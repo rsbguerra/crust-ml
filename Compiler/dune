@@ -1,0 +1,19 @@
+;; Lexer
+(ocamllex
+  (modules lexer))
+
+;; Tokens -- Necessita de estar separado das regras devido a dependencias ciclicas entre o Lexer e o Parser
+(menhir
+  (modules tokens)
+  (flags   --only-tokens))
+
+;; Gera o Parser e junta os ficheiros tokens.mly e parser.mly num só
+(menhir
+  (modules    tokens parser)
+  (merge_into parser)
+  (flags      --external-tokens Tokens))
+
+;; Gera o executavel crust.exe
+(executable
+  (name      crust)
+  (modules_without_implementation ast))
