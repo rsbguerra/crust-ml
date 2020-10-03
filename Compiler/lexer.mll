@@ -13,29 +13,20 @@
   let keyword_table =
     create_hashtable 32
     [
-      ("val", VAL);
+      ("let", LET);
       ("int", INT);
       ("if", IF);
       ("else", ELSE);
-      ("foreach", FOREACH);
       ("while", WHILE);
-      ("do", DO);
+      ("loop", LOOP);
       ("for", FOR);
-      ("in", IN);
       ("break", BREAK);
       ("continue", CONTINUE);
-      ("type", TYPE);
-      ("array", ARRAY);
-      ("of", OF);
-      ("filled", FILLED);
-      ("by", BY);
-      ("print", PRINT);
-      ("printn",PRINTN);
+      ("print!", PRINT);
+      ("println!",PRINTN);
       ("scanf", SCANF);
-      ("function", FUNCTION);
-      ("return", RETURN);
-      ("maxint", MAXINT);
-      ("minint", MININT)
+      ("fun", FUN);
+      ("return", RETURN)
     ]
   let line_num = ref 1
 
@@ -63,8 +54,6 @@ rule analisador = parse
   | '='             { [ASSIGN] }
   | '('             { [LPR] }
   | ')'             { [RPR] }
-  | '['             { [LBK] }
-  | ']'             { [RBK] }
   | '{'             { [LBC] }
   | '}'             { [RBC] }
   | '+'             { [PLUS] }
@@ -72,7 +61,6 @@ rule analisador = parse
   | '*'             { [TIMES] }
   | '/'             { [DIV] }
   | '%'             { [MOD] }
-  | '?'             { [TERNARY] }
   | "&"             { [BITAND] }
   | "|"             { [BITOR] }
   | "^"             { [BITXOR] }
@@ -90,7 +78,6 @@ rule analisador = parse
   | "!"             { [NOT] }
   | ':'             { [COLON] }
   | ';'             { [DELIMITER] }
-  | ".."            { [TO] }
   | ','             { [COMMA] }
   | integer as snum 
     { 

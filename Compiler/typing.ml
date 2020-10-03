@@ -307,18 +307,6 @@ let rec verify_stmt ctxs = function
       (* 7 - Verifica o corpo *)
       verify_stmt ctxs bl
 
-  | Sforeach(id, set, bl, line) ->
-      (* 1 - Adiciona o contexto do foreach e declaracao da sua variavel *)
-      let ctxs = ctxs@[(Hashtbl.create 17 : table_ctx)] in
-      verify_stmt ctxs (Sdeclare(id, Int, Ecst(0L, line), line));
-
-      (* 2 - Verifica que foi passado um conjunto *)
-      let t1 = verify_expr ctxs set in
-      if not (is_set t1) then error ("The foreach statement was expecting a set but was given "^string_of_typ t1^ ".") line;
-  
-      (* 3 - Verifica o corpo *)
-      verify_stmt ctxs bl
-
   | Swhile(e, body, line) ->
       (* 1 - Adiciona o contexto do while *)
       let ctxs = ctxs@[(Hashtbl.create 17 : table_ctx)] in
@@ -329,16 +317,6 @@ let rec verify_stmt ctxs = function
   
       verify_stmt ctxs body
 
-  | Sdowhile(e, body, line) ->
-      (* 1 - Adiciona o contexto do while *)
-      let ctxs = ctxs@[(Hashtbl.create 17 : table_ctx)] in
-    
-      verify_stmt ctxs body;
-
-      (* 2 - Verifica que foi passado um inteiro *)
-      let t1 = verify_expr ctxs e in
-      if not (is_int t1) then error ("The condition of the do while statement only accepts Tint but was givin a " ^ string_of_typ t1 ^ ".") line
-  
   | Saset (id, e1, e2, line) ->
       (* 1 - Verificar que id existe *)
       if List.length(find_id id ctxs) == 0 then error ("The variable "^id^" was not declared.") line;
@@ -356,6 +334,7 @@ let rec verify_stmt ctxs = function
       (* 4 - Verificar que o novo valor e do tipo Tint *)
       let t2 = verify_expr ctxs e2 in
       if not(is_int t2) then error ("The assignment statement only supports integers but was given a "^string_of_typ t2^".") line  
+   | _ -> error "a." (-1)
 
 and verify_stmts ctxs = function  
   | Stfunction (f, args, return, body, line) -> 

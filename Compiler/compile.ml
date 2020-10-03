@@ -772,77 +772,6 @@ let rec compile_stmt ctxs = function
       body ++ 
       
       for_verification
-     
-  | Sforeach(x, e, bl, line) ->
-      (* 1 - Cria o contexto do foreach *)
-      let ctxs = (ctxs@[(Hashtbl.create 17 : table_ctx)]) in
-       
-      (* Reserva memória para o fim do conjunto *)
-      (* 2 - Declara a variavel x*)
-      let code = compile_stmt ctxs (Sdeclare(x, Int, Ecst(0L, line), line)) in
-      frame_size := 8 + !frame_size;
-      
-      
-      (* 3 - Vai buscar o contexto do foreach *)
-      let ctx = List.hd (List.rev ctxs) in
-      
-      (* 4 - Guarda o offset da variavel i*)
-      let ofs = - int_of_vint  (snd(Hashtbl.find ctx x)) in
-      
-      (* 4 - Incrementa o numero de fors existentes*)
-      number_of_foreach := !number_of_foreach + 1;
-      let foreach_index = string_of_int(!number_of_foreach) in
-      loops := [("foreach_" ^ foreach_index)]@(!loops);
-
-      (* 5 - Inicializacao do foreach *)
-      let loop_initialize = 
-        (* 5.1 - Acrescenta o codigo da declaracao do x *)
-        code ++
-
-        (* 5.2 - Vai buscar o valor do conjunto *)
-        compile_expr ctxs e ++
-
-        (* 5.3 - Como tem que ser um conjunto retiramos dois valores *)
-        popq rbx ++
-        popq rax ++
-
-        (* 5.4 - Atribuimos o valor inicial do conjunto ao x*)
-        movq (reg rax) (ind ~ofs rbp) ++
-
-        (* 5.5 - Guardamos o valor final no endereço seguinte ao do x *)
-        movq (reg rbx) (ind ~ofs:(ofs - 8) rbp) ++
-
-        (* 5.6 - Cria a label do foreach para os jumps*)
-        label ("foreach_" ^ foreach_index ^ "_inicio")
-      in
-
-      (* 6 - Compila o corpo do foreach *)
-      let body = compile_stmt ctxs bl in
-
-      (* 7 - Compara o valor do x em relacao ao limite superior do foreach *)
-      let for_verification = 
-
-        label ("foreach_" ^ foreach_index ^ "_condicao") ++
-        
-        (* 7.1 Incrementa o valor de x*)
-        movq (ind ~ofs rbp) (reg rax) ++
-        incq (reg rax) ++
-        movq (reg rax) (ind ~ofs rbp) ++
-        
-        (* 7.2 Compara ao valor final *) 
-        
-        movq (ind ~ofs:(ofs - 8) rbp) (reg rbx) ++
-        cmpq (reg rbx) (reg rax) ++
-
-        jle ("foreach_" ^ foreach_index ^ "_inicio") ++
-        label ("foreach_" ^ foreach_index ^ "_fim")
-      in
-      loops := List.tl !loops;
-
-      loop_initialize ++ 
-      body ++ 
-      for_verification      
-
   | Swhile(e, bl, _) ->
       (* 1 - Cria o contexto do foreach *)
 
@@ -874,36 +803,6 @@ let rec compile_stmt ctxs = function
       loops := List.tl !loops;
     
       code
-      
-  | Sdowhile(e, bl, _) ->
-      (* 1 - Cria o contexto do foreach *)
-      let while_ctxs = (ctxs@[(Hashtbl.create 17 : table_ctx)]) in
-    
-      (* 2 - Incrementa o numero de fors existentes*)
-      number_of_while := !number_of_while + 1;
-      let while_index = string_of_int(!number_of_while) in
-      loops := [("dowhile_" ^ while_index)]@(!loops);
-       
-      let code = 
-        (* 3 - Cria a label do while - Vai buscar o valor de e *)
-        label ("dowhile_" ^ while_index ^ "_inicio") ++
-      
-        (* 6 - Compila o corpo do while *)
-        compile_stmt while_ctxs bl ++
-
-        compile_expr ctxs e ++
-        popq rax ++
-        
-        cmpq (imm64 0L) (reg rax) ++
-        jne ("dowhile_" ^ while_index ^ "_inicio") ++
-
-        (* 7 - Compara o valor do x em relacao ao limite superior do foreach *)
-        label ("dowhile_" ^ while_index ^ "_fim")
-      in
-      loops := List.tl !loops;
-      
-      code
-  
   | _ -> error "STMT NOT IMPLEMENTED IN THE COMPILER."
         
 and compile_block_stmt ctx = function

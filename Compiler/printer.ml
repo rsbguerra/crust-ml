@@ -33,7 +33,6 @@ and print_stmt = function
   | Sprintn (e, _)       -> printf "Sprintn("; print_expr e; printf ")"
   | Sscanf (id, _)       ->printf "Sscanf( %s )" id
   | Sblock (bl, _)       -> interpret_block_stmt  bl
-  | Sforeach(x, e, bl, _) -> printf "Sforeach(%s, " x; print_expr e; printf ",\n"; print_stmt bl; printf ")"
   | Swhile(e, bl, _) -> printf "Swhile( "; print_expr e; printf ",\n"; print_stmt bl; printf ")"
   | Saset (id, e1, e2, _) -> printf "Saset(%s, " id; print_expr e1; printf ", "; print_expr e2; printf ")"
   | _ -> assert false

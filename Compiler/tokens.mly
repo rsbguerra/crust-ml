@@ -4,26 +4,21 @@
 
 %token <int64>     CST
 %token <Ast.ident> IDENT
-%token IF ELSE PRINT PRINTN SCANF VAL INT
-%token FOREACH IN TO WHILE FOR DO
+%token IF ELSE PRINT PRINTN SCANF INT
+%token LOOP WHILE FOR
 %token CONTINUE BREAK
-%token FUNCTION RETURN
+%token FUN RETURN
 %token TYPE
-%token ARRAY OF FILLED BY
-%token MAXINT MININT
 %token PLUS "+" 
 %token MINUS TIMES DIV MOD
 %token BITAND BITOR BITXOR LSHIFT RSHIFT BITNOT
 %token GT ">"
 %token GET LT LET 
 %token EQ NEQ
-%token TERNARY "?"
 %token LPR "(" 
 %token RPR ")"
 %token LBC "{"
 %token RBC "}"
-%token LBK "["
-%token RBK "]"
 %token AND "&&"
 %token OR "||"
 %token NOT "!"
@@ -35,7 +30,7 @@
 
 /* Definição das prioridades e associatividades dos tokens */
 
-%left TERNARY COLON
+%left COLON
 %left OR
 %left AND
 %left BITOR

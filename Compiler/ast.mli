@@ -43,9 +43,8 @@ and stmt =
   | Sscanf of ident * int
   | Sblock of stmt list * int
   | Sfor of ident * costumtype * expr * expr * expr * stmt * int
-  | Sforeach of ident * expr * stmt * int
   | Swhile of expr * stmt * int
-  | Sdowhile of expr * stmt * int
+  | Sloop of stmt * int
   | Saset of ident * expr * expr * int(* id[e2] := e3 *)
   | Snothing of int
 

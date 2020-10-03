@@ -7,5 +7,5 @@ cd ./tests
 sh ./run-test Comments
 
 
-# The tests have the following format:
-# sh ./run-test <folder-in-good/bad-directory>
+# To run a new category (the name folder in good/bad directory) add:
+# sh ./run-test <category>
