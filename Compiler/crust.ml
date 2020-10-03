@@ -1,13 +1,11 @@
 
-(* Ficheiro principal do compilador arithc *)
-
+(* This is the main file of the crust compiler *)
 open Format
 open Lexing
 
 (* Opção de compilação, para parar na fase de parsing *)
 let parse_only = ref false
 let print_ast = ref false
-let interpt = ref false
 
 (* Nome dos ficheiros fonte e alvo *)
 let ifile = ref ""
@@ -21,12 +19,10 @@ let options =
    "  Executes only the lexer and parser ";
   "-print-ast", Arg.Set print_ast,
   "  Prints the AST of a givin file ";
-  "-interpt", Arg.Set interpt,
-  "  Utilizes the interpter instead of the compiler ";
    "-o", Arg.String (set_file ofile),
    "<file>  To indicate the name of the output file"]
 
-let usage = "usage: natrix [option(s)] file.nx"
+let usage = "usage: crust [option(s)] file.rs"
 
 (* localiza um erro indicando a linha e a coluna *)
 let localisation pos =
@@ -41,16 +37,16 @@ let () =
   (* Verifica-se que o nome do ficheiro fonte foi bem introduzido *)
   if !ifile="" then begin eprintf "\n\nerror:\n\n    Was expecting a file but got none. Pass the file to compile\n\n@?"; exit 1 end;
 
-  (* Este ficheiro deve ter como extensão .nx *)
-  if not (Filename.check_suffix !ifile ".nx") then begin
-    eprintf "The input file must be of the type .nx\n@?";
+  (* Verifies if the given file has a .rs extension *)
+  if not (Filename.check_suffix !ifile ".rs") then begin
+    eprintf "The input file must be of the type .rs\n@?";
     Arg.usage options usage;
     exit 1
   end;
 
    (* Por omissão, o ficheiro alvo tem o mesmo nome que o ficheiro fonte,
      só muda a extensão *)
-  if !ofile="" then ofile := Filename.chop_suffix !ifile ".nx" ^ ".s";
+  if !ofile="" then ofile := Filename.chop_suffix !ifile ".rs" ^ ".s";
 
   (* Abertura do ficheiro fonte em leitura *)
   let f = open_in !ifile in
@@ -75,8 +71,6 @@ let () =
        resultante desta transformação deve ficar escrito no ficheiro alvo ofile. *)
     Typing.file p;
 
-    if !interpt then begin Interp.file p; exit 0; end;
-    
     Compile.compile_program p !ofile
   with
   | Lexer.Lexing_error c ->
@@ -105,20 +99,3 @@ let () =
 	    (* Erro de utilização de variáveis durante a compilação *)
 	    eprintf "\nerror:\n\n  Erro de compilação:\n  %s\n@." s;
       exit 1
-  | Interp.Error (s, line) ->
-      eprintf "\n\nFile \"%s\", line %d:\n" !ifile line;
-      eprintf "\nerror:\n\n    Interpretation Error:\n  %s\n@." s;
-      exit 1
-  | Interp.Return (_, line) -> 
-      eprintf "\n\nFile \"%s\", line %d:\n" !ifile line;
-      eprintf "\nerror:\n\n    Interpretation Error:\n Run-time error: Illegal return statement. You can only use return statements inside of functions  \n@.";
-      exit 1
-  | Interp.Continue line -> 
-      eprintf "\n\nFile \"%s\", line %d:\n" !ifile line;
-      eprintf "\nerror:\n\n    Interpretation Error:\n Run-time error: Illegal continue statement. You can only use continue statements inside of loops  \n@.";
-      exit 1
-  | Interp.Break line -> 
-      eprintf "\n\nFile \"%s\", line %d:\n" !ifile line;
-      eprintf "\nerror:\n\n    Interpretation Error:\n Run-time error: Illegal continue statement. You can only use break statements inside of loops  \n@.";
-      exit 1
-  

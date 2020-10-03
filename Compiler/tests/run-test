@@ -3,16 +3,16 @@
 score_i=0
 max_i=0
 
-echo "Testes positivos (ficheiros em tests/good/)"
+echo "Testes positivos (ficheiros em tests/good/"$1")"
 
-for f in tests/good/*.nx; do
+for f in good/"$1"/*.rs; do
     max_i=`expr $max_i + 1`;
     echo $f
-    expected=tests/good/`basename $f .nx`.out
-    assembly=tests/good/`basename $f .nx`.s
+    expected=good/"$1"/`basename $f .rs`.out
+    assembly=good/"$1"/`basename $f .rs`.s
     
     rm -f out
-    dune exec ./natrix.exe $f
+    ../_build/default/crust.exe $f
     gcc -g -no-pie $assembly
     if ./a.out > out; then
     
@@ -27,13 +27,13 @@ for f in tests/good/*.nx; do
 done
 echo
 
-echo "Testes negativos (ficheiros em tests/bad/)"
+echo "Testes negativos (ficheiros em tests/bad/"$1")"
 
-for f in tests/bad/*.nx; do
+for f in bad/"$1"/*.rs; do
     max_i=`expr $max_i + 1`;
     echo $f
     rm -f out
-    if dune exec -- ./natrix.exe -interpt $f > out 2>&1; then
+    if ../_build/default/crust.exe $f > out 2>&1; then
 	echo "  FALHA : a avaliação de $f deveria falhar"
     else
         if grep -q "^error:" out; then
@@ -48,4 +48,6 @@ echo
 percent=`expr 100 \* $score_i / $max_i`;
 echo "Score: $score_i / $max_i testes, seja $percent%"
 
-rm  -f /tests/good/*.s
+rm  -f /good/"$1"/*.s
+rm  -f out
+rm  -f a.out

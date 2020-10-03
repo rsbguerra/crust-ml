@@ -5,7 +5,6 @@
   exception Lexing_error of string
   exception Lexing_error_comment of string
 
-
   let create_hashtable size init =
     let tbl = Hashtbl.create size in
     List.iter (fun (key, data) -> Hashtbl.add tbl key data) init;
@@ -40,6 +39,8 @@
     ]
   let line_num = ref 1
 
+  let comment_level = ref 0
+
   let newline lexbuf =
     let pos = lexbuf.lex_curr_p in
     lexbuf.lex_curr_p <-
@@ -56,8 +57,8 @@ let whitespace = [' ' '\t']
 
 rule analisador = parse
   | "//"            { singlecomment lexbuf}
-  | "(*"            { multicomment lexbuf }
-  | newline         { new_line lexbuf; line_num := !line_num + 1;analisador lexbuf}
+  | "/*"            { comment_level := !comment_level+1; multicomment lexbuf }
+  | newline         { new_line lexbuf; line_num := !line_num+1; analisador lexbuf}
   | whitespace      { analisador lexbuf}
   | '='             { [ASSIGN] }
   | '('             { [LPR] }
@@ -111,9 +112,10 @@ and singlecomment = parse
   | _         { singlecomment lexbuf}
 
 and multicomment = parse
-  | "*)"      { analisador lexbuf}
-  | eof       { raise (Lexing_error_comment "Commentary not closed, you need to close the multi line comments with: *)")}
-  | newline   {new_line lexbuf; line_num := !line_num + 1; multicomment lexbuf}
+  | "*/"      { comment_level := !comment_level-1; if !comment_level = 0 then analisador lexbuf else multicomment lexbuf}
+  | "/*"      { comment_level := !comment_level+1; multicomment lexbuf}
+  | eof       { raise (Lexing_error_comment "Commentary not closed, you need to close the multi line comments with: */")}
+  | newline   { new_line lexbuf; line_num := !line_num + 1; multicomment lexbuf}
   | _         { multicomment lexbuf}
 
 {

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Sets tests directory
+cd ./tests
+
+# --- Tests
+sh ./run-test Comments
+
+
+# The tests have the following format:
+# sh ./run-test <folder-in-good/bad-directory>
