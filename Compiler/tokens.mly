@@ -4,6 +4,7 @@
 
 %token <int64>     CST
 %token <Ast.ident> IDENT
+
 %token KW_IF KW_ELSE PRINT PRINTN SCANF INT
 %token KW_LOOP KW_WHILE KW_FOR
 %token KW_CONTINUE KW_BREAK
@@ -26,6 +27,25 @@
 %token DELIMITER ";"
 %token COMMA ","
 %token EOF
+
+/* Definição das prioridades e associatividades dos tokens */
+
+%left OR
+%left AND
+%left BITOR
+%left BITXOR
+%left BITAND
+%left EQ NEQ
+%left GT LT GET LET 
+%left LSHIFT RSHIFT
+%left PLUS MINUS
+%left TIMES DIV MOD
+%left NOT BITNOT
+
+%%
+
+(* === TODO ===
+
 (* === Strict === *)
 %token KW_AS
 %token KW_CONST
@@ -56,18 +76,23 @@
 %token KW_ASYNC
 %token KW_AWAIT
 %token KW_DYN
-/* Definição das prioridades e associatividades dos tokens */
 
-%left OR
-%left AND
-%left BITOR
-%left BITXOR
-%left BITAND
-%left EQ NEQ
-%left GT LT GET LET 
-%left LSHIFT RSHIFT
-%left PLUS MINUS
-%left TIMES DIV MOD
-%left NOT BITNOT
+(* === Reserved ===*)
+%token KW_ABSTRACT
+%token KW_BECOME
+%token KW_BOX
+%token KW_DO
+%token KW_FINAL
+%token KW_MACRO
+%token KW_OVERRIDE
+%token KW_PRIV
+%token KW_TRY
+%token KW_TYPEOF
+%token KW_UNSIZED
+%token KW_VIRTUAL
+%token KW_YIELD
 
-%%
+(* === Weak ===*)
+%token KW_UNION
+%token KW_STATICLIFETIME
+*)
