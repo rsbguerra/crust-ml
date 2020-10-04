@@ -53,18 +53,11 @@ simple_stmt:
 | BREAK ";"                                        { Sbreak !Lexer.line_num }
 | CONTINUE ";"                                     { Scontinue !Lexer.line_num }
 | LET id = ident ":" t = type_def "=" e = expr ";" { Sdeclare (id, t, e, !Lexer.line_num) }
-| TYPE id = ident "=" set = expr ";"               { Sset (id, set, !Lexer.line_num) }
-| id = ident ":""=" e = expr ";"                   { Sassign (id, e, !Lexer.line_num) }
 | id = ident o = binop"=" e = expr ";"             { Sassign (id, Ebinop(o, Eident (id, !Lexer.line_num), e, !Lexer.line_num), !Lexer.line_num) }
 | PRINT "(" e = expr ")" ";"                       { Sprint(e, !Lexer.line_num) }
 | PRINTN "(" e = expr ")" ";"                      { Sprintn(e, !Lexer.line_num) }
 | SCANF "(" id = ident ")" ";"                     { Sscanf(id, !Lexer.line_num) }
 | ";"                                              { Snothing(!Lexer.line_num) }
-;
-
-array_type:
-| INT                               { ATInt }
-| id = ident                        { ATid id }
 ;
 
 type_def:

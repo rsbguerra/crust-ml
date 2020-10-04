@@ -15,16 +15,16 @@ let maxint = Int64.max_int
 let frame_size = ref 0
 
 (* Variáveis para garantir que cada for/if/etc. tem labels com nomes diferentes *)
-let number_of_while = ref 0
-let number_of_foreach = ref 0
-let number_of_for = ref 0
+let number_of_while      = ref 0
+let number_of_foreach    = ref 0
+let number_of_for        = ref 0
 let number_of_bool_tests = ref 0
-let number_of_and_or = ref 0
-let number_of_ifs = ref 0
-let number_of_tipagens = ref 0
-let number_of_arraydefs = ref 0
-let number_of_ternary = ref 0
-let number_of_shift = ref 0
+let number_of_and_or     = ref 0
+let number_of_ifs        = ref 0
+let number_of_tipagens   = ref 0
+let number_of_arraydefs  = ref 0
+let number_of_ternary    = ref 0
+let number_of_shift      = ref 0
 
 let loops = ref []
 
@@ -141,16 +141,6 @@ let rec compile_expr ctxs = function
 
       (* Coloca os valores *)
       pushq (reg rbx) ++
-      pushq (reg rax)
-
-  | Eminint _ -> 
-      (* 1 - Colocar a constante minint na pilha *)
-      movq (imm64 minint) (reg rax) ++
-      pushq (reg rax) 
-
-  | Emaxint _ ->
-      (* 1 - Colocar a constante maxint na pilha *)
-      movq (imm64 maxint) (reg rax) ++
       pushq (reg rax)
 
   | Eident(id, _) ->
@@ -569,43 +559,6 @@ let rec compile_stmt ctxs = function
     Hashtbl.add ctx id (t, Vint ofs);
     code
 
-  | Sdeclarearray (id, ida, e, _) ->
-      (* 
-        1 - O tamanho da array está em (ida^sz)
-      *)
-      
-      (* 1 - Incrementar o numero de declaracoes de arrays *)
-      number_of_arraydefs := !number_of_arraydefs + 1;
-      let current_arraydefs = string_of_int(!number_of_arraydefs) in
-
-      (* 2 - Guardamos o frame anterior para calcular o tamanho da array *)
-      let ofs = !frame_size in
-      frame_size := 16 + !frame_size;
-      
-      let array_ctx = List.hd (List.rev(find_id ctxs ida)) in
-      let _, size = Hashtbl.find array_ctx (ida ^ "sz") in
-      let ofs_inicio, ofs_fim = tuple_of_vset size in
-      let code =
-        
-        movq  (imm64 0L) (reg r8) ++
-        label ("arraydef_" ^ current_arraydefs) ++
-        
-        compile_expr ctxs e ++
-        popq rax ++
-        movq (reg rbx) (ind ~ofs:(-ofs) rbp) ++
-        
-
-        (* Verificar o valor *)
-        movq (ind ~ofs:(-ofs_fim) rbp) (reg rbx) ++
-        decq (reg rbx) ++
-        movq (ind ~ofs:(-ofs_inicio) rbp) (reg rax) ++
-        cmpq (reg rbx) (reg rax) ++
-
-        jge ("arraydef_" ^ current_arraydefs)
-      in
-      let ctx = List.hd (List.rev ctxs) in
-      Hashtbl.add ctx id (Int, Vlist(Vset(0, 3), Vset(0,1)));
-      code
   | Sassign (id, e1, _)  ->
       (* 1 - Vai buscar o contexto em que o id esta declarado *)        
       let ctx = List.hd (List.rev (find_id ctxs id)) in
@@ -620,57 +573,6 @@ let rec compile_stmt ctxs = function
 
       movq (reg rax) (ind ~ofs:(-ofs) rbp) ++
       is_in_type_boundaries ctxs ofs t
-
-  | Sarray (id, sz, t, line) -> 
-      let ctx = List.hd (List.rev ctxs) in
-      let size = get_type_size ctxs sz in
-      let ofs = - !frame_size in
-      frame_size := 32 + !frame_size;
-      
-      let t1 = 
-        match t with 
-        | ATInt -> compile_expr ctxs (Eset(Ecst(minint, line), Ecst(maxint, line), line))
-        | ATset(e1, e2) -> compile_expr ctxs (Eset(e1, e2, line))
-        | ATid t -> compile_expr ctxs (Eident(t, line))
-        in
-      let code = 
-        size ++
-
-        (* Guardar o valor do size *)
-        popq rax ++ 
-        movq (imm 0) (ind ~ofs rbp) ++
-        movq (reg rax) (ind ~ofs:(ofs - 8) rbp) ++       
-        t1 ++
-        popq rax ++ (* fim *)
-        popq rbx ++ (* inicio*)
-        movq (reg rbx) (ind ~ofs:(ofs - 16) rbp) ++
-        movq (reg rbx) (ind ~ofs:(ofs - 24) rbp)
-      in
-      Hashtbl.add ctx (id ^ "sz") (Int, Vset(-ofs, -(ofs + 8)));
-      Hashtbl.add ctx id (CTid (id ^ "sz"), Vset(-(ofs + 16), -(ofs + 24)));
-
-      code
-
-  | Sset (id, set, _) ->
-      (* 1 - Vai buscar o contexto atual *)
-      let ctx = List.hd (List.rev ctxs) in
-      
-      (* 2 - Reserva dois espaços de memoria para o conjunto e guarda o endereço mais baixo *)
-      let ofs = !frame_size in
-      frame_size := 16 + !frame_size;
-
-      (* 3 - Guarda *)
-      let code =
-        compile_expr ctxs set ++
-        popq rax ++
-        popq rbx ++
-        movq (reg rbx) (ind ~ofs:(-ofs) rbp) ++
-        movq (reg rax) (ind ~ofs:(-(ofs + 8)) rbp)
-      in
-
-      (* 4 - Guarda o conjunto e os seus valores *)
-      Hashtbl.add ctx id (Int, Vset(ofs, ofs + 8));
-      code
 
   | Sprint (e, _) ->
       (* 1 - Vai buscar o valor de e *)

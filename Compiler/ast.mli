@@ -1,6 +1,6 @@
 (*
   Última alteração: 28-12-2019
-  Descricao: Árvore de sintaxe abastrata do Natrix
+  Descricao: Árvore de sintaxe abastrata do Rust
 *)
 
 type ident = string
@@ -18,8 +18,6 @@ and binop =
 
 and expr =
   | Ecst of int64 * int
-  | Eminint of int
-  | Emaxint of int
   | Eset of expr * expr * int
   | Eident of ident * int
   | Ebinop of binop * expr * expr * int
@@ -29,23 +27,19 @@ and expr =
   | Eternary of expr * expr * expr * int
 
 and stmt =
-  | Sif of expr * stmt * elif list * int
-  | Sreturn of expr * int
+  | Sif    of expr * stmt * elif list * int
   | Sbreak of int
   | Scontinue of int
-  | Sassign of ident * expr * int
+  | Sassign  of ident * expr * int
   | Sdeclare of ident * costumtype * expr * int
-  | Sset of ident * expr * int
-  | Sarray of ident * expr * array_type * int
-  | Sdeclarearray of ident * ident * expr * int
   | Sprint of expr * int
   | Sprintn of expr * int
   | Sscanf of ident * int
   | Sblock of stmt list * int
-  | Sfor of ident * costumtype * expr * expr * expr * stmt * int
+  | Sfor   of ident * costumtype * expr * expr * expr * stmt * int
+  | Sreturn of expr * int
   | Swhile of expr * stmt * int
-  | Sloop of stmt * int
-  | Saset of ident * expr * expr * int(* id[e2] := e3 *)
+  | Sloop  of stmt * int
   | Snothing of int
 
 (* Para não podermos definir funções dentro de instruções *)
@@ -61,10 +55,5 @@ and argument = ident * costumtype
 and costumtype = 
   | Int
   | CTid of ident
-
-and array_type =
-  | ATInt
-  | ATid of ident
-  | ATset of expr * expr
   
 and program = stmts

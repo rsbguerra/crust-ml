@@ -79,7 +79,6 @@ let costumtype_to_typ ctxs id =
 
 let rec verify_expr ctxs = function
   | Ecst _ -> Tint
-  | Eminint _ | Emaxint _ -> Tint
   | Eset (e1, e2, line) ->
       let t1 = verify_expr ctxs e1 in
       let t2 = verify_expr ctxs e2 in
@@ -157,18 +156,6 @@ let rec verify_expr ctxs = function
     if not (compare_typ (t1, t2)) then error ("Both branches of the ternary operator need return the same type.") line;
     t1
 
-and verify_array_type ctxs e =
-  match e with 
-  | ATInt -> Tset(Tint, Tint)
-  | ATset(e1, e2) -> 
-      let t1 =  verify_expr ctxs (Eset(e1, e2, 0)) in
-      if not (is_set t1) then error ("Error defining an array. The size of an array needs to be of the type Tint or Tset but was given " ^ string_of_typ t1 ^ ".") 0;
-      Tset(Tint, Tint)
-  | ATid t -> 
-      let t1 =  verify_expr ctxs (Eident(t, 0)) in
-      if not (is_set t1) then error ("Error defining an array. The size of an array needs to be of the type Tint or Tset but was given " ^ string_of_typ t1 ^ ".") 0;
-      Tset(Tint, Tint)
-
 (* Verificacao de uma instrucao - Instruções nao devolvem um valor *)
 let rec verify_stmt ctxs = function
   | Sif (e, s1, elif, line)   ->
@@ -221,46 +208,6 @@ let rec verify_stmt ctxs = function
       (* 2 - Verificar se estamos a lhe dar um Tint *)
       let t1 = verify_expr ctxs e1 in
       if not(is_int t1) then error ("The assignment statement only supports integers but was given a " ^ string_of_typ t1 ^".") line
-
-  | Sdeclarearray (id, ida, e, line) ->
-      (* 1 - Verificar se o id e unico *)
-      let ctx = List.hd (List.rev ctxs) in
-      if (Hashtbl.mem functions id) || (Hashtbl.mem ctx id) then error ("The identifier "^id^" is already defined in this scope.") line;
-
-      (* 2 - Verificar se ida existe e é do tipo Tarray *)
-      if List.length(List.rev (find_id ida ctxs)) == 0 then error ("The array type "^ida^" was not defined.") line;
-      let array_ctx = List.hd (List.rev (find_id ida ctxs)) in
-      let ta,_ = Hashtbl.find array_ctx ida in
-      if not (is_array ta) then error ("Error declaring an array. Was expecting the type Tarray but was given "^string_of_typ ta^".") line;
-
-      (* 3 - Verificar se _e_ e do tipo Tint*)
-      let t1 = verify_expr ctxs e in
-      if not (is_int t1) then error ("Error declaring an array. The elements can only be filled with integers but was given "^string_of_typ t1^".") line;
-      Hashtbl.add ctx id (Tarrayvar, false)
-
-  | Sarray (id, sz, t, line)  ->
-      (* 1 - Verificar se o id e unico *)
-      let ctx = List.hd (List.rev ctxs) in
-      if (Hashtbl.mem functions id) || (Hashtbl.mem ctx id) then error ("The identifier "^id^" was already defined in this scope.") line;
-
-      (* 2 - Verificar se o sz é um Tint ou Tset *)
-      let t1 = verify_expr ctxs sz in
-      if not (is_int t1) && not (is_set t1) then error ("Error defining an array. The size of an array needs to be of the type Tint or Tset but was given "^string_of_typ t1^".") line;
-
-      (*3 - Verificar se t é do tipo Tset*)
-      let t2 = verify_array_type ctxs t in
-      if not (is_set t2) then error ("Error defining an array. The range of an array needs to be of the type Tset but was given "^string_of_typ t2^".") line;
-      Hashtbl.add ctx id (Tarray, false) 
-
-  | Sset (id, set, line) ->
-      (* 1 - Verificar se o nome ja nao esta a ser usado *)
-      let ctx = List.hd (List.rev ctxs) in
-      if (Hashtbl.mem functions id) || (Hashtbl.mem ctx id) then error ("Error defining a set. The identifier "^id^" was already defined in this scope.") line;
-  
-      (* 2 - Verificar se estamos a lhe dar um set *)
-      let t1 = verify_expr ctxs set in
-      if not(is_set t1) then error ("Error defining a set. Was expecting a Tset but was given "^string_of_typ t1^ ".") line;
-      Hashtbl.add ctx id (t1,false)
 
   | Sprint(e, line)      ->
       let t1 = verify_expr ctxs e in
@@ -316,24 +263,7 @@ let rec verify_stmt ctxs = function
       if not (is_int t1) then error ("The condition of the while statement only accepts Tint but was givin a " ^ string_of_typ t1 ^ ".") line;
   
       verify_stmt ctxs body
-
-  | Saset (id, e1, e2, line) ->
-      (* 1 - Verificar que id existe *)
-      if List.length(find_id id ctxs) == 0 then error ("The variable "^id^" was not declared.") line;
       
-      (* 2 - Verificar se ida existe e é do tipo Tarray *)
-      let array_ctx = List.hd (List.rev (find_id id ctxs)) in
-      let ta = fst(Hashtbl.find array_ctx id) in
-      Hashtbl.replace array_ctx id (ta, true);
-      if not (is_arrayvar ta) then error ("The variable"^id^" has type "^string_of_typ ta^" but s being used as an Tarrayvar.") line;
-
-      (* 3 - Verificar que o index é do tipo Tint *)
-      let t1 = verify_expr ctxs e1 in
-      if not(is_int t1) then error ("The assignment statement of the type array was expecting a index of the type Tint but was given "^string_of_typ t1^".") line;
-  
-      (* 4 - Verificar que o novo valor e do tipo Tint *)
-      let t2 = verify_expr ctxs e2 in
-      if not(is_int t2) then error ("The assignment statement only supports integers but was given a "^string_of_typ t2^".") line  
    | _ -> error "a." (-1)
 
 and verify_stmts ctxs = function  

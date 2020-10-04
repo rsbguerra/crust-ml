@@ -9,8 +9,6 @@ let rec print_expr_list = function
 and print_expr = function
   | Ecst (n, _)                -> printf " Ecst( %s ) " (Int64.to_string n)
   | Eset (e1, e2, _)         -> printf " Eset( "; print_expr e1; print_expr e2; printf ") "
-  | Eminint _               -> printf " Eminint "
-  | Emaxint _              -> printf " Emaxint "
   | Ebinop (Band, e1, e2, _) -> printf " Ebinop( Band, "; print_expr e1; printf ", "; print_expr e2; printf ") "
   | Ebinop (Bor, e1, e2, _)  -> printf " Ebinop( Bor, "; print_expr e1; printf ", "; print_expr e2; printf ") "
   | Ebinop (_, e1, e2, _)    -> printf " Ebinop( Op, "; print_expr e1; printf ", "; print_expr e2; printf ") "
@@ -26,15 +24,11 @@ and print_stmt = function
   | Sreturn (e, _)       -> printf "Sreturn("; print_expr e; printf ")"
   | Sassign (id, e1, _)-> printf "Sassign(%s, " id; print_expr e1; printf ")"
   | Sdeclare (id, _ ,e1, _) -> printf "Sdeclare(%s, t, " id ; print_expr e1; printf ")"
-  | Sset (id, e, _)    -> printf "Sset(%s, " id; print_expr e; printf ")"
-  | Sarray(id,sz,_,_) -> printf "Sarray(%s, " id; print_expr sz; printf ", "; printf "_ )"
-  | Sdeclarearray(id, ida, e, _) -> printf "Sdeclarearray(%s, %s, " id ida; print_expr e; printf ")"
   | Sprint (e, _)        -> printf "Sprint("; print_expr e; printf ")"
   | Sprintn (e, _)       -> printf "Sprintn("; print_expr e; printf ")"
   | Sscanf (id, _)       ->printf "Sscanf( %s )" id
   | Sblock (bl, _)       -> interpret_block_stmt  bl
   | Swhile(e, bl, _) -> printf "Swhile( "; print_expr e; printf ",\n"; print_stmt bl; printf ")"
-  | Saset (id, e1, e2, _) -> printf "Saset(%s, " id; print_expr e1; printf ", "; print_expr e2; printf ")"
   | _ -> assert false
 
 and print_argument_list = function

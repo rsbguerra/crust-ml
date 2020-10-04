@@ -8,7 +8,6 @@
 %token LOOP WHILE FOR
 %token CONTINUE BREAK
 %token FUN RETURN
-%token TYPE
 %token PLUS "+" 
 %token MINUS TIMES DIV MOD
 %token BITAND BITOR BITXOR LSHIFT RSHIFT BITNOT
@@ -30,7 +29,6 @@
 
 /* Definição das prioridades e associatividades dos tokens */
 
-%left COLON
 %left OR
 %left AND
 %left BITOR
