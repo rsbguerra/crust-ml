@@ -74,6 +74,7 @@
 
 (* ======== Rules ========== *)
 
+(** Integer Literals*)
 let INTEGER_SUFFIX = "u8"|"u16"|"u32"|"u64"|"u128"|"usize"|"i8"|"i16"|"i32"|"i64"|"i128"|"isize"
 let HEX_DIGIT      = ['0'-'9' 'a'-'f' 'A'-'F']
 let DEC_DIGIT      = ['0'-'9']
@@ -84,6 +85,14 @@ let OCT_LITERAL    = "0o" (OCT_DIGIT|'_')* OCT_DIGIT (OCT_DIGIT|'_')*
 let BIN_LITERAL    = "0b" (BIN_DIGIT|'_')* BIN_DIGIT (BIN_DIGIT|'_')*
 let DEC_LITERAL    = DEC_DIGIT(BIN_DIGIT|'_')*
 let INTEGER_LITERAL= (DEC_LITERAL|BIN_LITERAL|OCT_LITERAL|HEX_LITERAL) (' ')* INTEGER_SUFFIX?
+
+(**Floating-point literals*)
+let FLOAT_SUFFIX   = "f32"|"f64"
+let FLOAT_EXPONENT = ('e'|'E') ('+'|'-')? (DEC_DIGIT|'_')* DEC_DIGIT (DEC_DIGIT|'_')*
+let FLOAT_LITERAL  = DEC_LITERAL '.' | DEC_LITERAL FLOAT_EXPONENT | DEC_LITERAL '.' DEC_LITERAL FLOAT_EXPONENT? | DEC_LITERAL ('.' DEC_LITERAL)? FLOAT_EXPONENT? FLOAT_SUFFIX
+
+(** Boolean Literals*)
+let BOOLEAN_LITERAL = "true"|"false"
 
 let letter     = ['a'-'z' 'A'-'Z']
 let char       = ''' letter '''
