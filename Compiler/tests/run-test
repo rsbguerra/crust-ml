@@ -1,53 +1,56 @@
 #!/bin/bash
 
+bin=../_build/default/crust.exe
 score_i=0
-max_i=0
+number_of_tests=0
 
-echo "Testes positivos (ficheiros em tests/good/"$1")"
+echo "Starting the "$1" Tests"
 
+echo " ===> Good Tests"
+
+# Iterate good tests
 for f in good/"$1"/*.rs; do
-    max_i=`expr $max_i + 1`;
-    echo $f
+    number_of_tests=`expr $number_of_tests + 1`;
+    echo " " $f
     expected=good/"$1"/`basename $f .rs`.out
     assembly=good/"$1"/`basename $f .rs`.s
     
-    rm -f out
-    ../_build/default/crust.exe $f
-    gcc -g -no-pie $assembly
+    # Compile file
+    $bin $f; gcc -g -no-pie $assembly
+
+    # Compare output
     if ./a.out > out; then
-    
-	if cmp --quiet out $expected; then
-	    score_i=`expr $score_i + 1`;
-	else
-	    echo "  FALHA : saida errada para $f"
+	    if cmp --quiet out $expected; then
+	        score_i=`expr $score_i + 1`;
+	    else
+	        echo "  ERROR: Wrong output at $f"
 	fi
     else
-	echo "  FALHA da interpretação para $f"
+	    echo "  ERROR: The interpretation failed at $f"
     fi
 done
-echo
 
-echo "Testes negativos (ficheiros em tests/bad/"$1")"
+echo "\n ===> Bad Tests"
 
 for f in bad/"$1"/*.rs; do
-    max_i=`expr $max_i + 1`;
-    echo $f
-    rm -f out
-    if ../_build/default/crust.exe $f > out 2>&1; then
-	echo "  FALHA : a avaliação de $f deveria falhar"
+    number_of_tests=`expr $number_of_tests + 1`;
+    echo " " $f
+    
+    if $bin $f > out 2>&1; then
+    echo "  ERROR : The avaliation of $f didn't failed"
     else
         if grep -q "^error:" out; then
-	    score_i=`expr $score_i + 1`;
+	        score_i=`expr $score_i + 1`;
         else
-            echo "  FALHA : deveria mostrar 'error'"
+            echo "  ERROR : No error message found in output"
         fi
     fi
 done
 
-echo
-percent=`expr 100 \* $score_i / $max_i`;
-echo "Score: $score_i / $max_i testes, seja $percent%"
+percent=`expr 100 \* $score_i / $number_of_tests`
+echo "\nScore: $score_i/$number_of_tests tests = $percent%\n"
 
-rm  -f /good/"$1"/*.s
+# Remove tmp files
+rm  -f good/"$1"/*.s
 rm  -f out
 rm  -f a.out

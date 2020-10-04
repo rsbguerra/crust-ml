@@ -16,7 +16,7 @@ prog:
 ;
 
 stmts:
-| FUN f = ident "(" x = separated_list(",", argument_list) ")" ":"  r = type_def s = function_suite 
+| KW_FN f = ident "(" x = separated_list(",", argument_list) ")" ":"  r = type_def s = function_suite 
               { Stfunction(f, x, r, s, !Lexer.line_num)}
 | s = stmt    { Stmt(s, !Lexer.line_num) } 
 ;
@@ -36,23 +36,23 @@ suite:
 ;
 
 elif:
-| ELSE IF "(" e = expr ")" "{" s = suite "}" { (e, s, !Lexer.line_num) }
-| ELSE "{" s = suite "}" { ( Ecst(1L, !Lexer.line_num), s, !Lexer.line_num) }
+| KW_ELSE KW_IF "(" e = expr ")" "{" s = suite "}" { (e, s, !Lexer.line_num) }
+| KW_ELSE "{" s = suite "}" { ( Ecst(1L, !Lexer.line_num), s, !Lexer.line_num) }
 ;
 
 stmt:
 | s = simple_stmt                                        { s } 
-| IF "(" e = expr ")" "{" s1 = suite "}" l = list(elif)  { Sif(e, s1, l, !Lexer.line_num)}
-| WHILE "(" e = expr ")" "{" s = suite "}"               { Swhile(e, s, !Lexer.line_num) }
-| LOOP "{" s = suite "}"                                 { Sloop(s, !Lexer.line_num)}
-| FOR "(" id = ident ":" t = type_def "=" e = expr ";" cond = expr ";" incr = expr ")" "{" s = suite "}" {Sfor(id, t, e, cond, incr, s, !Lexer.line_num)} 
+| KW_IF "(" e = expr ")" "{" s1 = suite "}" l = list(elif)  { Sif(e, s1, l, !Lexer.line_num)}
+| KW_WHILE "(" e = expr ")" "{" s = suite "}"               { Swhile(e, s, !Lexer.line_num) }
+| KW_LOOP "{" s = suite "}"                                 { Sloop(s, !Lexer.line_num)}
+| KW_FOR "(" id = ident ":" t = type_def "=" e = expr ";" cond = expr ";" incr = expr ")" "{" s = suite "}" {Sfor(id, t, e, cond, incr, s, !Lexer.line_num)} 
 ;
 
 simple_stmt:
-| RETURN e = expr ";"                              { Sreturn(e, !Lexer.line_num) }
-| BREAK ";"                                        { Sbreak !Lexer.line_num }
-| CONTINUE ";"                                     { Scontinue !Lexer.line_num }
-| LET id = ident ":" t = type_def "=" e = expr ";" { Sdeclare (id, t, e, !Lexer.line_num) }
+| KW_RETURN e = expr ";"                              { Sreturn(e, !Lexer.line_num) }
+| KW_BREAK ";"                                        { Sbreak !Lexer.line_num }
+| KW_CONTINUE ";"                                     { Scontinue !Lexer.line_num }
+| KW_LET id = ident ":" t = type_def "=" e = expr ";" { Sdeclare (id, t, e, !Lexer.line_num) }
 | id = ident o = binop"=" e = expr ";"             { Sassign (id, Ebinop(o, Eident (id, !Lexer.line_num), e, !Lexer.line_num), !Lexer.line_num) }
 | PRINT "(" e = expr ")" ";"                       { Sprint(e, !Lexer.line_num) }
 | PRINTN "(" e = expr ")" ";"                      { Sprintn(e, !Lexer.line_num) }

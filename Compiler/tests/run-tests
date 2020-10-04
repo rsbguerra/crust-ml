@@ -5,6 +5,7 @@ cd ./tests
 
 # --- Tests
 sh ./run-test Comments
+sh ./run-test Variables
 
 
 # To run a new category (the name folder in good/bad directory) add:
