@@ -4,9 +4,12 @@
 cd ./tests
 
 # --- Tests
-sh ./run-test Comments
-sh ./run-test Variables
+bash ./run-test Comments
+bash ./run-test Variables
 
 
 # To run a new category (the name folder in good/bad directory) add:
-# sh ./run-test <category>
+# bash ./run-test <category>
+
+# Optionally you can select some tests as verbose, simple add the -v option at the end.
+# bash ./run-test <category> -v

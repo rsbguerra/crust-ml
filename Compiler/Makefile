@@ -2,7 +2,7 @@ all:
 	dune build ./crust.exe
 
 test:
-	sh ./tests/run-tests
+	bash ./tests/run-tests
 
 clean:
 	dune clean

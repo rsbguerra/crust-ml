@@ -88,3 +88,15 @@ File `run-test`
 ```Shell
 sh ./run-test MyCategory
 ```
+
+### Verbosity
+
+The above example will only ouput log messages for the wrong tests, if you desire to have a full message to know exactly what is correct and what isn't you simple need to add the `-v` option at the end.
+
+Example:
+
+File `run-test`
+
+```Shell
+sh ./run-test MyCategory -v
+```
