@@ -58,7 +58,8 @@ function run_test (){
     assembly=good/"$test_category"/`basename $f .rs`.s
     
     # Compile file
-    $bin $f; gcc -g -no-pie $assembly
+    $bin $f
+    gcc -g -no-pie $assembly
 
     # Compare output
     if ./a.out > out; then

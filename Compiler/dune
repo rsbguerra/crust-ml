@@ -16,4 +16,5 @@
 ;; Gera o executavel crust.exe
 (executable
   (name      crust)
-  (modules_without_implementation ast))
+  (modules_without_implementation ast)
+  (libraries stdint))

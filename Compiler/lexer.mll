@@ -5,6 +5,7 @@
 {
   open Lexing
   open Tokens
+  open Ast
 
   exception Lexing_error of string
   exception Lexing_error_comment of string
@@ -152,9 +153,9 @@ rule analisador = parse
   | ';'             { [DELIMITER] }
   | ','             { [COMMA] }
   | INTEGER_LITERAL as snum 
-    { 
+    { (*Todo decide wich type this integer is *)
       try
-        [CST (Int64.of_string snum)]
+        [CST ( Ci64 (Int64.of_string snum))]
       with _ -> raise (Lexing_error ("The constant is too big : " ^ snum)) }
   | id as word
   { try

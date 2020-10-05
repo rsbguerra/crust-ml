@@ -65,13 +65,7 @@ let () =
 
     (* Pára-se aqui se só queremos o parsing *)
     if !parse_only then exit 0;
-    if !print_ast then Printer.print_file p; 
-
-    (* Compilação da árvore de sintaxe abstracta p. O código máquina
-       resultante desta transformação deve ficar escrito no ficheiro alvo ofile. *)
-    Typing.file p;
-
-    Compile.compile_program p !ofile
+    if !print_ast then Printer.print_file p;
   with
   | Lexer.Lexing_error c ->
   (* Erro léxico. Recupera-se a posição absoluta e converte-se para número de linha *)
@@ -87,15 +81,4 @@ let () =
 	    localisation (Lexing.lexeme_start_p buf);
 	    eprintf "\nerror:\n\n  Syntatic error: invalid derivation.\n\n@.";
       exit 1
-  | Typing.Error (s, line)-> 
-      eprintf "\n\nFile \"%s\", line %d:\n" !ifile line;
-      eprintf "\nerror:\n\n  Semmantic Analysis:\n  %s\n@." s;
-      exit 1
-  | Compile.VarUndef s->
-	    (* Erro de utilização de variáveis durante a compilação *)
-	    eprintf "\nerror:\n\n  Erro de compilação: a variável  %s não está definida@." s;
-      exit 1
-  | Compile.Error s->
-	    (* Erro de utilização de variáveis durante a compilação *)
-	    eprintf "\nerror:\n\n  Erro de compilação:\n  %s\n@." s;
-      exit 1
+ 

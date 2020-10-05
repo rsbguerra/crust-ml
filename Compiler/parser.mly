@@ -16,13 +16,13 @@ prog:
 ;
 
 stmts:
-| KW_FN f = ident "(" x = separated_list(",", argument_list) ")" ":"  r = type_def s = function_suite 
+| KW_FN f = ident "(" x = separated_list(",", argument_list) ")" ":"  r = crust_types s = function_suite 
               { Stfunction(f, x, r, s, !Lexer.line_num)}
 | s = stmt    { Stmt(s, !Lexer.line_num) } 
 ;
 
 argument_list:
-|  id = ident ":" t = type_def {(id, t)}
+|  id = ident ":" t = crust_types {(id, t)}
 ;
 
 function_suite:
@@ -37,22 +37,21 @@ suite:
 
 elif:
 | KW_ELSE KW_IF "(" e = expr ")" "{" s = suite "}" { (e, s, !Lexer.line_num) }
-| KW_ELSE "{" s = suite "}" { ( Ecst(1L, !Lexer.line_num), s, !Lexer.line_num) }
+| KW_ELSE "{" s = suite "}"                        { ( Ecst( Ci64 1L, !Lexer.line_num), s, !Lexer.line_num) }
 ;
 
 stmt:
-| s = simple_stmt                                        { s } 
+| s = simple_stmt                                           { s } 
 | KW_IF "(" e = expr ")" "{" s1 = suite "}" l = list(elif)  { Sif(e, s1, l, !Lexer.line_num)}
 | KW_WHILE "(" e = expr ")" "{" s = suite "}"               { Swhile(e, s, !Lexer.line_num) }
 | KW_LOOP "{" s = suite "}"                                 { Sloop(s, !Lexer.line_num)}
-| KW_FOR "(" id = ident ":" t = type_def "=" e = expr ";" cond = expr ";" incr = expr ")" "{" s = suite "}" {Sfor(id, t, e, cond, incr, s, !Lexer.line_num)} 
 ;
 
 simple_stmt:
 | KW_RETURN e = expr ";"                              { Sreturn(e, !Lexer.line_num) }
 | KW_BREAK ";"                                        { Sbreak !Lexer.line_num }
 | KW_CONTINUE ";"                                     { Scontinue !Lexer.line_num }
-| KW_LET id = ident ":" t = type_def "=" e = expr ";" { Sdeclare (id, t, e, !Lexer.line_num) }
+| KW_LET id = ident ":" t = crust_types "=" e = expr ";" { Sdeclare (id, t, e, !Lexer.line_num) }
 | id = ident o = binop"=" e = expr ";"             { Sassign (id, Ebinop(o, Eident (id, !Lexer.line_num), e, !Lexer.line_num), !Lexer.line_num) }
 | PRINT "(" e = expr ")" ";"                       { Sprint(e, !Lexer.line_num) }
 | PRINTN "(" e = expr ")" ";"                      { Sprintn(e, !Lexer.line_num) }
@@ -60,15 +59,24 @@ simple_stmt:
 | ";"                                              { Snothing(!Lexer.line_num) }
 ;
 
-type_def:
-| INT           { Int }
-| id = ident    { CTid id }
+crust_types:
+| I8     { Ti8   }
+| I16    { Ti16  }
+| I32    { Ti32  }
+| I64    { Ti64  }
+| I128   { Ti128 }
+| U8     { Tu8   }
+| U16    { Tu16  }
+| U32    { Tu32  }
+| U64    { Tu64  }
+| U128   { Tu128 }
+| BOOL   { Tbool }
 ;
 
 expr:
 | c = CST                           { Ecst (c, !Lexer.line_num) }
 | id = ident                        { Eident (id, !Lexer.line_num) }
-| u = unop e1 = expr                { Eunop (u, e1, !Lexer.line_num) }
+| u  = unop e1 = expr               { Eunop (u, e1, !Lexer.line_num) }
 | e1 = expr o = binop e2 = expr     { Ebinop (o, e1, e2, !Lexer.line_num) }
 | id = ident "(" l = separated_list("," , expr) ")" { Ecall(id, l, !Lexer.line_num)}
 | "(" e = expr ")"                  { e }
