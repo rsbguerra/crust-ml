@@ -98,10 +98,10 @@ let HEX_DIGIT      = ['0'-'9' 'a'-'f' 'A'-'F']
 let DEC_DIGIT      = ['0'-'9']
 let OCT_DIGIT      = ['0'-'7']
 let BIN_DIGIT      = ['0'-'1']
-let HEX_LITERAL    = "0x" (HEX_DIGIT|'_')* HEX_DIGIT (HEX_DIGIT|'_')*
-let OCT_LITERAL    = "0o" (OCT_DIGIT|'_')* OCT_DIGIT (OCT_DIGIT|'_')*
-let BIN_LITERAL    = "0b" (BIN_DIGIT|'_')* BIN_DIGIT (BIN_DIGIT|'_')*
-let DEC_LITERAL    = DEC_DIGIT(BIN_DIGIT|'_')*
+let HEX_LITERAL    = ("0x"|"0X") (HEX_DIGIT|'_')*
+let OCT_LITERAL    = ("0o"|"0O") (OCT_DIGIT|'_')*
+let BIN_LITERAL    = ("0b"|"0B") (BIN_DIGIT|'_')*
+let DEC_LITERAL    = DEC_DIGIT(DEC_DIGIT|'_')*
 let INTEGER_LITERAL= (DEC_LITERAL|BIN_LITERAL|OCT_LITERAL|HEX_LITERAL) (' ')* INTEGER_SUFFIX?
 
 (**Floating-point literals*)
@@ -152,6 +152,16 @@ rule analisador = parse
   | ':'             { [COLON] }
   | ';'             { [DELIMITER] }
   | ','             { [COMMA] }
+  | "u8"            { [U8] }
+  | "u16"           { [U16] }
+  | "u32"           { [U32] }
+  | "u64"           { [U16] }
+  | "u128"          { [U128] }
+  | "i8"            { [I8] }
+  | "i16"           { [I16] }
+  | "i32"           { [I32] }
+  | "i64"           { [I16] }
+  | "i128"          { [I128] }
   | INTEGER_LITERAL as snum 
     { (*Todo decide wich type this integer is *)
       try
