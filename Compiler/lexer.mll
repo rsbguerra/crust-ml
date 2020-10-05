@@ -1,7 +1,6 @@
 (*
   References: 
     - https://doc.rust-lang.org/reference/tokens.html
-
 *)
 {
   open Lexing
@@ -19,47 +18,65 @@
     create_hashtable 32
     [
       (* === strict === *)
-      ("as",       KW_AS);
-      ("break",    KW_BREAK);
-      ("const",    KW_CONST);
-      ("continue", KW_CONTINUE);
-      ("crate",    KW_CRATE);
-      ("else",     KW_ELSE);
-      ("enum",     KW_ENUM);
-      ("extern",   KW_EXTERN);
-      ("false",    KW_FALSE);
-      ("fn",       KW_FN);
-      ("for",      KW_FOR);
-      ("if",       KW_IF);
-      ("impl",     KW_IMPL);
-      ("in",       KW_IN);
-      ("let",      KW_LET);
-      ("loop",     KW_LOOP);
-      ("match",    KW_MATCH);
-      ("mod",      KW_MOD);
-      ("move",     KW_MOVE);
-      ("mut",      KW_MUT);
-      ("pub",      KW_PUB);
-      ("ref",      KW_REF);
-      ("return",   KW_RETURN);
-      ("self",     KW_SELFVALUE);
-      ("Self",     KW_SELFTYPE);
-      ("static",   KW_STATIC);
-      ("struct",   KW_STRUCT);
-      ("super",    KW_SUPER);
-      ("trait",    KW_TRAIT);
-      ("true",     KW_TRUE);
-      ("type",     KW_TYPE);
-      ("unsafe",   KW_UNSAFE);
-      ("use",      KW_USE);
-      ("where",    KW_WHERE);
-      ("while",    KW_WHILE);
-      ("async",    KW_ASYNC);
-      ("await",    KW_AWAIT);
-      ("dyn",      KW_DYN);
-      (* === Reserved ===*)
-      (* === Weak ===*)
+      "as",       KW_AS;
+      "break",    KW_BREAK;
+      "const",    KW_CONST;
+      "continue", KW_CONTINUE;
+      "crate",    KW_CRATE;
+      "else",     KW_ELSE;
+      "enum",     KW_ENUM;
+      "extern",   KW_EXTERN;
+      "false",    KW_FALSE;
+      "fn",       KW_FN;
+      "for",      KW_FOR;
+      "if",       KW_IF;
+      "impl",     KW_IMPL;
+      "in",       KW_IN;
+      "let",      KW_LET;
+      "loop",     KW_LOOP;
+      "match",    KW_MATCH;
+      "mod",      KW_MOD;
+      "move",     KW_MOVE;
+      "mut",      KW_MUT;
+      "pub",      KW_PUB;
+      "ref",      KW_REF;
+      "return",   KW_RETURN;
+      "self",     KW_SELFVALUE;
+      "Self",     KW_SELFTYPE;
+      "static",   KW_STATIC;
+      "struct",   KW_STRUCT;
+      "super",    KW_SUPER;
+      "trait",    KW_TRAIT;
+      "true",     KW_TRUE;
+      "type",     KW_TYPE;
+      "unsafe",   KW_UNSAFE;
+      "use",      KW_USE;
+      "where",    KW_WHERE;
+      "while",    KW_WHILE;
+      "async",    KW_ASYNC;
+      "await",    KW_AWAIT;
+      "dyn",      KW_DYN;
+      "println!", KW_PRINTLN;
+      "print!",   KW_PRINT;
       
+      (* === Reserved ===*)
+      "abstract", KW_ABSTRACT;
+      "become",   KW_BECOME;
+      "box",      KW_BOX;
+      "do",       KW_DO;
+      "final",    KW_FINAL;
+      "macro",    KW_MACRO;
+      "override", KW_OVERRIDE;
+      "priv",     KW_PRIV;
+      "try",      KW_TRY;
+      "typeof",   KW_TYPEOF;
+      "unsized",  KW_UNSIZED;
+      "virtual",  KW_VIRTUAL;
+      "yield",    KW_YIELD;
+
+      (* === Weak ===*)
+      "union",    KW_UNION;
+      "'static",  KW_STATICLIFETIME
     ]
   let line_num = ref 1
 
@@ -116,9 +133,9 @@ rule analisador = parse
   | '*'             { [TIMES] }
   | '/'             { [DIV] }
   | '%'             { [MOD] }
-  | "&"             { [BITAND] }
-  | "|"             { [BITOR] }
-  | "^"             { [BITXOR] }
+  | '&'             { [BITAND] }
+  | '|'             { [BITOR] }
+  | '^'             { [BITXOR] }
   | "<<"            { [LSHIFT] }
   | ">>"            { [RSHIFT] }
   | "<"             { [LT] }
@@ -129,8 +146,8 @@ rule analisador = parse
   | "!="            { [NEQ] }
   | "||"            { [OR] }
   | "&&"            { [AND] }
-  | "~"             { [BITNOT] }
-  | "!"             { [NOT] }
+  | '~'             { [BITNOT] }
+  | '!'             { [NOT] }
   | ':'             { [COLON] }
   | ';'             { [DELIMITER] }
   | ','             { [COMMA] }
