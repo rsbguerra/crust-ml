@@ -16,7 +16,7 @@ prog:
 ;
 
 stmts:
-| KW_FN f = ident "(" x = separated_list(",", argument_list) ")" ":"  r = crust_types s = function_suite 
+| KW_FN f = ident "(" x = separated_list(",", argument_list) ")" ARROW r = crust_types s = function_suite 
               { Stfunction(f, x, r, s, !Lexer.line_num)}
 | s = stmt    { Stmt(s, !Lexer.line_num) } 
 ;
@@ -36,15 +36,15 @@ suite:
 ;
 
 elif:
-| KW_ELSE KW_IF "(" e = expr ")" "{" s = suite "}" { (e, s, !Lexer.line_num) }
-| KW_ELSE "{" s = suite "}"                        { ( Ecst( Ci64 1L, !Lexer.line_num), s, !Lexer.line_num) }
+| KW_ELSE KW_IF e = expr "{" s = suite "}" { (e, s, !Lexer.line_num) }
+| KW_ELSE "{" s = suite "}"                { ( Ecst( Ci64 1L, !Lexer.line_num), s, !Lexer.line_num) }
 ;
 
 stmt:
-| s = simple_stmt                                           { s } 
-| KW_IF "(" e = expr ")" "{" s1 = suite "}" l = list(elif)  { Sif(e, s1, l, !Lexer.line_num)}
-| KW_WHILE "(" e = expr ")" "{" s = suite "}"               { Swhile(e, s, !Lexer.line_num) }
-| KW_LOOP "{" s = suite "}"                                 { Sloop(s, !Lexer.line_num)}
+| s = simple_stmt                                   { s } 
+| KW_IF e = expr "{" s1 = suite "}" l = list(elif)  { Sif(e, s1, l, !Lexer.line_num)}
+| KW_WHILE e = expr "{" s = suite "}"               { Swhile(e, s, !Lexer.line_num) }
+| KW_LOOP "{" s = suite "}"                         { Sloop(s, !Lexer.line_num)}
 ;
 
 simple_stmt:
@@ -75,6 +75,8 @@ crust_types:
 
 expr:
 | c = CST                           { Ecst (c, !Lexer.line_num) }
+| KW_TRUE                           { Ecst ((Cbool true), !Lexer.line_num) }
+| KW_FALSE                          { Ecst ((Cbool false), !Lexer.line_num) }
 | id = ident                        { Eident (id, !Lexer.line_num) }
 | u  = unop e1 = expr               { Eunop (u, e1, !Lexer.line_num) }
 | e1 = expr o = binop e2 = expr     { Ebinop (o, e1, e2, !Lexer.line_num) }

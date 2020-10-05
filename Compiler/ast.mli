@@ -19,7 +19,6 @@ and binop =
 
 and expr =
   | Ecst     of crust_conts * int
-  | Eset     of expr * expr * int
   | Eident   of ident * int
   | Ebinop   of binop * expr * expr * int
   | Eunop    of unop * expr * int
@@ -36,7 +35,6 @@ and stmt =
   | Sprintn   of expr * int
   | Sscanf    of ident * int
   | Sblock    of stmt list * int
-  | Sfor      of ident * crust_conts * expr * expr * expr * stmt * int
   | Sreturn   of expr * int
   | Swhile    of expr * stmt * int
   | Sloop     of stmt * int

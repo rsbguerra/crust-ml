@@ -102,7 +102,7 @@ let HEX_LITERAL    = ("0x"|"0X") (HEX_DIGIT|'_')*
 let OCT_LITERAL    = ("0o"|"0O") (OCT_DIGIT|'_')*
 let BIN_LITERAL    = ("0b"|"0B") (BIN_DIGIT|'_')*
 let DEC_LITERAL    = DEC_DIGIT(DEC_DIGIT|'_')*
-let INTEGER_LITERAL= (DEC_LITERAL|BIN_LITERAL|OCT_LITERAL|HEX_LITERAL) (' ')* INTEGER_SUFFIX?
+let INTEGER_LITERAL= (DEC_LITERAL|BIN_LITERAL|OCT_LITERAL|HEX_LITERAL)
 
 (**Floating-point literals*)
 let FLOAT_SUFFIX   = "f32"|"f64"
@@ -150,6 +150,7 @@ rule analisador = parse
   | '~'             { [BITNOT] }
   | '!'             { [NOT] }
   | ':'             { [COLON] }
+  | "->"          { [ARROW] }
   | ';'             { [DELIMITER] }
   | ','             { [COMMA] }
   | "u8"            { [U8] }
@@ -165,8 +166,9 @@ rule analisador = parse
   | INTEGER_LITERAL as snum 
     { (*Todo decide wich type this integer is *)
       try
-        [CST ( Ci64 (Int64.of_string snum))]
-      with _ -> raise (Lexing_error ("The constant is too big : " ^ snum)) }
+        
+        [CST ( Ci64 (Stdint.Int64.of_string snum))]
+      with _ -> raise (Lexing_error ("The constant is too big : _" ^ snum^"_")) }
   | id as word
   { try
       let token = Hashtbl.find keyword_table word in  

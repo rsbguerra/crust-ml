@@ -1,33 +1,32 @@
 open Ast
 open Format
 
-let rec print_expr_list = function
-  | [hd] -> print_expr hd
-  | hd::tl -> print_expr hd; printf ", " ; print_expr_list tl
-  | _ -> ()
+let rec string_of_expr_list = function
+  | [hd] -> string_of_expr hd
+  | hd::tl -> (string_of_expr hd)^", "^(string_of_expr_list tl)
+  | _ -> ""
 
-and print_expr = function
-  | Ecst (n, _)              -> printf " Ecst( %s )"(string_of_crust_consts n)
-  | Eset (e1, e2, _)         -> printf " Eset( "; print_expr e1; print_expr e2; printf ") "
-  | Ebinop (Band, e1, e2, _) -> printf " Ebinop( Band, "; print_expr e1; printf ", "; print_expr e2; printf ") "
-  | Ebinop (Bor, e1, e2, _)  -> printf " Ebinop( Bor, "; print_expr e1; printf ", "; print_expr e2; printf ") "
-  | Ebinop (_, e1, e2, _)    -> printf " Ebinop( Op, "; print_expr e1; printf ", "; print_expr e2; printf ") "
-  | Eunop (_ , e1, _)        -> printf " Eunop( Unot, "; print_expr e1; printf ") "
-  | Ecall ("size", [e1], _)  -> printf " Ecall( size, "; print_expr e1; printf ") "
-  | Ecall (f, el, _)         -> printf " Ecall( %s, " f; print_expr_list el; printf " ) "  
-  | Eident (id, line)        -> printf " Eident(%s, %d) " id line
+and string_of_expr = function
+  | Ecst (n, _)              -> "Ecst("^(string_of_crust_consts n)^")"
+  | Ebinop (Band, e1, e2, _) -> "Ebinop(Band, "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
+  | Ebinop (Bor, e1, e2, _)  -> "Ebinop(Bor, "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
+  | Ebinop (_, e1, e2, _)    -> "Ebinop(Op, "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
+  | Eunop (_ , e1, _)        -> "Eunop(Unot, "^(string_of_expr e1)^")"
+  | Ecall ("size", [e1], _)  -> "Ecall(size, "^(string_of_expr e1)^")"
+  | Ecall (f, el, _)         -> "Ecall("^f^", "^(string_of_expr_list el)^")"  
+  | Eident (id, _)           -> "Eident("^id^")"
   | _ -> assert false 
 
 and print_stmt = function
-  | Sif (e, s1, _, _)    -> printf "Sif("; print_expr e; printf ", "; print_stmt s1; printf ","; printf ")"
-  | Sreturn (e, _)       -> printf "Sreturn("; print_expr e; printf ")"
-  | Sassign (id, e1, _)  -> printf "Sassign(%s, " id; print_expr e1; printf ")"
-  | Sdeclare (id, t ,e1, _) -> printf "Sdeclare(%s, %s, " id (string_of_crust_types t); print_expr e1; printf ")"
-  | Sprint (e, _)        -> printf "Sprint("; print_expr e; printf ")"
-  | Sprintn (e, _)       -> printf "Sprintn("; print_expr e; printf ")"
-  | Sscanf (id, _)       -> printf "Sscanf( %s )" id
+  | Sif (e, s1, _, _)    -> printf "Sif(%s" (string_of_expr e); printf ", "; print_stmt s1; printf ", )"
+  | Sreturn (e, _)       -> printf "Sreturn(%s)" (string_of_expr e)
+  | Sassign (id, e1, _)  -> printf "Sassign(%s, %s)" id (string_of_expr e1)
+  | Sdeclare (id, t ,e1, _) -> printf "Sdeclare(%s, %s, %s)" id (string_of_crust_types t) (string_of_expr e1)
+  | Sprint (e, _)        -> printf "Sprint(%s)" (string_of_expr e)
+  | Sprintn (e, _)       -> printf "Sprintn(%s)" (string_of_expr e)
+  | Sscanf (id, _)       -> printf "Sscanf(%s)" id
   | Sblock (bl, _)       -> interpret_block_stmt  bl
-  | Swhile(e, bl, _)     -> printf "Swhile( "; print_expr e; printf ",\n"; print_stmt bl; printf ")"
+  | Swhile(e, bl, _)     -> printf "Swhile(%s, \n"(string_of_expr e); print_stmt bl; printf ")"
   | Sloop(bl, _)         -> printf "Sloop( "; print_stmt bl; printf ")"
   | _ -> assert false
 
@@ -37,16 +36,16 @@ and print_argument_list = function
   | [] -> ()
 
 and string_of_crust_consts = function 
-  | Cu8   c -> "Cu8( "^(Stdint.Uint8.to_string c) ^ " )"
-  | Cu16  c -> "Cu16( "^(Stdint.Uint16.to_string c)^ " )"
-  | Cu32  c -> "Cu32( "^(Stdint.Uint32.to_string c)^ " )"
-  | Cu64  c -> "Cu64( "^(Stdint.Uint64.to_string c)^ " )"
-  | Cu128 c -> "Cu128( "^(Stdint.Uint128.to_string c)^ " )"
-  | Ci8   c -> "Ci8( "^(Stdint.Int8.to_string c)^ " )"
-  | Ci16  c -> "Ci16( "^(Stdint.Int16.to_string c)^ " )"
-  | Ci32  c -> "Ci32( "^(Stdint.Int32.to_string c)^ " )"
-  | Ci64  c -> "Ci64( "^(Stdint.Int64.to_string c)^ " )"  
-  | Ci128 c -> "Ci128( "^(Stdint.Int128.to_string c)^ " )"
+  | Cu8   c -> "Cu8( "^(Stdint.Uint8.to_string c)^" )"
+  | Cu16  c -> "Cu16( "^(Stdint.Uint16.to_string c)^" )"
+  | Cu32  c -> "Cu32( "^(Stdint.Uint32.to_string c)^" )"
+  | Cu64  c -> "Cu64( "^(Stdint.Uint64.to_string c)^" )"
+  | Cu128 c -> "Cu128( "^(Stdint.Uint128.to_string c)^" )"
+  | Ci8   c -> "Ci8( "^(Stdint.Int8.to_string c)^" )"
+  | Ci16  c -> "Ci16( "^(Stdint.Int16.to_string c)^" )"
+  | Ci32  c -> "Ci32( "^(Stdint.Int32.to_string c)^" )"
+  | Ci64  c -> "Ci64( "^(Stdint.Int64.to_string c)^" )"  
+  | Ci128 c -> "Ci128( "^(Stdint.Int128.to_string c)^" )"
   | Cbool c -> "Cbool( "^(string_of_bool c)^" )"
 
 and string_of_crust_types = function 

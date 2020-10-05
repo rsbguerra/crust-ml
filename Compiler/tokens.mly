@@ -28,6 +28,7 @@
 %token DELIMITER ";"
 %token COMMA ","
 %token EOF
+%token ARROW "->"
 (* === TODO === *)
 
 (* === Strict === *)
