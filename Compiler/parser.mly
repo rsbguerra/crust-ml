@@ -12,14 +12,17 @@
 %%
 
 prog:
-| b = list(stmts) EOF { Stblock(b, !Lexer.line_num) }
+| b = list(global_stmt) EOF { GSblock(b, !Lexer.line_num) }
 ;
 
-stmts:
+global_stmt:
+| KW_USE f = ident    { GSuse (f, !Lexer.line_num) }
+| KW_STRUCT i = ident { GSstruct (i, !Lexer.line_num) }
+| KW_IMPL i = ident   { GSstruct (i, !Lexer.line_num) }
 | KW_FN f = ident "(" x = separated_list(",", argument_list) ")" ARROW r = crust_types s = function_suite 
-              { Stfunction(f, x, r, s, !Lexer.line_num)}
-| s = stmt    { Stmt(s, !Lexer.line_num) } 
+                      { GSfunction(f, x, r, s, !Lexer.line_num)} 
 ;
+
 
 argument_list:
 |  id = ident ":" t = crust_types {(id, t)}
@@ -55,7 +58,6 @@ simple_stmt:
 | id = ident o = binop"=" e = expr ";"             { Sassign (id, Ebinop(o, Eident (id, !Lexer.line_num), e, !Lexer.line_num), !Lexer.line_num) }
 | PRINT "(" e = expr ")" ";"                       { Sprint(e, !Lexer.line_num) }
 | PRINTN "(" e = expr ")" ";"                      { Sprintn(e, !Lexer.line_num) }
-| SCANF "(" id = ident ")" ";"                     { Sscanf(id, !Lexer.line_num) }
 | ";"                                              { Snothing(!Lexer.line_num) }
 ;
 

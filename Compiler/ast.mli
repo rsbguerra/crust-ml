@@ -26,37 +26,38 @@ and expr =
   
 and stmt =
   | Sif       of expr * stmt * elif list * int
-  | Sbreak    of int
-  | Scontinue of int
-  | Sassign   of ident * expr * int
-  | Sdeclare  of ident * crust_types * expr * int
-  | Sprint    of expr * int
-  | Sprintn   of expr * int
-  | Sscanf    of ident * int
-  | Sblock    of stmt list * int
-  | Sreturn   of expr * int
-  | Swhile    of expr * stmt * int
   | Sloop     of stmt * int
+  | Swhile    of expr * stmt * int
+  | Sdeclare  of ident * crust_types * expr * int
+  | Sassign   of ident * expr * int
+  | Sprintn   of expr * int
+  | Sprint    of expr * int
+  | Sblock    of stmt list * int
+  | Scontinue of int
+  | Sbreak    of int
+  | Sreturn   of expr * int
   | Snothing  of int
-
-(* Para não podermos definir funções dentro de instruções *)
-and stmts =                                               
-  | Stblock    of stmts list * int
-  | Stfunction of ident * argument list * crust_types * stmt * int
-  | Stmt       of stmt * int
 
 and elif = expr * stmt * int
 
-and argument = ident * crust_types
 
 and crust_conts =
-  | Cu8 of uint8 | Cu16 of uint16 | Cu32 of uint32 | Cu64 of uint64 | Cu128 of uint128
-  | Ci8 of int8  | Ci16 of int16  | Ci32 of int32  | Ci64 of int64  | Ci128 of int128
-  | Cbool of bool
+| Cu8 of uint8 | Cu16 of uint16 | Cu32 of uint32 | Cu64 of uint64 | Cu128 of uint128
+| Ci8 of int8  | Ci16 of int16  | Ci32 of int32  | Ci64 of int64  | Ci128 of int128
+| Cbool of bool
 
 and crust_types =
-  | Tu8 | Tu16 | Tu32 | Tu64 | Tu128
-  | Ti8 | Ti16 | Ti32 | Ti64 | Ti128
-  | Tbool
-  
-and program = stmts
+| Tu8 | Tu16 | Tu32 | Tu64 | Tu128
+| Ti8 | Ti16 | Ti32 | Ti64 | Ti128
+| Tbool
+
+and function_argument = ident * crust_types
+
+and global_stmt = 
+  | GSblock    of global_stmt list * int
+  | GSuse      of ident * int
+  | GSfunction of ident * function_argument list * crust_types * stmt * int
+  | GSstruct   of ident * int (* Todo *)
+  | GSimpl     of ident * int (* Todo *)
+
+and program = global_stmt

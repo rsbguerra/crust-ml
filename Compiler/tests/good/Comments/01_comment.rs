@@ -1,6 +1,10 @@
 // Single Line Comment
 
-fn somar(x: i32, y: i32) -> i32
+use another_file
+
+fn somar(x : i8, y : i8) -> 
 {
-    if x + y == x {let y : i32 = 5;} else { let y : i32 = 5;}
+    loop { 
+        let a : i8 = 3;
+    }
 }

@@ -4,13 +4,13 @@
 # É de realçar que a gramática do Natrix foi alterada durante a implementação
 # Sendo assim este ficheiro pode não ser 100% fiel 
 
-<digit> ::= ['0'-'9']
-<char>  ::= ['a-zA-Z']
-<integer>   ::= <digit>+
-<id>    ::= ('_' | <char>)(<char> | <digit>)* 
-<newline> ::= '\n'
+<digit>      ::= ['0'-'9']
+<char>       ::= ['a-zA-Z']
+<integer>    ::= <digit>+
+<id>         ::= ('_' | <char>)(<char> | <digit>)* 
+<newline>    ::= '\n'
 <whitespace> ::= '\t' | ' '
-<binop> ::= '+' | '-' | '/' | '*'
+<binop>      ::= '+' | '-' | '/' | '*'
 <booleanbop> ::= '>' | '>=' | '==' | '!=' | '<' | '<='
 
 # Parser
@@ -41,6 +41,7 @@
 <expression> ::= '(' <expression> ')'
                | <expression> <binop> <expression>
 			   | <integer>
+               | <boolean>
 			   | <id>
 
 <boolean_expression> ::= '('<expression> <booleanop> <expression> ')'

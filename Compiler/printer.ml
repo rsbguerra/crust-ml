@@ -1,5 +1,4 @@
 open Ast
-open Format
 
 let rec string_of_expr_list = function
   | [hd] -> string_of_expr hd
@@ -16,23 +15,22 @@ and string_of_expr = function
   | Ecall (f, el, _)         -> "Ecall("^f^", "^(string_of_expr_list el)^")"  
   | Eident (id, _)           -> "Eident("^id^")"
 
-and print_stmt = function
-  | Sif (e, s1, _, _)    -> printf "Sif(%s" (string_of_expr e); printf ", "; print_stmt s1; printf ", )"
-  | Sreturn (e, _)       -> printf "Sreturn(%s)" (string_of_expr e)
-  | Sassign (id, e1, _)  -> printf "Sassign(%s, %s)" id (string_of_expr e1)
-  | Sdeclare (id, t ,e1, _) -> printf "Sdeclare(%s, %s, %s)" id (string_of_crust_types t) (string_of_expr e1)
-  | Sprint (e, _)        -> printf "Sprint(%s)" (string_of_expr e)
-  | Sprintn (e, _)       -> printf "Sprintn(%s)" (string_of_expr e)
-  | Sscanf (id, _)       -> printf "Sscanf(%s)" id
-  | Sblock (bl, _)       -> interpret_block_stmt  bl
-  | Swhile(e, bl, _)     -> printf "Swhile(%s, \n"(string_of_expr e); print_stmt bl; printf ")"
-  | Sloop(bl, _)         -> printf "Sloop( "; print_stmt bl; printf ")"
+and string_of_stmt = function
+  | Sif (e, s1, _, _)    -> "Sif("^(string_of_expr e)^", "^(string_of_stmt s1)^", )"
+  | Sreturn (e, _)       -> "Sreturn("^(string_of_expr e)^")"
+  | Sassign (id, e1, _)  -> "Sassign("^id^", "^(string_of_expr e1)^")"
+  | Sdeclare (id,t,e1,_) -> "Sdeclare("^id^", "^(string_of_crust_types t)^", "^(string_of_expr e1)^")"
+  | Sprint (e, _)        -> "Sprint("^(string_of_expr e)^", "^")"
+  | Sprintn (e, _)       -> "Sprintln("^(string_of_expr e)^", "^")"
+  | Sblock (bl, _)       -> string_of_block_stmt  bl
+  | Swhile(e, bl, _)     -> "Swhile("^(string_of_expr e)^"\n"^(string_of_stmt bl)^")"
+  | Sloop(bl, _)         -> "Sloop("^(string_of_stmt bl)^")"
   | _ -> assert false
 
-and print_argument_list = function
-  | [arg1] -> let id, t = arg1 in printf " %s : %s" id (string_of_crust_types t)
-  | arg1 :: tl -> let id, t = arg1 in printf " %s : %s" id (string_of_crust_types t); printf ", "; print_argument_list tl
-  | [] -> ()
+and string_of_argument_list = function
+  | [arg1]     -> let id, t = arg1 in id^":"^(string_of_crust_types t)
+  | arg1 :: tl -> let id, t = arg1 in id^":"^(string_of_crust_types t)^", "^(string_of_argument_list tl)
+  | []         -> ""
 
 and string_of_crust_consts = function 
   | Cu8   c -> "Cu8( "^(Stdint.Uint8.to_string c)^" )"
@@ -60,17 +58,19 @@ and string_of_crust_types = function
   | Ti128-> "Ti128"
   | Tbool-> "Tbool"
 
-and print_stmts = function  
-  | Stfunction (f, args, return, body, _) -> printf "Stfunction( %s, (" f ; print_argument_list args; printf "), %s" (string_of_crust_types return); printf ", "; print_stmt body
-  | Stblock (bl, _) -> interpret_block_stmts bl
-  | Stmt (s, _) -> print_stmt s
+and string_of_block_stmt  = function
+  | []      -> "\n"
+  | s :: sl -> (string_of_stmt s)^"\n"^(string_of_block_stmt sl)
 
-and interpret_block_stmt  = function
-  | [] -> printf "\n"
-  | s :: sl -> print_stmt s; printf "\n";interpret_block_stmt sl
+and string_of_block_global_stmt = function
+  | [] -> "\n"
+  | s :: sl -> (string_of_global_stmt s)^"\n"^(string_of_block_global_stmt sl)
 
-and interpret_block_stmts = function
-  | [] -> printf "\n"
-  | s :: sl -> print_stmts s; printf "\n"; interpret_block_stmts sl
-
-let print_file s = print_stmts s
+and string_of_global_stmt = function
+  | GSblock (bl, _) -> string_of_block_global_stmt bl
+  | GSuse (id, _)   -> "GSuse("^id^")"
+  | GSfunction (f, args, return, body, _) -> "GSfunction("^f^", ("^(string_of_argument_list args)^"), "^(string_of_crust_types return)^", \n    "^(string_of_stmt body)
+  | GSstruct (id, _)-> "GSstruct("^id^")"
+  | GSimpl (id, _)  -> "GSimpl("^id^")"
+   
+let print_file s = Printf.printf "%s\n" (string_of_global_stmt s)
