@@ -23,8 +23,7 @@ and expr =
   | Ebinop   of binop * expr * expr * int
   | Eunop    of unop * expr * int
   | Ecall    of ident * expr list * int
-  | Eternary of expr * expr * expr * int
-
+  
 and stmt =
   | Sif       of expr * stmt * elif list * int
   | Sbreak    of int

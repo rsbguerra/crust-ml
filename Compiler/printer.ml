@@ -15,7 +15,6 @@ and string_of_expr = function
   | Ecall ("size", [e1], _)  -> "Ecall(size, "^(string_of_expr e1)^")"
   | Ecall (f, el, _)         -> "Ecall("^f^", "^(string_of_expr_list el)^")"  
   | Eident (id, _)           -> "Eident("^id^")"
-  | _ -> assert false 
 
 and print_stmt = function
   | Sif (e, s1, _, _)    -> printf "Sif(%s" (string_of_expr e); printf ", "; print_stmt s1; printf ", )"

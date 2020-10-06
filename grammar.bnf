@@ -1,0 +1,52 @@
+# Definition
+
+# Lexer
+# É de realçar que a gramática do Natrix foi alterada durante a implementação
+# Sendo assim este ficheiro pode não ser 100% fiel 
+
+<digit> ::= ['0'-'9']
+<char>  ::= ['a-zA-Z']
+<integer>   ::= <digit>+
+<id>    ::= ('_' | <char>)(<char> | <digit>)* 
+<newline> ::= '\n'
+<whitespace> ::= '\t' | ' '
+<binop> ::= '+' | '-' | '/' | '*'
+<booleanbop> ::= '>' | '>=' | '==' | '!=' | '<' | '<='
+
+# Parser
+<program> ::= <global_statements> 
+
+<global_statements> ::= 
+                      | 'use' <id>
+                      | 'struct' <id> '{' (...) '}'
+                      | 'impl' <id>   '{' (...) '}'
+                      | <function_def>
+
+<statements> ::= ( <statement> | <function_def> )*
+
+<type> ::= <id> | i8 | i16 | i32 | i64 | i128 | u8 | u16 | u32 | u64 | u128 | bool
+
+<statement> ::= <statement>*
+              | 'if' <boolean_expression> '{' <statement> '}'
+				'else' '{' <statement> '}'
+			  | 'loop' '{' <statement> '}'
+			  | 'while' <boolean_expression> '{' <statement>'}'
+              | 'println!' '(' <expression> ')' ';'
+              | 'print!'   '(' <expression> ')' ';'
+			  | 'let' <id> (':' <type>)? '=' <expression> ';'
+			  | 'return' <expr> ';'
+              | 'continue' ';'
+              | 'break' ';'
+
+<expression> ::= '(' <expression> ')'
+               | <expression> <binop> <expression>
+			   | <integer>
+			   | <id>
+
+<boolean_expression> ::= '('<expression> <booleanop> <expression> ')'
+                       |  <expression> <booleanop> <expression>
+					   | '!' <boolean_expression>
+
+<argument_list> ::= (<id> ':' <type>)*
+
+<function_def> ::= 'fn' <id> '(' <argument_list> ')' '->' <type> '{' <statement> '}'
