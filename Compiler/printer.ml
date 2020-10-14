@@ -1,9 +1,9 @@
 open Ast
 
 let rec string_of_expr_list = function
-  | [hd] -> string_of_expr hd
+  | [hd]   -> string_of_expr hd
   | hd::tl -> (string_of_expr hd)^", "^(string_of_expr_list tl)
-  | _ -> ""
+  | _      -> ""
 
 and string_of_expr = function
   | Ecst (n, _)              -> "Ecst("^(string_of_crust_consts n)^")"
@@ -63,7 +63,7 @@ and string_of_block_stmt  = function
   | s :: sl -> (string_of_stmt s)^"\n"^(string_of_block_stmt sl)
 
 and string_of_block_global_stmt = function
-  | [] -> "\n"
+  | []      -> "\n"
   | s :: sl -> (string_of_global_stmt s)^"\n"^(string_of_block_global_stmt sl)
 
 and string_of_global_stmt = function
@@ -73,4 +73,5 @@ and string_of_global_stmt = function
   | GSstruct (id, _)-> "GSstruct("^id^")"
   | GSimpl (id, _)  -> "GSimpl("^id^")"
    
-let print_file s = Printf.printf "%s\n" (string_of_global_stmt s)
+let print_file s = 
+  Printf.printf "%s\n" (string_of_global_stmt s)

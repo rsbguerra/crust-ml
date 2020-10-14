@@ -2,6 +2,7 @@
   References: 
     - https://doc.rust-lang.org/reference/tokens.html
 *)
+
 {
   open Lexing
   open Tokens
@@ -79,6 +80,7 @@
       "union",    KW_UNION;
       "'static",  KW_STATICLIFETIME
     ]
+
   let line_num = ref 1
 
   let comment_level = ref 0
@@ -104,7 +106,7 @@ let BIN_LITERAL    = ("0b"|"0B") (BIN_DIGIT|'_')*
 let DEC_LITERAL    = DEC_DIGIT(DEC_DIGIT|'_')*
 let INTEGER_LITERAL= (DEC_LITERAL|BIN_LITERAL|OCT_LITERAL|HEX_LITERAL)
 
-(**Floating-point literals*)
+(** Floating-point literals*)
 let FLOAT_SUFFIX   = "f32"|"f64"
 let FLOAT_EXPONENT = ('e'|'E') ('+'|'-')? (DEC_DIGIT|'_')* DEC_DIGIT (DEC_DIGIT|'_')*
 let FLOAT_LITERAL  = DEC_LITERAL '.' | DEC_LITERAL FLOAT_EXPONENT | DEC_LITERAL '.' DEC_LITERAL FLOAT_EXPONENT? | DEC_LITERAL ('.' DEC_LITERAL)? FLOAT_EXPONENT? FLOAT_SUFFIX
@@ -150,7 +152,7 @@ rule analisador = parse
   | '~'             { [BITNOT] }
   | '!'             { [NOT] }
   | ':'             { [COLON] }
-  | "->"          { [ARROW] }
+  | "->"            { [ARROW] }
   | ';'             { [DELIMITER] }
   | ','             { [COMMA] }
   | "u8"            { [U8] }
@@ -166,7 +168,6 @@ rule analisador = parse
   | INTEGER_LITERAL as snum 
     { (*Todo decide wich type this integer is *)
       try
-        
         [CST ( Ci64 (Stdint.Int64.of_string snum))]
       with _ -> raise (Lexing_error ("The constant is too big : _" ^ snum^"_")) }
   | id as word
