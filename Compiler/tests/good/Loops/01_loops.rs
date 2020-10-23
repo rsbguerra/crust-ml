@@ -2,7 +2,7 @@
 
 fn somar(x : i8, y : i8) -> i8
 {
-    loop { 
+    loop {
         let a : i8 = 3;
     }
 }
