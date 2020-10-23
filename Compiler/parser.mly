@@ -17,7 +17,7 @@ prog:
 
 global_stmt:
 | KW_USE f = ident    { GSuse (f, !Lexer.line_num) }
-| KW_STRUCT i = ident { GSstruct (i, !Lexer.line_num) }
+| KW_STRUCT i = ident "{" l = separated_list(",", argument_list) "}" { GSstruct (i, l, !Lexer.line_num) }
 | KW_IMPL i = ident   { GSstruct (i, !Lexer.line_num) }
 | KW_FN f = ident "(" x = separated_list(",", argument_list) ")" ARROW r = crust_types s = function_suite 
                       { GSfunction(f, x, r, s, !Lexer.line_num)} 
@@ -55,7 +55,7 @@ simple_stmt:
 | KW_BREAK ";"                                        { Sbreak !Lexer.line_num }
 | KW_CONTINUE ";"                                     { Scontinue !Lexer.line_num }
 | KW_LET id = ident ":" t = crust_types "=" e = expr ";" { Sdeclare (id, t, e, !Lexer.line_num) }
-| id = ident o = binop"=" e = expr ";"             { Sassign (id, Ebinop(o, Eident (id, !Lexer.line_num), e, !Lexer.line_num), !Lexer.line_num) }
+| id = ident o = binop "=" e = expr ";"             { Sassign (id, Ebinop(o, Eident (id, !Lexer.line_num), e, !Lexer.line_num), !Lexer.line_num) }
 | PRINT "(" e = expr ")" ";"                       { Sprint(e, !Lexer.line_num) }
 | PRINTN "(" e = expr ")" ";"                      { Sprintn(e, !Lexer.line_num) }
 | ";"                                              { Snothing(!Lexer.line_num) }

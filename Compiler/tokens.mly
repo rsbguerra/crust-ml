@@ -10,11 +10,11 @@
 %token KW_LOOP KW_WHILE KW_FOR
 %token KW_CONTINUE KW_BREAK
 %token KW_FN KW_RETURN
-%token PLUS "+" 
+%token PLUS "+"
 %token MINUS TIMES DIV MOD
 %token BITAND BITOR BITXOR LSHIFT RSHIFT BITNOT
 %token GT ">"
-%token GET LT LET 
+%token GET LT LET
 %token EQ NEQ
 %token LPR "(" 
 %token RPR ")"

@@ -70,7 +70,7 @@ and string_of_global_stmt = function
   | GSblock (bl, _) -> string_of_block_global_stmt bl
   | GSuse (id, _)   -> "GSuse("^id^")"
   | GSfunction (f, args, return, body, _) -> "GSfunction("^f^", ("^(string_of_argument_list args)^"), "^(string_of_crust_types return)^", \n    "^(string_of_stmt body)
-  | GSstruct (id, _)-> "GSstruct("^id^")"
+  | GSstruct (id, keys, _)-> "GSstruct("^id^", ("^ (string_of_argument_list keys)^")"
   | GSimpl (id, _)  -> "GSimpl("^id^")"
    
 let print_file s = Printf.printf "%s\n" (string_of_global_stmt s)
