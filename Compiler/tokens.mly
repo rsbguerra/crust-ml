@@ -2,7 +2,7 @@
   open Ast
 %}
 
-%token <Ast.crust_conts>     CST
+%token <Ast.crust_const>     CST
 %token <Ast.ident> IDENT
 
 %token I8 I16 I32 I64 I128 U8 U16 U32 U64 U128 BOOL

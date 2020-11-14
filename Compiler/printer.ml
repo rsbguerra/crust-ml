@@ -58,6 +58,22 @@ and string_of_crust_types = function
   | Ti128-> "Ti128"
   | Tbool-> "Tbool"
 
+and string_of_binop = function
+  | Badd -> "+"
+  | Bsub -> "-"
+  | Bdiv -> "/"
+  | Bmod -> "%"
+  | Bmul -> "*"
+  | Beq -> "=="
+  | Bneq -> "!="
+  | Blt -> "<" 
+  | Ble -> "<="
+  | Bgt -> ">" 
+  | Bge -> ">="
+  | Band -> "&&"
+  | Bor -> "||"
+  | _ -> assert false  
+
 and string_of_block_stmt  = function
   | []      -> "\n"
   | s :: sl -> (string_of_stmt s)^"\n"^(string_of_block_stmt sl)
