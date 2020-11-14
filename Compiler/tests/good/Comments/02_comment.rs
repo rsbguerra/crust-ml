@@ -1,19 +1,6 @@
-/*
+// Single Line Comment
 
-multi
-
-line
-
-comment
-*/
-
-/* multi line */
-
-/******** */
-
-/* 
-    /* 
-        /* 
-        */ 
-    */ 
-*/
+fn somar(x : i8, y : i8) -> i32
+{
+    println!(2);
+}

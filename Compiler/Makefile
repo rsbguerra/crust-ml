@@ -1,8 +1,10 @@
+release=--profile release
+
 all:
-	dune build ./crust.exe
+	dune build $(release) ./crust.exe
 
 print:
-	dune exec -- ./crust.exe -print-ast ./tests/good/Comments/01_comment.rs
+	dune exec  $(release) -- ./crust.exe -print-ast ./tests/good/Comments/01_comment.rs
 
 test:
 	bash ./tests/run-tests

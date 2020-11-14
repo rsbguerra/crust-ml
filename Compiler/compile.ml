@@ -11,388 +11,29 @@ let error s = raise (Error s)
 (* Tamanho da frame, em byte (cada variável local ocupa 8 bytes) *)
 let frame_size = ref 0
 
+
+let get_value = function
+ | Ci64 v -> v
+ | _ -> assert false
+
 let rec compile_expr ctxs = function
   | Ecst (i, _) ->
       (* 1 - Colocar a constante no topo da pilha *)
-      movq (imm64 i) (reg rax) ++
+      movq (imm64 (get_value i)) (reg rax) ++
       pushq (reg rax)
 
-  | Eset (e1, e2, _) ->
-      (* 1 - Colocar o inicio na pilha *)
-      compile_expr ctxs e1 ++
-      
-      (* 2 - Colocar o fim na pilha *)
-      compile_expr ctxs e2 ++
-
-      (* 3 - Retura os valores da pilha *)
-      popq rax ++
-      popq rbx ++
-
-      (* 4 - Faz as verificacoes *)
-      
-      (* Verificar se f < i *)
-      cmpq (reg rbx) (reg rax) ++
-      jle "print_error_s" ++
-
-      (* Coloca os valores *)
-      pushq (reg rbx) ++
-      pushq (reg rax)
-
-  | Eminint _ -> 
-      (* 1 - Colocar a constante minint na pilha *)
-      movq (imm64 minint) (reg rax) ++
-      pushq (reg rax) 
-
-  | Emaxint _ ->
-      (* 1 - Colocar a constante maxint na pilha *)
-      movq (imm64 maxint) (reg rax) ++
-      pushq (reg rax)
-
-  | Eident(id, _) ->
-      (* 1 - Ir buscar  o valor de id *)
-      let ctx = List.hd( List.rev (find_id ctxs id )) in
-      let v = snd(Hashtbl.find ctx id) in
-
-      (* 2 - Gerar o codigo respondente  ao tipo de dados*)
-      extract_to_assembly v
-  
-  | Ebinop (Bmod | Bdiv as op, e1, e2, _) ->
-      
-      (* 1 - Dependendo da operacao queremos um registo diferente *)
-      let rg = 
-        match op with 
-        | Bmod -> rdx
-        | Bdiv -> rax
-        | _ -> assert false
-      in
-
-      (* 2 - Colocar e1 e e2 na pilha*)  
-      compile_expr ctxs e1 ++
-      compile_expr ctxs e2 ++
-
-      (* 3 - Recebe os valores da pilha *)
-      popq rbx ++
-      popq rax ++
-      
-      (* 4 - Limpa o registo rdx *)
-      movq (imm 0) (reg rdx) ++
-      
-      (* 5 - Verifica se estamos a dividir por zero *)
-      cmpq (imm 0) (reg rbx) ++
-      je "print_error_z" ++
-
-      (* 6 - Realiza a operacao e coloca o resultado na pilha *)
-      idivq (reg rbx) ++
-      pushq (reg rg)
-
-  | Ebinop (Badd | Bsub | Bmul as o , e1, e2, _) ->
-      (* 1 - Dependendo da operacao queremos uma operacao diferente *)
-      let op = match o with
-        | Badd -> addq
-        | Bsub -> subq
-        | Bmul -> imulq
-        | _ -> assert false
-      in
-      
-      (* 2 - Colocar e1 e e2 na pilha*)  
-      compile_expr ctxs e1 ++
-      compile_expr ctxs e2 ++
-
-      (* 3 - Recebe os valores da pilha *)
-      popq rax ++
-      popq rbx ++
-      
-      (* 4 - Realiza a operacao e coloca o resultado na pilha *)
-      op (reg rax) (reg rbx) ++
-      pushq (reg rbx)
-
-  | Ebinop (Band | Bor as o, e1, e2, _) ->
-      number_of_and_or := !number_of_and_or + 1;
-      let current_and_or = string_of_int(!number_of_and_or) in
-        
-      (* 1 - Dependendo da operacao queremos uma operacao diferente *)
-      let op, cmp_op = 
-        match o with 
-        | Band -> andq, jne
-        | Bor  -> orq , je
-        | _    -> assert false
-      in
-
-      (* 2 - Colocar e1 na pilha*)  
-      compile_expr ctxs e1 ++
-      popq rax ++
-      
-      (* 3 - Verificar se podemos terminar a expressao *)
-      cmpq (imm64 1L) (reg rax) ++
-      cmp_op ("lazy_evaluation_" ^ current_and_or) ++
-
-      (* 4 - COlocar e2 no topo da pilha*)
-      compile_expr ctxs e2 ++
-      popq rax ++
-
-      (* 5 - Realiza a operacao e coloca o resultado na pilha *)
-      op  (imm64 1L) (reg rax) ++
-
-      (* 6 - termina *)
-      label ("lazy_evaluation_" ^ current_and_or) ++
-      pushq (reg rax)
-
-
-  | Ebinop (Bitand | Bitor | Bitxor as o, e1 , e2, _) ->
-      let op = match o with
-        | Bitand -> andq
-        | Bitor-> orq
-        | Bitxor -> xorq
-        | _ -> assert false
-      in  
-
-      (* 3 - Colocar e1 e e2 na pilha*)  
-      compile_expr ctxs e1 ++
-      compile_expr ctxs e2 ++
-  
-      (* 4 - Recebe os valores da pilha *)
-      popq rax ++
-      popq rcx ++
-
-      movb (reg cl) (lab "shift") ++
-
-      op  (lab "shift") (reg rax) ++
-      pushq (reg rax)
-  | Ebinop (Bitls | Bitrs as o, e1 , e2, _) ->
-      let op = match o with
-        | Bitrs -> shrq
-        | Bitls -> shlq
-        | _ -> assert false
-      in  
-      (* 1 - Incrementar numero de verificacoes *)
-      number_of_shift := !number_of_shift + 1;
-      let current_shift = string_of_int(!number_of_shift) in
-
-      (* 3 - Colocar e1 e e2 na pilha*)  
-      compile_expr ctxs e1 ++
-      compile_expr ctxs e2 ++
-  
-      (* 4 - Recebe os valores da pilha *)
-      popq rbx ++
-      popq rax ++
-
-      cmpq (imm64 0L) (reg rbx) ++
-      jle ("print_error_s") ++
-      label ("bitwise_shift_" ^ current_shift) ++
-      
-      op (imm 1) (reg rax) ++
-      decq (reg rbx) ++
-      
-      cmpq (imm64 0L) (reg rbx) ++
-      jg ("bitwise_shift_" ^ current_shift) ++
-      
-      pushq (reg rax) 
-      
-   
-  | Ebinop (Beq | Bneq | Blt | Ble | Bgt | Bge as o, e1, e2, _) ->
-      (* 1 - Dependendo da operacao queremos uma operacao diferente *)
-      let op = match o with
-        | Beq -> je
-        | Bneq-> jne
-        | Blt -> jl
-        | Ble -> jle
-        | Bgt -> jg
-        | Bge -> jge
-        | _ -> assert false
-      in
-    
-      (* 2 - Incrementar numero de verificacoes *)
-      number_of_bool_tests := !number_of_bool_tests + 1;
-      let current_bool_test = string_of_int(!number_of_bool_tests) in
-    
-      (* 3 - Colocar e1 e e2 na pilha*)  
-      compile_expr ctxs e1 ++
-      compile_expr ctxs e2 ++
-
-      (* 4 - Recebe os valores da pilha *)
-      popq rbx ++
-      popq rax ++
-
-      (* 5 - Compara ambos os valores e faz o devido salto *)
-      cmpq (reg rbx) (reg rax) ++
-      op ("bool_true_" ^ current_bool_test) ++
-
-      (* 6a - Se for falso *)
-      movq (imm 0) (reg rax) ++
-      pushq (reg rax) ++
-
-      (* 7a - Termina *)
-      jmp ("bool_end_" ^ current_bool_test) ++
-      
-      (* 6b - Se for verdade *)
-      label ("bool_true_" ^ current_bool_test) ++
-      movq (imm 1) (reg rax) ++
-      pushq (reg rax) ++
-      
-      (* 7a - Termina *)
-      label ("bool_end_" ^ current_bool_test)
-
-  | Eunop (Unot, e1, _) ->
-      (* 1 - Incrementar numero de verificacoes *)
-      number_of_bool_tests := !number_of_bool_tests + 1;
-      let current_bool_test = string_of_int(!number_of_bool_tests) in
-  
-      (* 2 - Colocar e1 na pilha *)  
-      compile_expr ctxs e1 ++
-      
-      (* 3 - Recebe o valor de e1 *)  
-      popq rax ++
-
-      (* 4 - Verifica se e falso *)
-      cmpq (imm64 0L) (reg rax) ++
-      je ("bool_true_" ^ current_bool_test) ++
-      
-      (* 5a - Se a comparacao falhar entao retornamos 0 *)
-      movq (imm64 0L) (reg rax) ++
-      pushq (reg rax) ++
-      
-      (* 6a - Terminamos *)  
-      jmp ("bool_end_" ^ current_bool_test) ++
-      
-      (* 5b - Se a comparacao acertar entao retornamos 1 *)
-      label ("bool_true_" ^ current_bool_test) ++
-      movq (imm64 1L) (reg rax) ++
-      pushq (reg rax) ++
-
-      (* 6b - Terminamos *)  
-      label ("bool_end_" ^ current_bool_test)
-
-  | Eunop (Uneg, e1, _) -> 
-      (* 1 - Colocar e1 na pilha *)  
-      compile_expr ctxs e1 ++
-      
-      (* 2 - Recebe o valor de e1 *)  
-      popq rax ++
-      
-      negq (reg rax) ++
-
-      pushq (reg rax)
-  | Eunop (Ubitnot, e1, _) -> 
-      (* 1 - Colocar e1 na pilha *)  
-      compile_expr ctxs e1 ++
-      
-      (* 2 - Recebe o valor de e1 *)  
-      popq rax ++
-      
-      notq (reg rax) ++
-
-      pushq (reg rax)
-
-  | Ecall ("size", [e1], _) ->
-      (* 1 - Colocar e1 na pilha *)  
-      compile_expr ctxs e1 ++
-
-      (* 2 - Como sabemos que e um conjunto, vamos buscar dois valores *)
-      popq rax ++ (* Fim *)
-      popq rbx ++ (* Inicio *)
-
-      (* 3 - Calcula o tamanho *)
-      subq (reg rbx) (reg rax) ++
-
-      (* 4 - Termina *)
-      pushq (reg rax)
-
-  | Ecall (f, el, _) ->
-      (* 1 - Vai buscar a funcao f *)
-      let ctx, return = Hashtbl.find function_ctx f in
-      let ctxs = ctxs@[(Hashtbl.create 17 : table_ctx)] in
-      (* 2 - Ref onde vai ficar o codigo dos argumentos *)
-      let code = ref nop in
-      
-      for i = 0 to (List.length el) - 1 do
-        (* 4.1 - Vai buscar os dados do argumento i *)
-        let _, v = List.nth ctx i in
-        let t, ofs = v in
-        let ofs = - int_of_vint ofs in
-        code := !code ++
-          (* 4.2.1 - Vai buscar o valor da expressao no indice i *)  
-          compile_expr ctxs (List.nth el i) ++
-          popq rax ++
-
-          (* 4.2.2 - *)
-          movq (reg rax) (ind ~ofs rbp) ++
-          is_in_type_boundaries ctxs (-ofs) t;
-      done;
-      (* Verificar se o retorno esta nos limites do tipo *)
-      !code ++ 
-      addq (imm64 1L) (lab "is_in_function") ++
-      call ("user" ^ f) ++
-      movq (reg rax) (reg rbx) ++
-      is_rbx_in_type_boundaries ctxs return ++
-      pushq (reg rbx)
-      
-  | Eternary (cond, e1, e2, _) -> 
-      (*1 - Incrementa o numero de ifs realizados ate ao momento *)
-      number_of_ternary := !number_of_ternary + 1;
-      let current_ternary = string_of_int(!number_of_ternary) in
-    
-      (* 2 - Calcular o valor da condicao *)
-      compile_expr ctxs cond ++
-      popq rax ++
-
-      (* 3 - Se vor diferente de entao e verdade *)
-      cmpq (imm 0) (reg rax) ++
-      jne ("ternary_true_" ^ current_ternary) ++
-      
-      (* 4a - Se for 0 executa o else*)
-      compile_expr ctxs e2 ++
-
-      jmp ("ternary_end_" ^ current_ternary) ++
-
-      (* 4b - Se for 1 executa o then *)
-      label ("ternary_true_" ^ current_ternary) ++
-      
-      compile_expr ctxs e1 ++
-
-      (* 5 - Termina *)
-      label ("ternary_end_" ^ current_ternary)
- 
-  | _ -> error "Not implemented"
+  | Eident _ -> assert false
+  | Ebinop _ -> assert false
+  | Eunop _ -> assert false
+  | Ecall _ -> assert false
 
 
 let rec compile_stmt ctxs = function
   | Sif _       -> assert false
   | Sloop _ ->              assert false
-  | Swhile _ ->     assert false
-  | Sdeclare (id, t, e, _) ->
-    (* 1 - Calcular o tamanho do frame *)
-    let ofs = !frame_size in
-    frame_size := 8 + !frame_size;
-  
-    let ctx = List.hd (List.rev ctxs) in
-    let code =
-      (* 2 - Calcular o valor da expressao  *)
-      compile_expr ctxs e ++
-      popq rax ++
-    
-      (* 3 - Guardar o valor da expressao na posicao ofs *)
-      movq (reg rax) (ind ~ofs:(-ofs) rbp) ++
-      is_in_type_boundaries ctxs ofs t 
-    in
-
-    (* 4 - Adiciona ao contexto atual *)
-    Hashtbl.add ctx id (t, Vint ofs);
-    code
-  | Sassign (id, e1, _)  ->
-        (* 1 - Vai buscar o contexto em que o id esta declarado *)        
-        let ctx = List.hd (List.rev (find_id ctxs id)) in
-  
-        (* 2 - Vai buscar o tipo e o ofs de id *)
-        let t, ofs = Hashtbl.find ctx id in
-        let ofs = int_of_vint ofs in
-  
-        (* 2 - Atualiza o valor que esta no endereço ofs*)
-        compile_expr ctxs e1 ++
-        popq rax ++
-  
-        movq (reg rax) (ind ~ofs:(-ofs) rbp) ++
-        is_in_type_boundaries ctxs ofs t
-    
+  | Swhile _ ->   assert false
+  | Sdeclare _ -> assert false
+  | Sassign _ -> assert false
   | Sprintn (e, _) ->
     (* 1 - Vai buscar o valor de e *)  
     compile_expr ctxs e ++
@@ -416,7 +57,6 @@ let rec compile_stmt ctxs = function
   | Sbreak _ ->              assert false
   | Sreturn _ ->       assert false
   | Snothing _ -> nop
-  | _ -> error "STMT NOT IMPLEMENTED IN THE COMPILER."
         
 and compile_block_stmt ctx = function
   | [] -> [nop]
@@ -430,12 +70,14 @@ and compile_stmts ctxs = function
   | GSblock (bl, _) -> 
     let block = List.rev(compile_block_stmts ctxs bl) in
     List.fold_right (++) block nop
+  | GSfunction(_, _, _, body, _) ->
+    compile_stmt () body
   | _ -> assert false
+
 (* Compilação do programa p e grava o código no ficheiro ofile *)
 let compile_program p ofile =
-  let ctxs = [(Hashtbl.create 17 : table_ctx)] in
+  let ctxs = () in
   let code = compile_stmts ctxs p in
-  functions_code := !functions_code; 
   let p =
     { text =
         globl "main" ++ label "main" ++
@@ -492,8 +134,7 @@ let compile_program p ofile =
         leaq (lab ".Sprint_error_f") rdi ++
         movq (imm64 0L) (reg rax) ++
         call "printf" ++
-        jmp "end" ++
-        !functions_code;
+        jmp "end";
       data = 
         label ".Sprintn_int" ++ string "%ld\n" ++
         label ".Sprint_int" ++ string "%ld" ++

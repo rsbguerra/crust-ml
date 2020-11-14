@@ -17,7 +17,7 @@
     tbl
   
   let keyword_table =
-    create_hashtable 32
+    create_hashtable 64
     [
       (* === strict === *)
       "as",       KW_AS;
@@ -117,7 +117,7 @@ let BOOLEAN_LITERAL = "true"|"false"
 let letter     = ['a'-'z' 'A'-'Z']
 let char       = ''' letter '''
 let string     = '"' ('_'|letter|DEC_DIGIT)* '"'
-let id         = ('_'|letter)('_'|letter|DEC_DIGIT)*
+let id         = ('_'|letter)(('_'|letter|DEC_DIGIT)*)('!')*
 let newline    = ['\n']
 let whitespace = [' ' '\t']
 
