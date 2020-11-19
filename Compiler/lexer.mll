@@ -163,8 +163,9 @@ rule analisador = parse
   | "i8"            { [I8] }
   | "i16"           { [I16] }
   | "i32"           { [I32] }
-  | "i64"           { [I16] }
+  | "i64"           { [I64] }
   | "i128"          { [I128] }
+  | "bool"          { [BOOL] }
   | INTEGER_LITERAL as snum 
     { (*Todo decide wich type this integer is *)
       try

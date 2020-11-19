@@ -40,7 +40,7 @@ suite:
 
 elif:
 | KW_ELSE KW_IF e = expr "{" s = suite "}" { (e, s, !Lexer.line_num) }
-| KW_ELSE "{" s = suite "}"                { ( Ecst( Ci64 1L, !Lexer.line_num), s, !Lexer.line_num) }
+| KW_ELSE "{" s = suite "}"                { ( Ecst( Cbool true, !Lexer.line_num), s, !Lexer.line_num) }
 ;
 
 stmt:
