@@ -40,7 +40,7 @@ suite:
 
 elif:
 | KW_ELSE KW_IF e = expr "{" s = suite "}" { (e, s, !Lexer.line_num) }
-| KW_ELSE "{" s = suite "}"                { ( Ecst( Ci64 1L, !Lexer.line_num), s, !Lexer.line_num) }
+| KW_ELSE "{" s = suite "}"                { ( Ecst( Cbool true, !Lexer.line_num), s, !Lexer.line_num) }
 ;
 
 stmt:
@@ -55,9 +55,9 @@ simple_stmt:
 | KW_BREAK ";"                                        { Sbreak !Lexer.line_num }
 | KW_CONTINUE ";"                                     { Scontinue !Lexer.line_num }
 | KW_LET id = ident ":" t = crust_types "=" e = expr ";" { Sdeclare (id, t, e, !Lexer.line_num) }
-| id = ident o = binop "=" e = expr ";"             { Sassign (id, Ebinop(o, Eident (id, !Lexer.line_num), e, !Lexer.line_num), !Lexer.line_num) }
-| PRINT "(" e = expr ")" ";"                       { Sprint(e, !Lexer.line_num) }
-| PRINTN "(" e = expr ")" ";"                      { Sprintn(e, !Lexer.line_num) }
+| id = ident o = binop"=" e = expr ";"             { Sassign (id, Ebinop(o, Eident (id, !Lexer.line_num), e, !Lexer.line_num), !Lexer.line_num) }
+| KW_PRINT "(" e = expr ")" ";"                       { Sprint(e, !Lexer.line_num) }
+| KW_PRINTLN "(" e = expr ")" ";"                     { Sprintn(e, !Lexer.line_num) }
 | ";"                                              { Snothing(!Lexer.line_num) }
 ;
 

@@ -3,10 +3,22 @@
 # Lexer
 # É de realçar que a gramática do Natrix foi alterada durante a implementação
 # Sendo assim este ficheiro pode não ser 100% fiel 
+<INTEGER_SUFFIX> ::= "u8"|"u16"|"u32"|"u64"|"u128"|"usize"|"i8"|"i16"|"i32"|"i64"|"i128"|"isize"
+<HEX_DIGIT>      ::= ['0'-'9' 'a'-'f' 'A'-'F']
+<DEC_DIGIT>      ::= ['0'-'9']
+<OCT_DIGIT>      ::= ['0'-'7']
+<BIN_DIGIT>      ::= ['0'-'1']
+<HEX_LITERAL>    ::= ("0x"|"0X") (HEX_DIGIT|'_')*
+<OCT_LITERAL>    ::= ("0o"|"0O") (OCT_DIGIT|'_')*
+<BIN_LITERAL>    ::= ("0b"|"0B") (BIN_DIGIT|'_')*
+<DEC_LITERAL>    ::= DEC_DIGIT(DEC_DIGIT|'_')*
+<INTEGER_LITERAL>::= (DEC_LITERAL|BIN_LITERAL|OCT_LITERAL|HEX_LITERAL)
+
+<BOOLEAN_LITERAL> ::= "true"|"false"
+
 
 <digit>      ::= ['0'-'9']
 <char>       ::= ['a-zA-Z']
-<integer>    ::= <digit>+
 <id>         ::= ('_' | <char>)(<char> | <digit>)* 
 <newline>    ::= '\n'
 <whitespace> ::= '\t' | ' '
@@ -40,13 +52,15 @@
 
 <expression> ::= '(' <expression> ')'
                | <expression> <binop> <expression>
-			   | <integer>
-               | <boolean>
-			   | <id>
+			         | <INTEGER_LITERAL>
+               | <BOOLEAN_LITERAL>
+			         | <id>
 
 <boolean_expression> ::= '('<expression> <booleanop> <expression> ')'
                        |  <expression> <booleanop> <expression>
-					   | '!' <boolean_expression>
+                       | '(' boolean_expression')'
+					             | '!' <boolean_expression>
+                       | <BOOLEAN_LITERAL>
 
 <argument_list> ::= (<id> ':' <type>)*
 

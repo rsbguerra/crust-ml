@@ -2,11 +2,11 @@
   open Ast
 %}
 
-%token <Ast.crust_conts>     CST
+%token <Ast.crust_const>     CST
 %token <Ast.ident> IDENT
 
 %token I8 I16 I32 I64 I128 U8 U16 U32 U64 U128 BOOL
-%token KW_IF KW_ELSE PRINT PRINTN SCANF
+%token KW_IF KW_ELSE
 %token KW_LOOP KW_WHILE KW_FOR
 %token KW_CONTINUE KW_BREAK
 %token KW_FN KW_RETURN
@@ -77,12 +77,13 @@
 %token KW_VIRTUAL
 %token KW_YIELD
 
+%token KW_PRINTLN
+%token KW_PRINT
+
 (* === Weak ===*)
 %token KW_UNION
 %token KW_STATICLIFETIME
 
-%token KW_PRINTLN
-%token KW_PRINT
 
 /* Definição das prioridades e associatividades dos tokens */
 
