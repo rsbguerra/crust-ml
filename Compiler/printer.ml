@@ -24,7 +24,6 @@ and string_of_stmt = function
   | Sprintn (e, _)       -> Format.sprintf "@[<1>%s%s%s]@." "Sprintln(" (string_of_expr e) ")"
   | Sblock (bl, _)       -> string_of_block_stmt  bl
   | Swhile(e, bl, _)     -> "Swhile("^(string_of_expr e)^"\n"^(string_of_stmt bl)^")"
-  | Sloop(bl, _)         -> "Sloop("^(string_of_stmt bl)^")"
   | _ -> assert false
 
 and string_of_elif l = 
@@ -40,29 +39,12 @@ and string_of_argument_list = function
   | []         -> ""
 
 and string_of_crust_consts = function 
-  | Cu8   c -> "Cu8("^(Stdint.Uint8.to_string c)^")"
-  | Cu16  c -> "Cu16( "^(Stdint.Uint16.to_string c)^" )"
-  | Cu32  c -> "Cu32( "^(Stdint.Uint32.to_string c)^" )"
-  | Cu64  c -> "Cu64( "^(Stdint.Uint64.to_string c)^" )"
-  | Cu128 c -> "Cu128( "^(Stdint.Uint128.to_string c)^" )"
-  | Ci8   c -> "Ci8("^(Stdint.Int8.to_string c)^")"
-  | Ci16  c -> "Ci16( "^(Stdint.Int16.to_string c)^" )"
   | Ci32  c -> "Ci32( "^(Stdint.Int32.to_string c)^" )"
-  | Ci64  c -> "Ci64("^(Stdint.Int64.to_string c)^")"  
-  | Ci128 c -> "Ci128( "^(Stdint.Int128.to_string c)^" )"
   | Cbool c -> "Cbool( "^(string_of_bool c)^" )"
 
 and string_of_crust_types = function 
-  | Tu8  -> "Tu8"
-  | Tu16 -> "Tu16"
-  | Tu32 -> "Tu32"
-  | Tu64 -> "Tu64"
-  | Tu128-> "Tu128"
-  | Ti8  -> "Ti8"
-  | Ti16 -> "Ti16"
+  | Tvoid  -> "Tvoid"
   | Ti32 -> "Ti32"
-  | Ti64 -> "Ti64"
-  | Ti128-> "Ti128"
   | Tbool-> "Tbool"
 
 and string_of_binop = function
@@ -79,7 +61,6 @@ and string_of_binop = function
   | Bge -> ">="
   | Band -> "&&"
   | Bor -> "||"
-  | _ -> assert false  
 
 and string_of_block_stmt  = function
   | []      -> "\n"
@@ -91,10 +72,8 @@ and string_of_block_global_stmt = function
 
 and string_of_global_stmt = function
   | GSblock (bl, _) -> string_of_block_global_stmt bl
-  | GSuse (id, _)   -> "GSuse("^id^")"
   | GSfunction (f, args, return, body, _) -> "GSfunction("^f^", ("^(string_of_argument_list args)^"), "^(string_of_crust_types return)^", \n    "^(string_of_stmt body)
-  | GSstruct (id, keys, _)-> "GSstruct("^id^", ("^ (string_of_argument_list keys)^")"
-  | GSimpl (id, _)  -> "GSimpl("^id^")"
+  | GSstruct (id, elements, _)-> "GSstruct("^id^"(,"^(string_of_argument_list elements)^")"
    
 let print_file s = 
   Printf.printf "%s\n" (string_of_global_stmt s)

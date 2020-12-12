@@ -1,9 +1,10 @@
 (*
-  Última alteração: 28-12-2019
-  Descricao: Parser do Natrix
+  Last Modification: 12-12-2020
+  Description: Pico Rust Parser
+  Author: Dário Santos (dariovfsantos@gmail.com)
 *)
 
-/* Ponto de entrada da gramática */
+/* Grammar Entry Point */
 %start prog
 
 /* Tipo dos valores devolvidos pelo parser */
@@ -16,13 +17,14 @@ prog:
 ;
 
 global_stmt:
-| KW_USE f = ident    { GSuse (f, !Lexer.line_num) }
-| KW_STRUCT i = ident "{" l = separated_list(",", argument_list) "}" { GSstruct (i, l, !Lexer.line_num) }
-| KW_IMPL i = ident   { GSstruct (i, !Lexer.line_num) }
+| KW_STRUCT i = ident "{" l = separated_list(",", struct_elements) "}" { GSstruct (i, l, !Lexer.line_num) }
 | KW_FN f = ident "(" x = separated_list(",", argument_list) ")" ARROW r = crust_types s = function_suite 
                       { GSfunction(f, x, r, s, !Lexer.line_num)} 
 ;
 
+struct_elements:
+|  id = ident ":" t = crust_types {(id, t)}
+;
 
 argument_list:
 |  id = ident ":" t = crust_types {(id, t)}
@@ -30,9 +32,7 @@ argument_list:
 
 function_suite:
 | "{" l = list(stmt) "}"    { Sblock (l, !Lexer.line_num)}
-| "="">" e = expr ";"       { Sreturn(e, !Lexer.line_num)}
 ;
-
 
 suite:
 | l = list(stmt)     { Sblock (l, !Lexer.line_num) }
@@ -47,7 +47,6 @@ stmt:
 | s = simple_stmt                                   { s } 
 | KW_IF e = expr "{" s1 = suite "}" l = list(elif)  { Sif(e, s1, l, !Lexer.line_num)}
 | KW_WHILE e = expr "{" s = suite "}"               { Swhile(e, s, !Lexer.line_num) }
-| KW_LOOP "{" s = suite "}"                         { Sloop(s, !Lexer.line_num)}
 ;
 
 simple_stmt:
@@ -62,16 +61,7 @@ simple_stmt:
 ;
 
 crust_types:
-| I8     { Ti8   }
-| I16    { Ti16  }
 | I32    { Ti32  }
-| I64    { Ti64  }
-| I128   { Ti128 }
-| U8     { Tu8   }
-| U16    { Tu16  }
-| U32    { Tu32  }
-| U64    { Tu64  }
-| U128   { Tu128 }
 | BOOL   { Tbool }
 ;
 
@@ -89,7 +79,6 @@ expr:
 %inline unop:
 | MINUS  { Uneg }
 | NOT    { Unot }
-| BITNOT { Ubitnot }
 ;
 
 %inline binop:
@@ -106,11 +95,6 @@ expr:
 | LET   { Ble }
 | AND   { Band }
 | OR    { Bor  }
-| BITAND{ Bitand } 
-| BITOR { Bitor }
-| BITXOR{ Bitxor }
-| LSHIFT{ Bitls }
-| RSHIFT{ Bitrs }
 ;
 
 ident:
