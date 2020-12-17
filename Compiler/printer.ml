@@ -41,14 +41,17 @@ and string_of_expr = function
 
 and string_of_stmt = function
   | Sif (e, s1, elifs, _)-> "Sif("^(string_of_expr e)^", "^(string_of_stmt s1)^", "^(string_of_elif elifs)^")"
-  | Sreturn (e, _)       -> "Sreturn("^(string_of_expr e)^")"
-  | Sassign (id, e1, _)  -> "Sassign("^id^", "^(string_of_expr e1)^")"
-  | Sdeclare (id,t,e1,_) -> "Sdeclare("^id^", "^(string_of_crust_types t)^", "^(string_of_expr e1)^")"
-  | Sprint (e, _)        -> "Sprint("^(string_of_expr e)^", "^")"
-  | Sprintn (e, _)       -> "Sprintln("^(string_of_expr e)^")"
-  | Sblock (bl, _)       -> string_of_block_stmt "" bl
   | Swhile(e, bl, _)     -> "Swhile("^(string_of_expr e)^"\n"^(string_of_stmt bl)^")"
-  | _ -> assert false
+  | Sdeclare (id,t,e1,_) -> "Sdeclare("^id^", "^(string_of_crust_types t)^", "^(string_of_expr e1)^")"
+  | Sassign (id, e1, _)  -> "Sassign("^id^", "^(string_of_expr e1)^")"
+  | Sprintn (e, _)       -> "Sprintln("^(string_of_expr e)^")"
+  | Sprint (e, _)        -> "Sprint("^(string_of_expr e)^", "^")"
+  | Sblock (bl, _)       -> string_of_block_stmt "" bl
+  | Scontinue _          -> "Scontinue"
+  | Sbreak _             -> "Sbreak"
+  | Sreturn (e, _)       -> "Sreturn("^(string_of_expr e)^")"
+  | Snothing _           -> "Snothing"
+  | Sexpr(e, _)          -> "Sexpr("^(string_of_expr e)^")"
 
 and string_of_elif l = 
   let out = ref "" in
