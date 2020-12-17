@@ -97,11 +97,11 @@ and type_global_stmt ctxs = function
 
 and type_block_stmt ctxs acc = function
   | [] -> acc
-  | s :: sl -> (type_block_stmt ctxs ((type_stmt ctxs s)::acc) sl)
+  | s :: sl -> (type_block_stmt ctxs (acc@[type_stmt ctxs s]) sl)
 
 and type_block_global_stmt ctxs acc = function
   | [] -> acc
-  | s :: sl -> (type_block_global_stmt ctxs ((type_global_stmt ctxs s)::acc) sl)
+  | s :: sl -> (type_block_global_stmt ctxs (acc@[type_global_stmt ctxs s]) sl)
 
 (* Realiza a analise semantica de um ficheiro *)
 let file s = type_global_stmt [(Hashtbl.create 16 : table_ctx)] s

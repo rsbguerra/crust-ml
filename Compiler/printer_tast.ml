@@ -4,7 +4,6 @@ let string_of_typed_unop = function
   | TUneg -> "-"
   | TUnot -> "!"
 
-
 let string_of_typed_binop = function
   | TBadd -> "+"
   | TBsub -> "-"
@@ -31,7 +30,7 @@ let string_of_crust_types = function
 
 let rec string_of_typed_expr_list acc = function
   | []      -> acc
-  | hd::tl -> (string_of_typed_expr_list ((string_of_typed_expr hd)^", "^acc) tl)
+  | hd::tl -> (string_of_typed_expr_list (acc^(string_of_typed_expr hd)^", ") tl)
 
 and string_of_typed_expr = function
   | TEcst (n, t)              -> "TEcst("^(string_of_crust_consts n)^","^(string_of_crust_types t)^")"
@@ -46,8 +45,8 @@ and string_of_typed_stmt = function
   | TSreturn (e, t)    -> "TSreturn("^(string_of_typed_expr e)^")"
   | TSassign (id, e1)  -> "TSassign("^id^", "^(string_of_typed_expr e1)^")"
   | TSdeclare (id, t, e1) -> "TSdeclare("^id^", "^(string_of_crust_types t)^", "^(string_of_typed_expr e1)^")"
-  | TSprint e         -> "TSprint("^(string_of_typed_expr e)^", "^")"
-  | TSprintn e        -> Format.sprintf "@[<1>%s%s%s]@." "TSprintln(" (string_of_typed_expr e) ")"
+  | TSprint e         -> "TSprint("^(string_of_typed_expr e)^")"
+  | TSprintn e        -> "TSprintln("^(string_of_typed_expr e)^")"
   | TSblock bl        -> string_of_block_typed_stmt "" bl
   | _ -> assert false
 
@@ -57,10 +56,6 @@ and string_of_elif l =
     out := !out ^ "Selif("^(string_of_typed_expr e)^", "^(string_of_typed_stmt body)^ ")"
   )l;
   !out
-
-and string_of_argument_list acc = function
-  | [] -> acc
-  | arg1 :: tl -> let id, t = arg1 in (string_of_argument_list (acc^id^":"^(string_of_crust_types t)^", ") tl)
 
 and string_of_block_typed_stmt acc = function
   | []      -> acc^"\n"
@@ -78,7 +73,7 @@ and string_of_typed_global_stmt = function
 
 and string_of_pairs acc = function
   | []         -> acc
-  | (id, t):: tl -> string_of_pairs (id^":"^(string_of_crust_types t)^", "^acc) tl
+  | (id, t):: tl -> string_of_pairs (acc^id^":"^(string_of_crust_types t)^", ") tl
 
 
 let print_typed_ast s = 
