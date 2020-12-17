@@ -34,7 +34,7 @@ and typed_stmt =
   | TSprintn   of typed_expr
   | TSprint    of typed_expr
   | TSblock    of typed_stmt list
-  | TSreturn   of typed_expr * int *Ast.crust_types
+  | TSreturn   of typed_expr * int * Ast.crust_types
   | TScontinue
   | TSbreak
   | TSnothing

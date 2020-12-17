@@ -55,7 +55,6 @@ let rec type_expr ctxs = function
   | Eunop (op, e, line)       -> assert false
   | Ecall _        -> assert false
  
-
 (* Verificacao de uma instrucao - Instruções nao devolvem um valor *)
 and type_stmt ctxs = function
   | Sif(e1, body, elifs, line) ->
@@ -64,25 +63,35 @@ and type_stmt ctxs = function
     if not (compare_crust_types (Tbool, t1)) then error ("Wrong type in the if condition, was given " ^ Printer.string_of_crust_types t1 ^ " but a bool was expected.") line;
     (* 2 - Verificaro corpo do if *)
     let typed_body = type_stmt ((Hashtbl.create 16 : table_ctx)::ctxs) body in
-    (* 3 - Verificar elifs e o else *)
-    
+    (* TODO: 3 - Verificar elifs e o else *)
+
     Tast.TSif(te1, typed_body, [])
 
   | Swhile _              -> assert false
   | Sdeclare(id, t1, e, line) -> assert false
-  | Sprint _               -> assert false
-  | Sblock (bl, _)         -> assert false
-  | Sreturn _              -> assert false 
-  | Scontinue _            -> assert false(*Tast.TScontinue*)
-  | Sbreak _               -> assert false(*Tast.TSbreak*)
-  | Snothing _             -> Tast.TSnothing
+  | Sprintn (e1, _) ->
+    (* 1 - Tipar expressão *)
+    let te1, t = type_expr ctxs e1 in
+    Tast.TSprintn(te1)
+  | Sprint (e1, _) ->
+    (* 1 - Tipar expressão *)
+    let te1, t = type_expr ctxs e1 in
+    Tast.TSprint(te1)
+  | Sblock (bl, _) ->
+    (* 1 - Tipar bloco*)
+    Tast.TSblock(type_block_stmt ctxs [] bl)
+  | Sreturn (e1, line)     -> 
+    (* 1 - Verificar o tipo de e1 *)
+    let te1, t = type_expr ctxs e1 in
+    Tast.TSreturn(te1, line, t)
+  | Scontinue _ -> Tast.TScontinue
+  | Sbreak _    -> Tast.TSbreak
+  | Snothing _  -> Tast.TSnothing
   | _ -> assert false
   
 and type_global_stmt ctxs = function  
   | Ast.GSblock (bl, _) -> Tast.TGSblock(type_block_global_stmt ctxs [] bl)
-  | Ast.GSfunction(id, list, r, body, _)-> 
-  (*Tast.TGSfunction(id, list, r, type_stmt ((Hashtbl.create 16 : table_ctx)::ctxs) body)
-  *) assert false
+  | Ast.GSfunction(id, list, r, body, _) -> Tast.TGSfunction(id, list, r, type_stmt ((Hashtbl.create 16 : table_ctx)::ctxs) body)
   | Ast.GSstruct _      -> assert false
 
 and type_block_stmt ctxs acc = function
