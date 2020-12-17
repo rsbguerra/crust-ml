@@ -3,8 +3,6 @@
   Descricao: Typed Abstract Syntax Tree
 *)
 
-open Stdint
-
 type ident = string
 
 type typed_unop = 

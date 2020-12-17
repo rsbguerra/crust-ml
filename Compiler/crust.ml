@@ -72,9 +72,7 @@ let () =
     let typed_p = Typing.file p in
     if !print_ast then Printer_tast.print_typed_ast typed_p;
 
-    (*
-    Compile.compile_program p !ofile;
-    *)
+    Compile.compile_program typed_p !ofile
 
   with
   | Lexer.Lexing_error c ->

@@ -2,7 +2,7 @@
       
 open Format
 open X86_64
-open Ast
+open Tast
       
 exception VarUndef of string
 exception Error    of string
@@ -16,58 +16,50 @@ let (genv: (string, unit) Hashtbl.t) = Hashtbl.create 17
 let frame_size = ref 0
 
 let get_value = function
- | Ci64 v -> v
+ | Ast.Ci32 v -> v
  | _ -> assert false
 
 let rec compile_expr ctxs = function
-  | Ecst (i, _) ->
+  | TEcst (i, t) ->
     (* 1 - Colocar a constante no topo da pilha *)
-    movq (imm64 (get_value i)) (reg rax) ++
+    movq (imm32 (get_value i)) (reg rax) ++
     pushq (reg rax)
 
-  | Eident (i, _) -> assert false
-  | Ebinop _ -> assert false
-  | Eunop _ -> assert false
-  | Ecall _ -> assert false
+  | TEident (i, _) -> assert false
+  | TEbinop _ -> assert false
+  | TEunop _ -> assert false
+  | TEcall _ -> assert false
 
-(* | Badd | Bsub | Bmul | Bdiv | Bmod
-
-  | Beq  | Bneq | Blt  | Ble  | Bgt | Bge
-  | Band | Bor 
- *)
-
-(* let rec bin_op ctxs = function 
-  |  *)
 
 let rec compile_stmt ctxs = function
-  | Sif _       -> assert false
-  | Sloop _ ->              assert false
-  | Swhile _ ->   assert false
-  | Sdeclare _ -> assert false
-  | Sassign _ -> assert false
-  | Sprintn (e, _) ->
+  | TSif _       -> assert false
+  | TSwhile _ ->   assert false
+  | TSdeclare _ -> assert false
+  | TSassign _ -> assert false
+  | TSprintn e ->
     (* 1 - Vai buscar o valor de e *)  
     compile_expr ctxs e ++
           
     (* 2 - Passa como parametro para a funcao printn_int e chama-a*)
     popq rdi ++
     call "printn_int"
-  | Sprint (e, _)  ->
+  | TSprint e  ->
     (* 1 - Vai buscar o valor de e *)
     compile_expr ctxs e ++
 
     (* 2 - Passa como parametro para a funcao print_int e chama-a*)
     popq rdi ++
     call "print_int" 
-  | Sblock (bl, _) -> 
+  | TSblock bl -> 
     (* 1 - Compila um bloco de instrucoes *)
     let block = List.rev(compile_block_stmt ctxs bl) in
     List.fold_right (++) block nop
   
-  | Scontinue _ -> assert false
-  | Sbreak _ ->              assert false
-  | Sreturn _ ->       assert false
-  | Snothing _ -> nop
+  | TScontinue -> assert false
+  | TSbreak ->              assert false
+  | TSreturn _ ->  nop
+  | TSnothing _ -> nop
+  | _ -> assert false
         
 and compile_block_stmt ctx = function
   | [] -> [nop]
@@ -78,10 +70,10 @@ and compile_block_stmts ctx = function
   | s::sl -> (compile_block_stmts ctx sl) @ [compile_stmts ctx s]
         
 and compile_stmts ctxs = function  
-  | GSblock (bl, _) -> 
+  | TGSblock bl -> 
     let block = List.rev(compile_block_stmts ctxs bl) in
     List.fold_right (++) block nop
-  | GSfunction(_, _, _, body, _) ->
+  | TGSfunction(_, _, _, body) ->
     compile_stmt () body
   | _ -> assert false
 
