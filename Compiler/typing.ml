@@ -84,7 +84,7 @@ and type_stmt ctxs = function
   | Sreturn (e1, line)     -> 
     (* 1 - Verificar o tipo de e1 *)
     let te1, t = type_expr ctxs e1 in
-    Tast.TSreturn(te1, line, t)
+    Tast.TSreturn(te1, t)
   | Scontinue _ -> Tast.TScontinue
   | Sbreak _    -> Tast.TSbreak
   | Snothing _  -> Tast.TSnothing

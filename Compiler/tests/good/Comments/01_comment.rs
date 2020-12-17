@@ -1,17 +1,7 @@
 // Single Line Comment
 
-fn somar(x : i8, y : i8) -> i32
+fn somar(x : i32, y : i32) -> i32
 {
-  let x : bool = false;
-  let x : i64 = 2;
-
-  if(x)
-  {
-
-  }
-  else if(true)
-  {
-
-  }
-
+  print!(5);
+  return 4;
 }

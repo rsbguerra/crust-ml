@@ -1,5 +1,5 @@
 (*
-  Última alteração: 05-10-2020
+  Última alteração: 17-12-2020
   Descricao: Árvore de sintaxe abastrata do Rust
 *)
 open Stdint
