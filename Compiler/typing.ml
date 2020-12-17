@@ -31,7 +31,7 @@ type table_ctx = (string, crust_types) Hashtbl.t
 
 let rec find_id id l = 
   match l with
-  | ct::tl -> if Hashtbl.mem ct id then ( Some ct) else (find_id id tl) 
+  | ct::tl -> if Hashtbl.mem ct id then (Some ct) else (find_id id tl) 
   | _ -> None
 
 let crust_types_of_crust_const = function
@@ -44,7 +44,8 @@ let compare_crust_types = function
   | _, _                 -> false
 
 let rec type_expr ctxs = function
-  | Ecst(const, _) -> TEcst(const, crust_types_of_crust_const const), crust_types_of_crust_const const
+  | Ecst(const, _) -> 
+    TEcst(const, crust_types_of_crust_const const), crust_types_of_crust_const const
   | Eident(id, line)       -> 
     (* 1 - Ir buscar o CTX em que esta variável está declarada *)
     (* 2 - Retornar o seu tipo *)

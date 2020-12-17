@@ -11,7 +11,6 @@ and string_of_expr = function
   | Ebinop (Bor, e1, e2, _)  -> "Ebinop(Bor, "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
   | Ebinop (_, e1, e2, _)    -> "Ebinop(Op, "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
   | Eunop (_ , e1, _)        -> "Eunop(Unot, "^(string_of_expr e1)^")"
-  | Ecall ("size", [e1], _)  -> "Ecall(size, "^(string_of_expr e1)^")"
   | Ecall (f, el, _)         -> "Ecall("^f^", "^(string_of_expr_list el)^")"  
   | Eident (id, _)           -> "Eident("^id^")"
 
@@ -43,9 +42,9 @@ and string_of_crust_consts = function
   | Cbool c -> "Cbool( "^(string_of_bool c)^" )"
 
 and string_of_crust_types = function 
-  | Tvoid  -> "Tvoid"
-  | Ti32 -> "Ti32"
-  | Tbool-> "Tbool"
+  | Tvoid -> "Tvoid"
+  | Ti32  -> "Ti32"
+  | Tbool -> "Tbool"
 
 and string_of_binop = function
   | Badd -> "+"
