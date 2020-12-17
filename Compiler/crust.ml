@@ -69,7 +69,8 @@ let () =
 
     (* Compilação da árvore de sintaxe abstracta p. O código máquina
        resultante desta transformação deve ficar escrito no ficheiro alvo ofile. *)
-    Typing.file p
+    let typed_p = Typing.file p in  ()
+
     (*
     Compile.compile_program p !ofile;
     *)

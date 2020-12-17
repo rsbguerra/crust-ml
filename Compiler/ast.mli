@@ -52,5 +52,4 @@ and global_stmt =
 
 and pairs = ident * crust_types
 
-
 and program = global_stmt

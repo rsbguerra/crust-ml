@@ -51,8 +51,8 @@ let rec type_expr ctxs = function
     begin match find_id id ctxs with
     | None     -> error ("The identifier " ^ id ^ " was not defined.") line
     | Some ctx -> TEident(id, Hashtbl.find ctx id), Hashtbl.find ctx id end
-  | Ebinop _       -> assert false
-  | Eunop _        -> assert false
+  | Ebinop (op, e1, e2, line) -> assert false
+  | Eunop (op, e, line)       -> assert false
   | Ecall _        -> assert false
  
 
@@ -72,24 +72,26 @@ and type_stmt ctxs = function
   | Sdeclare(id, t1, e, line) -> assert false
   | Sprint _               -> assert false
   | Sblock (bl, _)         -> assert false
-  | Scontinue _            -> TScontinue
-  | Sbreak _               -> TSbreak
-  | Sreturn _              -> assert false
-  | Snothing _             -> TSnothing
+  | Sreturn _              -> assert false 
+  | Scontinue _            -> assert false(*Tast.TScontinue*)
+  | Sbreak _               -> assert false(*Tast.TSbreak*)
+  | Snothing _             -> Tast.TSnothing
   | _ -> assert false
   
 and type_global_stmt ctxs = function  
   | Ast.GSblock (bl, _) -> Tast.TGSblock(type_block_global_stmt ctxs [] bl)
-  | Ast.GSfunction(id, list, r, body, _)-> Tast.TGSfunction(id, list, r, type_stmt ((Hashtbl.create 16 : table_ctx)::ctxs) body)
+  | Ast.GSfunction(id, list, r, body, _)-> 
+  (*Tast.TGSfunction(id, list, r, type_stmt ((Hashtbl.create 16 : table_ctx)::ctxs) body)
+  *) assert false
   | Ast.GSstruct _      -> assert false
 
 and type_block_stmt ctxs acc = function
   | [] -> acc
-  | s :: sl -> (type_block_stmt ctxs ([type_stmt ctxs s]@acc) sl)
+  | s :: sl -> (type_block_stmt ctxs ((type_stmt ctxs s)::acc) sl)
 
-and type_block_global_stmt ctxs (acc : Tast.typed_global_stmt) = function
+and type_block_global_stmt ctxs acc = function
   | [] -> acc
-  | s :: sl -> (type_block_global_stmt ctxs ([type_global_stmt ctxs s]@acc) sl)
+  | s :: sl -> (type_block_global_stmt ctxs ((type_global_stmt ctxs s)::acc) sl)
 
 (* Realiza a analise semantica de um ficheiro *)
 let file s = type_global_stmt [(Hashtbl.create 16 : table_ctx)] s

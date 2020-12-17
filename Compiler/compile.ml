@@ -8,9 +8,12 @@ exception VarUndef of string
 exception Error    of string
 let error s = raise (Error s)
 
+
+(*  *)
+let (genv: (string, unit) Hashtbl.t) = Hashtbl.create 17
+
 (* Tamanho da frame, em byte (cada variável local ocupa 8 bytes) *)
 let frame_size = ref 0
-
 
 let get_value = function
  | Ci64 v -> v
@@ -18,15 +21,23 @@ let get_value = function
 
 let rec compile_expr ctxs = function
   | Ecst (i, _) ->
-      (* 1 - Colocar a constante no topo da pilha *)
-      movq (imm64 (get_value i)) (reg rax) ++
-      pushq (reg rax)
+    (* 1 - Colocar a constante no topo da pilha *)
+    movq (imm64 (get_value i)) (reg rax) ++
+    pushq (reg rax)
 
-  | Eident _ -> assert false
+  | Eident (i, _) -> assert false
   | Ebinop _ -> assert false
   | Eunop _ -> assert false
   | Ecall _ -> assert false
 
+(* | Badd | Bsub | Bmul | Bdiv | Bmod
+
+  | Beq  | Bneq | Blt  | Ble  | Bgt | Bge
+  | Band | Bor 
+ *)
+
+(* let rec bin_op ctxs = function 
+  |  *)
 
 let rec compile_stmt ctxs = function
   | Sif _       -> assert false
