@@ -3,20 +3,19 @@
   Parte-se do principio que o contexto atual é o que se encontra na cabeça da lista.
 
   No programa seguinte aquando da tipagem do corpo da instrução if 
-  iremos possuir uma lista de contextos parecida com [ctx1; ctx2; ctx3], 
-  em que ctx1 representa o contexto local do if, ctx2 o contexto do loop 
-  e ctx3 o contexto da função main.
+  iremos possuir uma lista de contextos parecida com [ctx3; ctx2; ctx1], 
+  em que ctx3 representa o contexto mais local, do if neste caso, ctx2 o contexto do loop
+  e ctx3 o contexto mais exterior, o da função main.
 
-  fn main(){
-     loop{
-       if(true)
-        { 
-          ... 
-        }
-        ...
-     }
-     ...
-  }
+     +  fn main(){
+     |      +  loop{
+     |      |      +  if(true) {
+CTX1 | CTX2 | CTX3 |    ...
+     |      |      + }
+     |      |    ...
+     |      +  }
+     |    ...
+     +  }
 *)
 open Ast
 open Tast
@@ -29,13 +28,12 @@ let error s line = raise (Error (s, line))
 (* table_ctx representa um scope, contexto *)
 type table_ctx = (string, crust_types) Hashtbl.t
 
-let rec find_id id l = 
-  match l with
+let rec find_id id = function
+  | []     -> None
   | ct::tl -> if Hashtbl.mem ct id then (Some ct) else (find_id id tl) 
-  | _ -> None
 
 let crust_types_of_crust_const = function
-  | Ast.Ci32  _ -> Ast.Ti32  
+  | Ast.Ci32  _ -> Ast.Ti32
   | Ast.Cbool _ -> Ast.Tbool
 
 let compare_crust_types = function 
@@ -72,9 +70,11 @@ and type_expr ctxs = function
     begin match find_id id ctxs with
     | None     -> error ("The identifier " ^ id ^ " was not defined.") line
     | Some ctx -> TEident(id, Hashtbl.find ctx id), Hashtbl.find ctx id end
-  | Ebinop (op, e1, e2, line) -> 
+  | Ebinop (op, e1, e2, line) ->
+    (* 1 - Tipar e1 e2*) 
     let te1, t1 = type_expr ctxs e1 in
     let te2, t2 = type_expr ctxs e2 in
+    (* 2 - Verificar as regras de tipos para cada conjunto de operadores *)
     type_binop_expr op te1 t1 te2 t2 line
   | Eunop (Ast.Uneg, e, line) ->
     (* 1 - Tipar e*)
@@ -90,7 +90,7 @@ and type_expr ctxs = function
     if not (compare_crust_types (Ast.Tbool, t)) then error ("Wrong type given to operand Ast.Unot, was given"^Printer.string_of_crust_types t^" but a "^Printer.string_of_crust_types Ast.Tbool^" was expected.") line;
     (* 3 - Retorna a expressão tipada *)
     Tast.TEunop(Ast.Unot, te, Ast.Tbool), Ast.Tbool
-  | Ecall _        -> assert false
+  | Ecall _ -> assert false
  
 (* Verificacao de uma instrucao - Instruções nao devolvem um valor *)
 and type_stmt ctxs = function
@@ -113,9 +113,39 @@ and type_stmt ctxs = function
     )elifs;
     Tast.TSif(te1, typed_body, !iflist)
 
-  | Swhile(e, body, line)     -> assert false
-  | Sdeclare(id, t1, e, line) -> assert false
-  | Sassign(ident, e, line)   -> assert false
+  | Swhile(e, body, line)     ->
+    (* 1 - Tipar e verificar a condição e *)
+    let te1, t1 = type_expr ctxs e in
+    if not (compare_crust_types (Tbool, t1)) then error ("Wrong type in the while condition, was given "^Printer.string_of_crust_types t1^" but a bool was expected.") line;
+    (* 2 - Tipar corpo do while *)
+    let typed_body = type_stmt ((Hashtbl.create 16 : table_ctx)::ctxs) body in
+    Tast.TSwhile(te1, typed_body)
+
+  | Sdeclare(id, t, e, line) ->
+    (* 1 - Verificar se id já existe no contexto local *)
+    let _ = match find_id id ctxs with
+    | None   -> ()
+    | Some _ -> error ("The identifier " ^ id ^ " was already defined.") line in
+    (* 2 - Tipar e verificar a expressão e*)
+    let te, t1 = type_expr ctxs e in
+    if not (compare_crust_types (t, t1)) then error ("Wrong type in the declaration of variable"^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
+    (* 3 - Adicionar variável ao contexto *)
+    Hashtbl.add (List.hd ctxs) id t;
+    (* 4 - Retornar declaração tipada *)
+    Tast. TSdeclare(id, t, te)
+
+  | Sassign(id, e, line)   ->
+    (* 1 - Verificar id *)
+    let ctx = match find_id id ctxs with
+    | Some ctx -> ctx in
+    | None     -> error ("The identifier " ^ id ^ " was not defined.") line
+    (* 2 - Extrair tipo do id *)
+    let _, t = Hashtbl.find ctx id in
+    (* 3 - Tipar expressão *)
+    let te, t1 = type_expr ctx e in
+    if not (compare_crust_types (t, t1)) then error ("Wrong type in the assign of variable"^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
+    Tast.TSassing(id, te)
+
   | Sprintn (e1, _) ->
     (* 1 - Tipar expressão *)
     let te1, t = type_expr ctxs e1 in
