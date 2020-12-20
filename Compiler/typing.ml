@@ -48,6 +48,10 @@ let rec find_struct_id id = function
   | []     -> None
   | (_,_,ct)::tl -> if Hashtbl.mem ct id then (Some ct) else (find_struct_id id tl) 
 
+let rec is_id_unique id = function
+  | []          -> true
+  | (v,f,s)::tl -> if (Hashtbl.mem v id || Hashtbl.mem f id || Hashtbl.mem s id) then false else (is_id_unique id tl) 
+
 let crust_types_of_crust_const = function
   | Ast.Ci32  _ -> Ast.Ti32
   | Ast.Cbool _ -> Ast.Tbool
@@ -140,9 +144,7 @@ and type_stmt ctxs = function
 
   | Sdeclare(id, t, e, line) ->
     (* 1 - Verificar se id já existe no contexto local *)
-    let _ = match find_var_id id ctxs with
-    | None   -> ()
-    | Some _ -> error ("The identifier " ^ id ^ " was already defined.") line in
+    if not (is_id_unique id ctxs) then error ("The identifier " ^ id ^ " was already defined.") line;
     (* 2 - Tipar e verificar a expressão e*)
     let te, t1 = type_expr ctxs e in
     if not (compare_crust_types (t, t1)) then error ("Wrong type in the declaration of variable"^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
@@ -192,21 +194,17 @@ and type_global_stmt ctxs = function
   | Ast.GSblock (bl, _) -> Tast.TGSblock(type_block_global_stmt ctxs [] bl)
   | Ast.GSfunction(id, args, r, body, line) -> 
     (* 1 - Verificar se o id já foi definido *)
-    let _ = match find_fun_id id ctxs with
-      | None   -> ()
-      | Some _ -> error ("The function with identifier " ^ id ^ " was already defined.") line in
+    if not (is_id_unique id ctxs) then error ("The function with identifier " ^ id ^ " was already defined.") line;
     let _,f,_ = List.hd ctxs in
     Hashtbl.add f id r;
     (* 2 - tipar argumentos *)
     let ctxs = (make_ctx ())::ctxs in
-    List.iter(fun (id,t) -> 
+    List.iter(fun (arg,t) -> 
       (* 2.1 - Verificar se o id já foi definido *)
-      let _ = match find_var_id id ctxs with
-      | None   -> ()
-      | Some _ -> error ("The function argument with identifier " ^ id ^ " was already defined.") line in
+      if not (is_id_unique arg ctxs) then error ("The function argument with identifier " ^ arg ^ " was already defined.") line;
       let v,_,_ = List.hd ctxs in
     
-      Hashtbl.add v id t;
+      Hashtbl.add v arg t;
 
     ) args;
     (* 3 - Tipar corpo *)
@@ -216,27 +214,19 @@ and type_global_stmt ctxs = function
   Tast.TGSfunction(id, args, r, typed_body)
 
   | Ast.GSstruct(id, el, line) ->
-    (* 1 - Verificar id *)
-    let _ = match find_struct_id id ctxs with
-      | None   -> ()
-      | Some _ -> error ("The struct with identifier " ^ id ^ " was already defined.") line in
-    
-    (* 2 - Verificar que os elementos da estrutura são únicos *)
+    (* 1 - Verificar que os elementos da estrutura são únicos *)
     let tmp_ctx = make_ctx () in
-    List.iter(fun (id,t) -> 
-      let _ = match find_var_id id [tmp_ctx] with
-        | None   -> ()
-        | Some _ -> error ("The struct with identifier " ^ id ^ " was already defined.") line in
+    List.iter(fun (e,t) ->
+      if not (is_id_unique e [tmp_ctx]) then error ("The struct element with identifier " ^ e ^ " was already defined.") line;
       let v,_,_ = tmp_ctx in
-      Hashtbl.add v id t 
+      Hashtbl.add v e t 
     )el;
-
-    (* 3 - Adiciona a estrutura *)
+    (* 2 - Verificar id *)
+    if not (is_id_unique id ctxs) then error ("The struct with identifier " ^ id ^ " was already defined.") line;
     let _,_,s = List.hd ctxs in
     Hashtbl.add s id el;
 
     Tast.TGSstruct(id, el)
-
     
 and type_block_stmt ctxs acc = function
   | [] -> acc

@@ -2,7 +2,7 @@
 
 struct T {
   a : i32,
-  b : bool
+  a : bool
 }
 
 fn somar(x : i32, y : i32) -> i32
