@@ -1,5 +1,10 @@
 // Single Line Comment
 
+struct T {
+  a : i32,
+  b : bool
+}
+
 fn somar(x : i32, y : i32) -> i32
 {
   if(!(5 == 4))

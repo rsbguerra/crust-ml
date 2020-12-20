@@ -9,6 +9,9 @@ type ident = string
 type unop = 
   | Uneg      (* - *)
   | Unot      (* ! *)
+  | Uref      (* & *)
+  | Udef      (* * *)
+  | Umut      (* & mt*)
 
 and binop =
   | Badd | Bsub | Bmul | Bdiv | Bmod
@@ -20,6 +23,10 @@ and expr =
   | Eident   of ident * int
   | Ebinop   of binop * expr * expr * int
   | Eunop    of unop * expr * int
+  | Eaccess  of expr * ident             (* S.x (S-> struct, x -> element of struct)*)
+  | Elen     of expr  
+  | Evec_access of expr * expr
+  | Evec_decl   of expr list
   | Ecall    of ident * expr list * int
   
 and stmt =

@@ -26,11 +26,27 @@ exception Error of string * int
 let error s line = raise (Error (s, line))
 
 (* table_ctx representa um scope, contexto *)
-type table_ctx = (string, crust_types) Hashtbl.t
+type tbl_variables_ctx = (string, crust_types) Hashtbl.t
+type tbl_functions_ctx = (string, crust_types) Hashtbl.t
+type tbl_structs_ctx = (string, Ast.pairs list) Hashtbl.t
 
-let rec find_id id = function
+let make_ctx () = 
+  let v = (Hashtbl.create 16 : tbl_variables_ctx) in
+  let f = (Hashtbl.create 16 : tbl_functions_ctx) in
+  let s = (Hashtbl.create 16 : tbl_structs_ctx) in
+  (v, f, s)
+
+let rec find_var_id id = function
   | []     -> None
-  | ct::tl -> if Hashtbl.mem ct id then (Some ct) else (find_id id tl) 
+  | (ct,_,_)::tl -> if Hashtbl.mem ct id then (Some ct) else (find_var_id id tl) 
+
+let rec find_fun_id id = function
+  | []     -> None
+  | (_,ct,_)::tl -> if Hashtbl.mem ct id then (Some ct) else (find_fun_id id tl) 
+
+let rec find_struct_id id = function
+  | []     -> None
+  | (_,_,ct)::tl -> if Hashtbl.mem ct id then (Some ct) else (find_struct_id id tl) 
 
 let crust_types_of_crust_const = function
   | Ast.Ci32  _ -> Ast.Ti32
@@ -67,7 +83,7 @@ and type_expr ctxs = function
   | Eident(id, line)       -> 
     (* 1 - Ir buscar o CTX em que esta variável está declarada *)
     (* 2 - Retornar o seu tipo *)
-    begin match find_id id ctxs with
+    begin match find_var_id id ctxs with
     | None     -> error ("The identifier " ^ id ^ " was not defined.") line
     | Some ctx -> TEident(id, Hashtbl.find ctx id), Hashtbl.find ctx id end
   | Ebinop (op, e1, e2, line) ->
@@ -91,7 +107,8 @@ and type_expr ctxs = function
     (* 3 - Retorna a expressão tipada *)
     Tast.TEunop(Ast.Unot, te, Ast.Tbool), Ast.Tbool
   | Ecall _ -> assert false
- 
+  | _ -> assert false
+  
 (* Verificacao de uma instrucao - Instruções nao devolvem um valor *)
 and type_stmt ctxs = function
   | Sif(e1, body, elifs, line) ->
@@ -99,7 +116,7 @@ and type_stmt ctxs = function
     let te1, t1 = type_expr ctxs e1 in
     if not (compare_crust_types (Tbool, t1)) then error ("Wrong type in the if condition, was given " ^ Printer.string_of_crust_types t1 ^ " but a bool was expected.") line;
     (* 2 - Verificaro corpo do if *)
-    let typed_body = type_stmt ((Hashtbl.create 16 : table_ctx)::ctxs) body in
+    let typed_body = type_stmt ((make_ctx ())::ctxs) body in
     (*3 - Verificar elifs e o else *)
     let iflist = ref [] in
     List.iter(fun (e2, body, line) -> 
@@ -107,7 +124,7 @@ and type_stmt ctxs = function
       let te2, t2 = type_expr ctxs e2 in
       if not (compare_crust_types (Tbool, t1)) then error ("Wrong type in the if condition, was given " ^ Printer.string_of_crust_types t2 ^ " but a bool was expected.") line;
       (* 3.2 - Verificaro corpo do if *)
-      let typed_elif_body = type_stmt ((Hashtbl.create 16 : table_ctx)::ctxs) body in
+      let typed_elif_body = type_stmt ((make_ctx ())::ctxs) body in
       (* 3.3 - Adicionar aos elifs *)
       iflist := (!iflist)@[te2, typed_elif_body]
     )elifs;
@@ -118,42 +135,45 @@ and type_stmt ctxs = function
     let te1, t1 = type_expr ctxs e in
     if not (compare_crust_types (Tbool, t1)) then error ("Wrong type in the while condition, was given "^Printer.string_of_crust_types t1^" but a bool was expected.") line;
     (* 2 - Tipar corpo do while *)
-    let typed_body = type_stmt ((Hashtbl.create 16 : table_ctx)::ctxs) body in
+    let typed_body = type_stmt ((make_ctx ())::ctxs) body in
     Tast.TSwhile(te1, typed_body)
 
   | Sdeclare(id, t, e, line) ->
     (* 1 - Verificar se id já existe no contexto local *)
-    let _ = match find_id id ctxs with
+    let _ = match find_var_id id ctxs with
     | None   -> ()
     | Some _ -> error ("The identifier " ^ id ^ " was already defined.") line in
     (* 2 - Tipar e verificar a expressão e*)
     let te, t1 = type_expr ctxs e in
     if not (compare_crust_types (t, t1)) then error ("Wrong type in the declaration of variable"^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
     (* 3 - Adicionar variável ao contexto *)
-    Hashtbl.add (List.hd ctxs) id t;
+    let v_ctx,_,_ = (List.hd ctxs) in 
+    Hashtbl.add v_ctx id t;
     (* 4 - Retornar declaração tipada *)
     Tast. TSdeclare(id, t, te)
 
   | Sassign(id, e, line)   ->
     (* 1 - Verificar id *)
-    let ctx = match find_id id ctxs with
-    | Some ctx -> ctx in
-    | None     -> error ("The identifier " ^ id ^ " was not defined.") line
+    let ctx = (match find_var_id id ctxs with
+    | Some ctx -> ctx
+    | None     -> error ("The identifier " ^ id ^ " was not defined.") line) in
     (* 2 - Extrair tipo do id *)
-    let _, t = Hashtbl.find ctx id in
+    let t = Hashtbl.find ctx id in
     (* 3 - Tipar expressão *)
-    let te, t1 = type_expr ctx e in
+    let te, t1 = type_expr ctxs e in
     if not (compare_crust_types (t, t1)) then error ("Wrong type in the assign of variable"^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
-    Tast.TSassing(id, te)
+    Tast.TSassign(id, te)
 
   | Sprintn (e1, _) ->
     (* 1 - Tipar expressão *)
     let te1, t = type_expr ctxs e1 in
     Tast.TSprintn(te1)
+
   | Sprint (e1, _) ->
     (* 1 - Tipar expressão *)
     let te1, t = type_expr ctxs e1 in
     Tast.TSprint(te1)
+
   | Sblock (bl, _) ->
     (* 1 - Tipar bloco*)
     Tast.TSblock(type_block_stmt ctxs [] bl)
@@ -170,9 +190,54 @@ and type_stmt ctxs = function
   
 and type_global_stmt ctxs = function  
   | Ast.GSblock (bl, _) -> Tast.TGSblock(type_block_global_stmt ctxs [] bl)
-  | Ast.GSfunction(id, list, r, body, _) -> Tast.TGSfunction(id, list, r, type_stmt ((Hashtbl.create 16 : table_ctx)::ctxs) body)
-  | Ast.GSstruct _      -> assert false
+  | Ast.GSfunction(id, args, r, body, line) -> 
+    (* 1 - Verificar se o id já foi definido *)
+    let _ = match find_fun_id id ctxs with
+      | None   -> ()
+      | Some _ -> error ("The function with identifier " ^ id ^ " was already defined.") line in
+    let _,f,_ = List.hd ctxs in
+    Hashtbl.add f id r;
+    (* 2 - tipar argumentos *)
+    let ctxs = (make_ctx ())::ctxs in
+    List.iter(fun (id,t) -> 
+      (* 2.1 - Verificar se o id já foi definido *)
+      let _ = match find_var_id id ctxs with
+      | None   -> ()
+      | Some _ -> error ("The function argument with identifier " ^ id ^ " was already defined.") line in
+      let v,_,_ = List.hd ctxs in
+    
+      Hashtbl.add v id t;
 
+    ) args;
+    (* 3 - Tipar corpo *)
+    (* TODO: Alterar AST para que instruções também tenham tipo. Adicionar tipo UNIT*)
+    let typed_body = type_stmt ctxs body in
+
+  Tast.TGSfunction(id, args, r, typed_body)
+
+  | Ast.GSstruct(id, el, line) ->
+    (* 1 - Verificar id *)
+    let _ = match find_struct_id id ctxs with
+      | None   -> ()
+      | Some _ -> error ("The struct with identifier " ^ id ^ " was already defined.") line in
+    
+    (* 2 - Verificar que os elementos da estrutura são únicos *)
+    let tmp_ctx = make_ctx () in
+    List.iter(fun (id,t) -> 
+      let _ = match find_var_id id [tmp_ctx] with
+        | None   -> ()
+        | Some _ -> error ("The struct with identifier " ^ id ^ " was already defined.") line in
+      let v,_,_ = tmp_ctx in
+      Hashtbl.add v id t 
+    )el;
+
+    (* 3 - Adiciona a estrutura *)
+    let _,_,s = List.hd ctxs in
+    Hashtbl.add s id el;
+
+    Tast.TGSstruct(id, el)
+
+    
 and type_block_stmt ctxs acc = function
   | [] -> acc
   | s :: sl -> (type_block_stmt ctxs (acc@[type_stmt ctxs s]) sl)
@@ -182,4 +247,4 @@ and type_block_global_stmt ctxs acc = function
   | s :: sl -> (type_block_global_stmt ctxs (acc@[type_global_stmt ctxs s]) sl)
 
 (* Tipa uma AST *)
-let type_file s = type_global_stmt [(Hashtbl.create 16 : table_ctx)] s
+let type_file s = type_global_stmt [make_ctx ()] s

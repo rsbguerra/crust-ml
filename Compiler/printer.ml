@@ -8,6 +8,9 @@ let string_of_crust_types = function
 let string_of_unop = function
   | Uneg -> "-"
   | Unot -> "!"
+  | Uref -> "&"
+  | Udef -> "*"
+  | Umut -> "&mut"
 
 let string_of_binop = function
   | Badd -> "+"
@@ -38,6 +41,10 @@ and string_of_expr = function
   | Ebinop (binop, e1, e2, _)-> "Ebinop("^(string_of_binop binop)^", "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
   | Eunop (unop , e1, _)     -> "Eunop("^(string_of_unop unop)^", "^(string_of_expr e1)^")"
   | Ecall (f, el, _)         -> "Ecall("^f^", "^(string_of_expr_list "" el)^")"  
+  | Eaccess (e1, e2)         -> "Eaccess("^(string_of_expr e1)^", "^e2^")"
+  | Elen (e)                 -> "Elen"^(string_of_expr e)
+  | Evec_access(e1, e2)      -> "Evec_access("^(string_of_expr e1)^", "^(string_of_expr e2)^")"
+  | Evec_decl(el)             -> "Evec_decl("^(string_of_expr_list "" el)^")" 
 
 and string_of_stmt = function
   | Sif (e, s1, elifs, _)-> "Sif("^(string_of_expr e)^", "^(string_of_stmt s1)^", "^(string_of_elif elifs)^")"
