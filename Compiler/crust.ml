@@ -6,6 +6,8 @@ open Lexing
 (* Opção de compilação, para parar na fase de parsing *)
 let parse_only = ref false
 let print_ast = ref false
+let print_tast = ref false
+let print_past = ref false
 
 (* Nome dos ficheiros fonte e alvo *)
 let ifile = ref ""
@@ -19,6 +21,10 @@ let options =
    "  Executes only the lexer and parser ";
   "-print-ast", Arg.Set print_ast,
   "  Prints the AST of a givin file ";
+  "-print-tast", Arg.Set print_tast,
+  "  Prints the TAST of a givin file ";
+  "-print-past", Arg.Set print_ast,
+  "  Prints the PAST of a givin print_past ";
    "-o", Arg.String (set_file ofile),
    "<file>  To indicate the name of the output file"]
 
@@ -70,7 +76,9 @@ let () =
     (* Compilação da árvore de sintaxe abstracta p. O código máquina
        resultante desta transformação deve ficar escrito no ficheiro alvo ofile. *)
     let typed_p = Typing.type_file p in
-    if !print_ast then Printer_tast.print_typed_ast typed_p;
+    if !print_tast then Printer_tast.print_typed_ast typed_p;
+    let precomp_p = Pre_compile.precompile typed_p in
+    if !print_past then Printer_past.print_precomp_ast precomp_p;
 
     Compile.compile_program typed_p !ofile
 
