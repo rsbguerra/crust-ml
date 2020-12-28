@@ -34,7 +34,6 @@ let rec pcompile_expr ctxs next = function
 
 and pcompile_stmt ctxs = function
   | TSif (e, s, elif) ->
-      (* todo: verificar qual se fp é max fp1 fp2 ou só fp2 *)
       let pe, fp = pcompile_expr ctxs 0 e in
       let ps = pcompile_stmt ctxs s in
       let iflist = List.map (fun (if_expr, if_stmt) -> 
@@ -49,28 +48,37 @@ and pcompile_stmt ctxs = function
       PSwhile (pe, ps)
 
   | TSdeclare (id, t, e) -> 
-      Hashtbl.replace (var_ctx ctxs) id (pcompile_expr ctxs 0 e);
-      PSdeclare (id, t, e)
+      let ep, _ = (pcompile_expr ctxs 0 e) in
+      Hashtbl.replace (var_ctx ctxs) id ep;
+      PSdeclare (id, t, ep)
   | TSassign (id, e) ->
-      Hashtbl.replace (var_ctx ctxs) id (pcompile_expr ctxs 0 e);
-      PSassign (id, e)
-  | TSprintn e ->  
-      PSprintn (pcompile_expr ctxs 0 e)
-  | TSprint e -> 
-      PSprint (pcompile_expr ctxs 0 e)
+      let ep, _ = (pcompile_expr ctxs 0 e) in
+      Hashtbl.replace (var_ctx ctxs) id ep;
+      PSassign (id, ep)
+  | TSprintn e -> 
+      let ep, _ = (pcompile_expr ctxs 0 e) in
+      PSprintn ep
+  | TSprint e ->
+       let ep, _ = (pcompile_expr ctxs 0 e) in
+      PSprintn ep
   | TSblock stmts -> 
       PSblock (List.map (fun s -> pcompile_stmt ctxs s) stmts)
-  | TSreturn (e, _) -> 
-      PSreturn (pcompile_expr ctxs 0)
+  | TSreturn (e, _) ->
+      let ep, _ = (pcompile_expr ctxs 0 e) in
+      PSreturn ep
   | TSexpr e -> 
-      PSExpr (pcompile_expr ctxs 0)
+      let ep, _ = (pcompile_expr ctxs 0 e) in
+      PSexpr ep
   | TScontinue -> PScontinue
   | TSbreak -> PSbreak
   | TSnothing -> PSnothing
 
+and pcompile_block_stmt ctxs = 
+  List.map (fun s -> pcompile_stmt ctxs s)
+
 and pcompile_global_stmt ctxs = function
-  | TGSblock gl_stmts -> 
-    PSblock (List.map (fun s -> pcompile_stmt ctxs s) gl_stmts)
+  | TGSblock stmts -> 
+    PSblock (List.map (fun s -> pcompile_global_stmt ctxs s) stmts)
   | TGSfunction (i, args, t, stmt) -> assert false
   | TGSstruct (ident, args) -> assert false
 
