@@ -78,7 +78,7 @@ let () =
     let typed_p = Typing.type_file p in
     if !print_tast then Printer_tast.print_typed_ast typed_p;
     let precomp_p = Pre_compile.precompile typed_p in
-    if !print_past then Printer_past.print_precomp_ast precomp_p;
+    if !print_past then Printer_past.print_precomp_past precomp_p;
 
     Compile.compile_program typed_p !ofile
 

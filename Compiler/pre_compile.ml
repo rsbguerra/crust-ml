@@ -78,8 +78,8 @@ and pcompile_block_stmt ctxs =
 
 and pcompile_global_stmt ctxs = function
   | TGSblock stmts -> 
-    PSblock (List.map (fun s -> pcompile_global_stmt ctxs s) stmts)
+    PGSblock (List.map (fun s -> pcompile_global_stmt ctxs s) stmts)
   | TGSfunction (i, args, t, stmt) -> assert false
   | TGSstruct (ident, args) -> assert false
 
-let precompile s = pcompile_global_stmt (make_ctx ()) s
+let precompile = pcompile_global_stmt (make_ctx ())
