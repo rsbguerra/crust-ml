@@ -2,6 +2,7 @@ open Ast
 open Past
 open Printer
 
+
 let rec string_of_precomp_expr = function
   | PEcst n, fp ->
       "PEcst(" ^ 
@@ -33,7 +34,7 @@ and string_of_precomp_expr_list exprs fp =
 
 and string_of_precomp_stmt = function
   | PSif (e, s1, elifs) ->
-      "PSif(" ^ string_of_precomp_expr (e,0) ^ ", " ^ 
+      "PSif(" ^ string_of_precomp_expr (e,0) ^ ", \n" ^ 
       string_of_precomp_stmt s1 ^ ", " ^ 
       string_of_elif elifs ^ ")"
   | PSwhile (e, bl) ->
@@ -67,7 +68,7 @@ and string_of_precomp_stmt = function
 
 and string_of_elif l =
     List.map (fun (e, body) -> (string_of_precomp_expr (e,0), string_of_precomp_stmt body)) l |> 
-    List.fold_left (fun str (e, body) -> "Selif(" ^ e ^ ", " ^ body ^ ")" ^ str) ""
+    List.fold_left (fun str (e, body) -> "PSelif(" ^ e ^ ", " ^ body ^ ")" ^ str) ""
 
 
 and string_of_block_precomp_stmt bl =
