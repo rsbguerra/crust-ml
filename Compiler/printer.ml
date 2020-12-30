@@ -1,7 +1,7 @@
 open Ast
 
 let string_of_crust_types = function 
-  | Tvoid -> "Tvoid"
+  | Tunit -> "Tunit"
   | Ti32  -> "Ti32"
   | Tbool -> "Tbool"
 
@@ -30,6 +30,7 @@ let string_of_binop = function
 let string_of_crust_consts = function 
   | Ci32  c -> "Ci32("^(Stdint.Int32.to_string c)^")"
   | Cbool c -> "Cbool("^(string_of_bool c)^")"
+  | Cunit   -> "Cunit( () )"
 
 let rec string_of_expr_list acc = function
   | []      -> acc
@@ -62,7 +63,7 @@ and string_of_stmt = function
 
 and string_of_elif l = 
   let out = ref "" in
-  List.iter(fun (e, body, line) -> 
+  List.iter(fun (e, body, _) -> 
     out := !out ^ "Selif("^(string_of_expr e)^", "^(string_of_stmt body)^ ")"
   )l;
   !out

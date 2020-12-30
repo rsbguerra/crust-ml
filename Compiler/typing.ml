@@ -27,7 +27,7 @@ let error s line = raise (Error (s, line))
 
 (* table_ctx representa um scope, contexto *)
 type tbl_variables_ctx = (string, crust_types) Hashtbl.t
-type tbl_functions_ctx = (string, crust_types) Hashtbl.t
+type tbl_functions_ctx = (string, Ast.pairs list * crust_types) Hashtbl.t
 type tbl_structs_ctx = (string, Ast.pairs list) Hashtbl.t
 
 let make_ctx () = 
@@ -55,10 +55,12 @@ let rec is_id_unique id = function
 let crust_types_of_crust_const = function
   | Ast.Ci32  _ -> Ast.Ti32
   | Ast.Cbool _ -> Ast.Tbool
+  | Ast.Cunit   -> Ast.Tunit
 
 let compare_crust_types = function 
   | Ast.Ti32 , Ast.Ti32  -> true
   | Ast.Tbool, Ast.Tbool -> true
+  | Ast.Tunit, Ast.Tunit -> true
   | _, _                 -> false
   
 let rec type_binop_expr op te1 t1 te2 t2 line = match op with
@@ -110,7 +112,25 @@ and type_expr ctxs = function
     if not (compare_crust_types (Ast.Tbool, t)) then error ("Wrong type given to operand Ast.Unot, was given"^Printer.string_of_crust_types t^" but a "^Printer.string_of_crust_types Ast.Tbool^" was expected.") line;
     (* 3 - Retorna a expressão tipada *)
     Tast.TEunop(Ast.Unot, te, Ast.Tbool), Ast.Tbool
-  | Ecall _ -> assert false
+  | Ecall(id, args, line) ->
+    (* 1 - Verificar se a função existe *)
+    let params, r = match find_fun_id id ctxs with
+      | None -> error ("The function with identifier " ^ id ^ " was not defined.") line
+      | Some ctx -> Hashtbl.find ctx id in
+
+    (* 2 - Verificar os tipos dos argumentos *)
+    if not ((List.length args) = (List.length params)) then error ("Invalid number of arguments given.") line;
+    
+    let typed_args = ref [] in
+    List.iteri(fun i e ->
+      let te, t = type_expr ctxs e in
+      let ta = snd (List.nth params i) in
+      if not (compare_crust_types (t,ta)) then error ("Invalid number of arguments given.") line;
+      typed_args := !typed_args@[te]
+    )args;
+
+    TEcall(id, !typed_args, r), r
+
   | _ -> assert false
   
 (* Verificacao de uma instrucao - Instruções nao devolvem um valor *)
@@ -120,7 +140,7 @@ and type_stmt ctxs = function
     let te1, t1 = type_expr ctxs e1 in
     if not (compare_crust_types (Tbool, t1)) then error ("Wrong type in the if condition, was given " ^ Printer.string_of_crust_types t1 ^ " but a bool was expected.") line;
     (* 2 - Verificaro corpo do if *)
-    let typed_body = type_stmt ((make_ctx ())::ctxs) body in
+    let typed_body, tb = type_stmt ((make_ctx ())::ctxs) body in
     (*3 - Verificar elifs e o else *)
     let iflist = ref [] in
     List.iter(fun (e2, body, line) -> 
@@ -128,19 +148,22 @@ and type_stmt ctxs = function
       let te2, t2 = type_expr ctxs e2 in
       if not (compare_crust_types (Tbool, t1)) then error ("Wrong type in the if condition, was given " ^ Printer.string_of_crust_types t2 ^ " but a bool was expected.") line;
       (* 3.2 - Verificaro corpo do if *)
-      let typed_elif_body = type_stmt ((make_ctx ())::ctxs) body in
+      let typed_elif_body, telb = type_stmt ((make_ctx ())::ctxs) body in
+      (* 3.3 - Verificar se todos os elifs tem o mesmo tipo que if *)
+      if not (compare_crust_types (tb, telb)) then error ("Incompatible type in if branch, was given "^Printer.string_of_crust_types telb^" but a "^Printer.string_of_crust_types tb^" was expected.") line;
+    
       (* 3.3 - Adicionar aos elifs *)
       iflist := (!iflist)@[te2, typed_elif_body]
     )elifs;
-    Tast.TSif(te1, typed_body, !iflist)
+    Tast.TSif(te1, typed_body, !iflist, tb), tb
 
   | Swhile(e, body, line)     ->
     (* 1 - Tipar e verificar a condição e *)
     let te1, t1 = type_expr ctxs e in
     if not (compare_crust_types (Tbool, t1)) then error ("Wrong type in the while condition, was given "^Printer.string_of_crust_types t1^" but a bool was expected.") line;
     (* 2 - Tipar corpo do while *)
-    let typed_body = type_stmt ((make_ctx ())::ctxs) body in
-    Tast.TSwhile(te1, typed_body)
+    let typed_body, tb = type_stmt ((make_ctx ())::ctxs) body in
+    Tast.TSwhile(te1, typed_body, tb), tb
 
   | Sdeclare(id, t, e, line) ->
     (* 1 - Verificar se id já existe no contexto local *)
@@ -152,7 +175,7 @@ and type_stmt ctxs = function
     let v_ctx,_,_ = (List.hd ctxs) in 
     Hashtbl.add v_ctx id t;
     (* 4 - Retornar declaração tipada *)
-    Tast. TSdeclare(id, t, te)
+    Tast. TSdeclare(id, t, te, Ast.Tunit), Ast.Tunit
 
   | Sassign(id, e, line)   ->
     (* 1 - Verificar id *)
@@ -164,54 +187,59 @@ and type_stmt ctxs = function
     (* 3 - Tipar expressão *)
     let te, t1 = type_expr ctxs e in
     if not (compare_crust_types (t, t1)) then error ("Wrong type in the assign of variable"^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
-    Tast.TSassign(id, te)
+    Tast.TSassign(id, te, Ast.Tunit), Ast.Tunit
 
-  | Sprintn (e1, _) ->
+  | Sprintn (e, _) ->
     (* 1 - Tipar expressão *)
-    let te1, t = type_expr ctxs e1 in
-    Tast.TSprintn(te1)
+    let te, t = type_expr ctxs e in
+    Tast.TSprintn(te, Ast.Tunit), Ast.Tunit
 
-  | Sprint (e1, _) ->
+  | Sprint (e, _) ->
     (* 1 - Tipar expressão *)
-    let te1, t = type_expr ctxs e1 in
-    Tast.TSprint(te1)
+    let te, t = type_expr ctxs e in
+    Tast.TSprint(te, Ast.Tunit), Ast.Tunit
 
   | Sblock (bl, _) ->
     (* 1 - Tipar bloco*)
-    Tast.TSblock(type_block_stmt ctxs [] bl)
-  | Scontinue _ -> Tast.TScontinue
-  | Sbreak _    -> Tast.TSbreak
+    let l, t = type_block_stmt ctxs [] bl in
+    Tast.TSblock(l, t), t
+
+  | Scontinue _ -> Tast.TScontinue Ast.Tunit, Ast.Tunit
+  | Sbreak _    -> Tast.TSbreak Ast.Tunit, Ast.Tunit
   | Sreturn (e1, _)     -> 
     (* 1 - Verificar o tipo de e1 *)
     let te1, t = type_expr ctxs e1 in
-    Tast.TSreturn(te1, t)
-  | Snothing _  -> Tast.TSnothing
+    Tast.TSreturn(te1, t), t
+
+  | Snothing _  -> Tast.TSnothing Ast.Tunit, Ast.Tunit
   | Sexpr(e, line) ->
     let te, t = type_expr ctxs e in
-    Tast.TSexpr te
+    Tast.TSexpr(te, t), t
   
 and type_global_stmt ctxs = function  
   | Ast.GSblock (bl, _) -> Tast.TGSblock(type_block_global_stmt ctxs [] bl)
   | Ast.GSfunction(id, args, r, body, line) -> 
-    (* 1 - Verificar se o id já foi definido *)
-    if not (is_id_unique id ctxs) then error ("The function with identifier " ^ id ^ " was already defined.") line;
-    let _,f,_ = List.hd ctxs in
-    Hashtbl.add f id r;
-    (* 2 - tipar argumentos *)
-    let ctxs = (make_ctx ())::ctxs in
+    (* 1 - tipar argumentos *)
+    
+    let args_ctxs = (make_ctx ())::ctxs in
     List.iter(fun (arg,t) -> 
       (* 2.1 - Verificar se o id já foi definido *)
-      if not (is_id_unique arg ctxs) then error ("The function argument with identifier " ^ arg ^ " was already defined.") line;
-      let v,_,_ = List.hd ctxs in
+      if not (is_id_unique arg args_ctxs) then error ("The function argument with identifier " ^ arg ^ " was already defined.") line;
+      let v,_,_ = List.hd args_ctxs in
     
       Hashtbl.add v arg t;
-
     ) args;
-    (* 3 - Tipar corpo *)
-    (* TODO: Alterar AST para que instruções também tenham tipo. Adicionar tipo UNIT*)
-    let typed_body = type_stmt ctxs body in
+    
+    (* 2 - Verificar se o id já foi definido *)
+    if not (is_id_unique id args_ctxs) then error ("The function with identifier " ^ id ^ " was already defined.") line;
+    let _,f,_ = List.hd ctxs in
+    Hashtbl.add f id (args, r);
 
-  Tast.TGSfunction(id, args, r, typed_body)
+    (* 3 - Tipar corpo *)
+    let typed_body, tb = type_stmt args_ctxs body in
+    if not (compare_crust_types (tb,r)) then error ("The function "^id^" has return type "^Printer.string_of_crust_types r^" but is body has return type"^Printer.string_of_crust_types tb^".") line;
+      
+    Tast.TGSfunction(id, args, r, typed_body)
 
   | Ast.GSstruct(id, el, line) ->
     (* 1 - Verificar que os elementos da estrutura são únicos *)
@@ -229,7 +257,8 @@ and type_global_stmt ctxs = function
     Tast.TGSstruct(id, el)
     
 and type_block_stmt ctxs acc = function
-  | [] -> acc
+  | [] -> (List.map fst acc), Ast.Tunit
+  | [s] -> let typed_s, t = type_stmt ctxs s in let acc = acc@[(typed_s, t)] in (List.map fst acc), t 
   | s :: sl -> (type_block_stmt ctxs (acc@[type_stmt ctxs s]) sl)
 
 and type_block_global_stmt ctxs acc = function

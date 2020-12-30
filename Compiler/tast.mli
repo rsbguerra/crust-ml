@@ -13,18 +13,18 @@ and typed_expr =
   | TEcall    of ident * typed_expr list * Ast.crust_types
   
 and typed_stmt =
-  | TSif       of typed_expr * typed_stmt * typed_elif list
-  | TSwhile    of typed_expr * typed_stmt
-  | TSdeclare  of ident * Ast.crust_types * typed_expr
-  | TSassign   of ident * typed_expr
-  | TSprintn   of typed_expr
-  | TSprint    of typed_expr
-  | TSblock    of typed_stmt list
-  | TScontinue
-  | TSbreak
+  | TSif       of typed_expr * typed_stmt * typed_elif list  * Ast.crust_types
+  | TSwhile    of typed_expr * typed_stmt * Ast.crust_types
+  | TSdeclare  of ident * Ast.crust_types * typed_expr * Ast.crust_types
+  | TSassign   of ident * typed_expr * Ast.crust_types
+  | TSprintn   of typed_expr * Ast.crust_types
+  | TSprint    of typed_expr * Ast.crust_types
+  | TSblock    of typed_stmt list * Ast.crust_types
+  | TScontinue of Ast.crust_types
+  | TSbreak    of Ast.crust_types
   | TSreturn   of typed_expr * Ast.crust_types
-  | TSnothing
-  | TSexpr     of typed_expr
+  | TSnothing  of Ast.crust_types
+  | TSexpr     of typed_expr * Ast.crust_types
 
 and typed_elif = typed_expr * typed_stmt
 

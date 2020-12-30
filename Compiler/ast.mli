@@ -2,7 +2,6 @@
   Última alteração: 17-12-2020
   Descricao: Árvore de sintaxe abastrata do Rust
 *)
-open Stdint
 
 type ident = string
 
@@ -48,9 +47,10 @@ and elif = expr * stmt * int
 and crust_const =
   | Ci32 of int32
   | Cbool of bool
-
+  | Cunit
+  
 and crust_types =
-  | Tvoid | Ti32 | Tbool
+  | Tunit | Ti32 | Tbool
 
 and global_stmt = 
   | GSblock    of global_stmt list * int

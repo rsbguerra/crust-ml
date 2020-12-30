@@ -106,7 +106,7 @@ rule analisador = parse
   | INTEGER_LITERAL as snum 
     { (*Todo decide wich type this integer is *)
       try
-        [CST ( Ci32 (Stdint.Int32.of_string snum))]
+        [CST ( Ci32 (Int32.of_string snum))]
       with _ -> raise (Lexing_error ("The constant is too big : _" ^ snum^"_")) }
   | id as word
   { try
