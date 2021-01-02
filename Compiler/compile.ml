@@ -36,27 +36,27 @@ let rec compile_stmt ctxs = function
   | TSwhile _ ->   assert false
   | TSdeclare _ -> assert false
   | TSassign _ -> assert false
-  | TSprintn e ->
+  | TSprintn (e, _) ->
     (* 1 - Vai buscar o valor de e *)  
     compile_expr ctxs e ++
           
     (* 2 - Passa como parametro para a funcao printn_int e chama-a*)
     popq rdi ++
     call "printn_int"
-  | TSprint e  ->
+  | TSprint (e, _)  ->
     (* 1 - Vai buscar o valor de e *)
     compile_expr ctxs e ++
 
     (* 2 - Passa como parametro para a funcao print_int e chama-a*)
     popq rdi ++
     call "print_int" 
-  | TSblock bl -> 
+  | TSblock (bl, t) -> 
     (* 1 - Compila um bloco de instrucoes *)
     let block = List.rev(compile_block_stmt ctxs bl) in
     List.fold_right (++) block nop
   
-  | TScontinue -> assert false
-  | TSbreak ->              assert false
+  | TScontinue _ -> assert false
+  | TSbreak _ ->              assert false
   | TSreturn _ ->  nop
   | TSnothing _ -> nop
   | _ -> assert false

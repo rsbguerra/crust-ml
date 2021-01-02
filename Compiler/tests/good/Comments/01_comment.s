@@ -3,10 +3,6 @@
 main:
 	subq $0, %rsp
 	leaq -8(%rsp), %rbp
-	movq $5, %rax
-	pushq %rax
-	popq %rdi
-	call print_int
 end:
 	addq $0, %rsp
 	movq $0, %rax

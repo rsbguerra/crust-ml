@@ -1,28 +1,11 @@
 // Single Line Comment
 
-struct T {
-  a : i32,
-  a : bool
-}
-
 fn somar(x : i32, y : i32) -> i32
 {
-  if(!(5 == 4))
-  {
-    print!(-1);
-  }
-  else if(4 == 3)
-  {
-    print!(2);
-  }
-  else if(5 == 4)
-  {
-    print!(3);
-  }
-  else
-  {
-    print!(4);
-  }
-  
-  return 5;
+  return x + y;
+}
+
+fn print(x : i32) -> i32
+{
+  somar(6, 4)
 }
