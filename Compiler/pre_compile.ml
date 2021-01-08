@@ -18,6 +18,10 @@ let var_ctx    = fun (c, _, _) -> c
 let fun_ctx    = fun (_, c, _) -> c
 let struct_ctx = fun (_, _, c) -> c
 
+let var_ctx_hd    = fun l -> var_ctx (List.hd l)
+let fun_ctx_hd    = fun l -> fun_ctx (List.hd l)
+let struct_ctx_hd = fun l -> struct_ctx (List.hd l)
+
 let id_exists id =
   List.exists(fun (v,s,f) -> Hashtbl.mem v id || Hashtbl.mem f id || Hashtbl.mem s id ) 
 
@@ -67,11 +71,11 @@ and pcompile_stmt ctxs = function
 
   | TSdeclare (id, t, e, _) -> 
       let ep, fp = (pcompile_expr ctxs 0 e) in
-      Hashtbl.replace (var_ctx (List.hd ctxs)) id fp;
+      Hashtbl.replace (var_ctx_hd ctxs) id fp;
       PSdeclare (id, t, ep)
   | TSassign (id, e, _) ->
       let ep, fp = (pcompile_expr ctxs 0 e) in
-      Hashtbl.replace (var_ctx (List.hd ctxs)) id fp;
+      Hashtbl.replace (var_ctx_hd ctxs) id fp;
       PSassign (id, ep)
   | TSprintn (e, _) -> 
       let ep, _ = (pcompile_expr ctxs 0 e) in
@@ -96,8 +100,16 @@ and pcompile_block_stmt ctxs =
 
 and pcompile_global_stmt ctxs = function
   | TGSblock stmts -> 
-      PGSblock (List.map (fun s -> pcompile_global_stmt ((make_ctx())::ctxs) s) stmts)
-  | TGSfunction (i, args, t, stmt) -> assert false
+      PGSblock (List.map (fun s -> pcompile_global_stmt ((make_ctx())::ctxs) s) stmts, 0)
+  | TGSfunction (x, args, t, stmt) -> 
+      let new_ctxs = make_ctx()::ctxs in
+      let fpmax = List.fold_left(
+        fun fp (arg, _) -> 
+          Hashtbl.add (var_ctx_hd new_ctxs) x fp;
+          fp+8) 8 args in 
+      let s = pcompile_stmt new_ctxs stmt in
+      Hashtbl.replace (fun_ctx_hd new_ctxs) x fpmax;
+      PGSfunction(x, args, t, s, fpmax)
   | TGSstruct (ident, args) -> assert false
 
 let precompile = pcompile_global_stmt [make_ctx()]
