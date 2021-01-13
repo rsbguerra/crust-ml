@@ -4,20 +4,9 @@
 *)
 type ident = string
 
-(* and expr =
-  | PEcst of Ast.crust_const * int
-  | PEident of ident * int
-  | PEbinop of Ast.binop * expr * expr * int
-  | PEunop of Ast.unop * expr * int
-  | PEaccess of expr * ident (* S.x (S-> struct, x -> element of struct)*)
-  | PElen of expr
-  | PEvec_access of expr * expr
-  | PEvec_decl of expr list
-  | PEcall of ident * expr list * int *)
-
 and expr =
   | PEcst of Ast.crust_const
-  | PEident of ident
+  | PEident of ident * int
   | PEbinop of Ast.binop * expr * expr
   | PEunop of Ast.unop * expr
   | PEaccess of expr * ident (* S.x (S-> struct, x -> element of struct)*)
@@ -26,11 +15,10 @@ and expr =
   | PEvec_decl of expr list
   | PEcall of ident * expr list
 
-
 and stmt =
   | PSif of expr * stmt * elif list
   | PSwhile of expr * stmt
-  | PSdeclare of ident * Ast.crust_types * expr
+  | PSdeclare of ident * Ast.crust_types * expr * int
   | PSassign of ident * expr
   | PSprintn of expr
   | PSprint of expr
@@ -48,6 +36,6 @@ and global_stmt =
   | PGSfunction of ident * pairs list * Ast.crust_types * stmt
   | PGSstruct of ident * pairs list
 
-and pairs = ident * Ast.crust_types
+and pairs = ident * Ast.crust_types * int
 
 and program = global_stmt

@@ -31,12 +31,19 @@ let find_id id =
       match Hashtbl.find_opt f id with | Some x -> x | None ->
       match Hashtbl.find_opt s id with | Some x -> x | None -> None)
 
+let rec find_var_id id = function
+  | []     -> None
+  | (ct,_,_)::tl -> if Hashtbl.mem ct id then (Some ct) else (find_var_id id tl) 
+
 let rec pcompile_expr ctxs next = function
   | TEcst (c, t) -> 
       PEcst c, next
-  | TEident (id, t) ->
-      if id_exists id ctxs then PEident id, next
-      else raise Not_found
+    | TEident (id, t) -> begin
+      match find_var_id id ctxs with
+      | None -> assert false
+      | Some ct -> let fp = Hashtbl.find ct id in
+        PEident(id, fp), next
+      end
   | TEbinop (op, e1, e2, t) -> 
       let e1, fp1 = pcompile_expr ctxs next e1 in
       let e2, fp2 = pcompile_expr ctxs next e2 in
@@ -78,7 +85,7 @@ and pcompile_stmt ctxs next = function
   | TSdeclare (id, t, e, _) -> 
       let ep, next = (pcompile_expr ctxs next e) in
       Hashtbl.replace (var_ctx_hd ctxs) id (-next);
-      PSdeclare (id, t, ep), next+8
+      PSdeclare (id, t, ep, -next), next+8
 
   | TSassign (id, e, _) ->
       let ep, next = (pcompile_expr ctxs next e) in
@@ -114,13 +121,13 @@ and pcompile_global_stmt ctxs = function
     PGSblock (List.map (fun s -> pcompile_global_stmt ((make_ctx())::ctxs) s) stmts)
   | TGSfunction (x, args, t, stmt) -> 
       let new_ctxs = make_ctx()::ctxs in
-      let next = List.fold_left(
-        fun next (arg, _) -> 
+      let next, p_args = List.fold_left_map(
+        fun next (arg, t_arg) -> 
           Hashtbl.add (var_ctx_hd new_ctxs) x (-next);
-          next+8) 8 args in
+          (next+8), (arg, t_arg, (-next))) 8 args in
       let p_stmt, next = pcompile_stmt new_ctxs next stmt in
       Hashtbl.replace (fun_ctx_hd new_ctxs) x (-next);
-      PGSfunction(x, args, t, p_stmt)
+      PGSfunction(x, p_args, t, p_stmt)
   | TGSstruct (ident, args) -> assert false
 
 let precompile = pcompile_global_stmt [make_ctx()]
