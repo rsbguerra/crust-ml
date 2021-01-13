@@ -23,7 +23,7 @@ let fun_ctx_hd    = fun l -> fun_ctx (List.hd l)
 let struct_ctx_hd = fun l -> struct_ctx (List.hd l)
 
 let id_exists id =
-  List.exists(fun (v,s,f) -> Hashtbl.mem v id || Hashtbl.mem f id || Hashtbl.mem s id ) 
+  List.exists(fun (v,s,f) -> Hashtbl.mem v id || Hashtbl.mem f id || Hashtbl.mem s id)
 
 let find_id id =
   List.find_map(fun (v,f,s) -> 
@@ -45,8 +45,9 @@ let rec pcompile_expr ctxs next = function
   | TEunop (op, e, t) -> 
       let pe, _ = pcompile_expr ctxs next e in
       PEunop(op, pe), next
-  | TEcall (id, args, t) -> 
+  | TEcall (id, args, t) ->
     let exprs, fpmax = 
+      (*  *)
       List.fold_left (
         fun (l, fpmax) el -> 
           let e, fp = pcompile_expr ctxs fpmax el in
@@ -54,62 +55,74 @@ let rec pcompile_expr ctxs next = function
         ([], next) args in
     PEcall(id, exprs), fpmax
 
-and pcompile_stmt ctxs = function
+and pcompile_stmt ctxs next = function
   | TSif (e, s, elif, _) ->
-      let pe, fp = pcompile_expr ctxs 0 e in
-      let ps = pcompile_stmt ctxs s in
-      let iflist = List.map (fun (if_expr, if_stmt) -> 
-        let e, _ = pcompile_expr ctxs fp if_expr in
-        let s = pcompile_stmt ((make_ctx())::ctxs) if_stmt in
-        (e, s)) elif in 
-      PSif(pe, ps, iflist)
+      let pe, next  = pcompile_expr ctxs next e in
+      let ps, next  = pcompile_stmt ((make_ctx())::ctxs) next s in
+      let next, if_list = List.fold_left_map(
+        fun next (if_expr, if_stmt) ->
+          (* 1. Pre-compilar condição *)
+          let p_elif, next = pcompile_expr ctxs next if_expr in
+          (* 2. Pre-compilar stmts do corpo *)
+          let p_body_elif, next = pcompile_stmt ((make_ctx())::ctxs) next if_stmt in
+          (* 3. Devolver corpo tipado e último next *)
+          (next, p_body_elif)
+      ) next elif in
+      PSif(pe, ps, if_list), next
 
   | TSwhile (e, s, _) -> 
-      let pe, _ = pcompile_expr ctxs 0 e in
-      let ps = pcompile_stmt ((make_ctx())::ctxs) s in
-      PSwhile (pe, ps)
+      let pe, next = pcompile_expr ctxs next e in
+      let ps, next = pcompile_stmt ((make_ctx())::ctxs) next s in
+      PSwhile (pe, ps), next
 
   | TSdeclare (id, t, e, _) -> 
-      let ep, fp = (pcompile_expr ctxs 0 e) in
-      Hashtbl.replace (var_ctx_hd ctxs) id fp;
-      PSdeclare (id, t, ep)
-  | TSassign (id, e, _) ->
-      let ep, fp = (pcompile_expr ctxs 0 e) in
-      Hashtbl.replace (var_ctx_hd ctxs) id fp;
-      PSassign (id, ep)
-  | TSprintn (e, _) -> 
-      let ep, _ = (pcompile_expr ctxs 0 e) in
-      PSprintn ep
-  | TSprint (e, _) ->
-       let ep, _ = (pcompile_expr ctxs 0 e) in
-      PSprintn ep
-  | TSblock (stmts, _) -> 
-      PSblock (List.map (fun s -> pcompile_stmt ctxs s) stmts)
-  | TSreturn (e, _) ->
-      let ep, _ = (pcompile_expr ctxs 0 e) in
-      PSreturn ep
-  | TSexpr (e, _) -> 
-      let ep, _ = (pcompile_expr ctxs 0 e) in
-      PSexpr ep
-  | TScontinue _ -> PScontinue
-  | TSbreak _ -> PSbreak
-  | TSnothing _ -> PSnothing
+      let ep, next = (pcompile_expr ctxs next e) in
+      Hashtbl.replace (var_ctx_hd ctxs) id -next;
+      PSdeclare (id, t, ep), next+8
 
-and pcompile_block_stmt ctxs = 
-  List.map (fun s -> pcompile_stmt ctxs s)
+  | TSassign (id, e, _) ->
+      let ep, next = (pcompile_expr ctxs next e) in
+      Hashtbl.replace (var_ctx_hd ctxs) id next;
+      PSassign (id, ep), next
+  | TSprintn (e, _) -> 
+      let ep, next = (pcompile_expr ctxs next e) in
+      PSprintn ep, next
+  | TSprint (e, _) ->
+       let ep, next = (pcompile_expr ctxs next e) in
+      PSprintn ep, next
+  | TSblock (stmts, _) -> 
+      
+      PSblock (List.map (fun s -> pcompile_stmt ((make_ctx())::ctxs) s) stmts), next
+  | TSreturn (e, _) ->
+      let ep, next = (pcompile_expr ctxs next e) in
+      PSreturn ep, next
+  | TSexpr (e, _) -> 
+      let ep, next = (pcompile_expr ctxs next e) in
+      PSexpr ep, next
+  | TScontinue _ -> PScontinue, next
+  | TSbreak _ -> PSbreak, next
+  | TSnothing _ -> PSnothing, next
+
+and pcompile_block_stmt ctxs next block_stmt = 
+  let next, p_body = List.fold_left_map (fun next s -> 
+    let p_body, next = pcompile_stmt ctxs next s in
+    next, p_body) next block_stmt in
+    p_body, next
+
+
 
 and pcompile_global_stmt ctxs = function
   | TGSblock stmts -> 
-      PGSblock (List.map (fun s -> pcompile_global_stmt ((make_ctx())::ctxs) s) stmts, 0)
+    PGSblock (List.map (fun s -> pcompile_global_stmt ((make_ctx())::ctxs) s) stmts, 0)
   | TGSfunction (x, args, t, stmt) -> 
       let new_ctxs = make_ctx()::ctxs in
-      let fpmax = List.fold_left(
+      let next = List.fold_left(
         fun fp (arg, _) -> 
-          Hashtbl.add (var_ctx_hd new_ctxs) x fp;
-          fp+8) 8 args in 
-      let s = pcompile_stmt new_ctxs stmt in
-      Hashtbl.replace (fun_ctx_hd new_ctxs) x fpmax;
-      PGSfunction(x, args, t, s, fpmax)
+          Hashtbl.add (var_ctx_hd new_ctxs) x -next;
+          fp+8) 8 args in
+      let p_stmt, next = pcompile_stmt new_ctxs next stmt in
+      Hashtbl.replace (fun_ctx_hd new_ctxs) x -next;
+      PGSfunction(x, args, t, s, next)
   | TGSstruct (ident, args) -> assert false
 
 let precompile = pcompile_global_stmt [make_ctx()]

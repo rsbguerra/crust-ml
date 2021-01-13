@@ -80,12 +80,12 @@ and string_of_block_precomp_global_stmt gbl =
 
 
 and string_of_precomp_global_stmt = function
-  | PGSblock (bl, next) -> string_of_block_precomp_global_stmt bl
-  | PGSfunction (f, args, return, body, next) ->
+  | PGSblock bl -> string_of_block_precomp_global_stmt bl
+  | PGSfunction (f, args, return, body) ->
       "PGSfunction(" ^ f ^ ", (" ^ Printer.string_of_pairs "" args ^ "), "
       ^ Printer.string_of_crust_types return
       ^ ", \n    " ^ string_of_precomp_stmt body
-  | PGSstruct (id, elements, next) ->
+  | PGSstruct (id, elements) ->
       "PSstruct(" ^ id ^ "(," ^ Printer.string_of_pairs "" elements ^ ")"
 
 
