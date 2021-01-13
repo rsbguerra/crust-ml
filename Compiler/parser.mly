@@ -39,8 +39,8 @@ suite:
 ;
 
 elif:
-| KW_ELSE KW_IF e = expr "{" s = function_suite "}"  {(e, s, !Lexer.line_num) }
-| KW_ELSE "{" s = function_suite "}"                { ( Ecst( Cbool true, !Lexer.line_num), s, !Lexer.line_num) }
+| KW_ELSE KW_IF e = expr s = function_suite  {(e, s, !Lexer.line_num) }
+| KW_ELSE s = function_suite                { ( Ecst( Cbool true, !Lexer.line_num), s, !Lexer.line_num) }
 ;
 
 stmt:
