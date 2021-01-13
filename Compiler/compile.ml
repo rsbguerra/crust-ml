@@ -12,6 +12,7 @@ let error s = raise (Error s)
 let number_of_while  = ref 0
 let number_of_and_or = ref 0
 let number_of_ifs    = ref 0
+let number_of_bool_tests = ref 0
 
 let loops = ref []
 
@@ -19,9 +20,9 @@ let loops = ref []
 let frame_size = ref 0
 
 let get_value = function
- | Ast.Ci32 v  -> v
- | Ast.Cbool v -> if v then Int32.one else Int32.zero
- | _ -> assert false
+  | Ast.Ci32 v  -> v
+  | Ast.Cbool v -> if v then Int32.one else Int32.zero
+  | _ -> assert false
 
 let get_str_type = function
   | Ast.Ti32 -> "int"
@@ -37,7 +38,129 @@ let rec compile_expr = function
   | PEident (id, pos) -> 
     movq (ind ~ofs:pos rbp) (reg rax) ++
     pushq (reg rax)
-  | PEbinop _ -> assert false
+  | PEbinop (Ast.Bmod | Ast.Bdiv as op, e1, e2) ->    
+    (* 1 - Dependendo da operacao queremos um registo diferente *)
+    let rg = 
+      match op with 
+      | Bmod -> rdx
+      | Bdiv -> rax
+      | _ -> assert false
+    in
+
+    (* 2 - Colocar e1 e e2 na pilha*)  
+    compile_expr e1 ++
+    compile_expr e2 ++
+
+    (* 3 - Recebe os valores da pilha *)
+    popq rbx ++
+    popq rax ++
+      
+    (* 4 - Limpa o registo rdx *)
+    movq (imm 0) (reg rdx) ++
+      
+    (* 5 - Verifica se estamos a dividir por zero *)
+    cmpq (imm 0) (reg rbx) ++
+    je "print_error_z" ++
+
+    (* 6 - Realiza a operacao e coloca o resultado na pilha *)
+    idivq (reg rbx) ++
+    pushq (reg rg)
+
+  | PEbinop (Ast.Badd | Ast.Bsub | Ast.Bmul as o , e1, e2) ->
+    (* 1 - Dependendo da operacao queremos uma operacao diferente *)
+    let op = match o with
+      | Badd -> addq
+      | Bsub -> subq
+      | Bmul -> imulq
+      | _ -> assert false
+    in
+      
+    (* 2 - Colocar e1 e e2 na pilha*)  
+    compile_expr e1 ++
+    compile_expr e2 ++
+
+    (* 3 - Recebe os valores da pilha *)
+    popq rax ++
+    popq rbx ++
+      
+    (* 4 - Realiza a operacao e coloca o resultado na pilha *)
+    op (reg rax) (reg rbx) ++
+    pushq (reg rbx)
+
+  | PEbinop (Ast.Band | Ast.Bor as o, e1, e2) ->
+    number_of_and_or := !number_of_and_or + 1;
+    let current_and_or = string_of_int(!number_of_and_or) in
+        
+    (* 1 - Dependendo da operacao queremos uma operacao diferente *)
+    let op, cmp_op = 
+      match o with 
+      | Band -> andq, jne
+      | Bor  -> orq , je
+      | _    -> assert false
+    in
+
+      (* 2 - Colocar e1 na pilha*)  
+      compile_expr e1 ++
+      popq rax ++
+      
+      (* 3 - Verificar se podemos terminar a expressao *)
+      cmpq (imm64 1L) (reg rax) ++
+      cmp_op ("lazy_evaluation_" ^ current_and_or) ++
+
+      (* 4 - COlocar e2 no topo da pilha*)
+      compile_expr e2 ++
+      popq rax ++
+
+      (* 5 - Realiza a operacao e coloca o resultado na pilha *)
+      op  (imm64 1L) (reg rax) ++
+
+      (* 6 - termina *)
+      label ("lazy_evaluation_" ^ current_and_or) ++
+      pushq (reg rax)
+
+  | PEbinop (Ast.Beq | Ast.Bneq | Ast.Blt | Ast.Ble | Ast.Bgt | Ast.Bge as o, e1, e2) ->
+    (* 1 - Dependendo da operacao queremos uma operacao diferente *)
+    let op = match o with
+      | Beq -> je
+      | Bneq-> jne
+      | Blt -> jl
+      | Ble -> jle
+      | Bgt -> jg
+      | Bge -> jge
+      | _ -> assert false
+    in
+    
+    (* 2 - Incrementar numero de verificacoes *)
+    number_of_bool_tests := !number_of_bool_tests + 1;
+    let current_bool_test = string_of_int(!number_of_bool_tests) in
+    
+    (* 3 - Colocar e1 e e2 na pilha*)  
+    compile_expr e1 ++
+    compile_expr e2 ++
+
+    (* 4 - Recebe os valores da pilha *)
+    popq rbx ++
+    popq rax ++
+
+    (* 5 - Compara ambos os valores e faz o devido salto *)
+    cmpq (reg rbx) (reg rax) ++
+    op ("bool_true_" ^ current_bool_test) ++
+
+    (* 6a - Se for falso *)
+    movq (imm 0) (reg rax) ++
+    pushq (reg rax) ++
+
+    (* 7a - Termina *)
+    jmp ("bool_end_" ^ current_bool_test) ++
+      
+    (* 6b - Se for verdade *)
+    label ("bool_true_" ^ current_bool_test) ++
+    movq (imm 1) (reg rax) ++
+    pushq (reg rax) ++
+      
+    (* 7a - Termina *)
+    label ("bool_end_" ^ current_bool_test)
+
   | PEunop _ -> assert false
   | PEcall _ -> assert false
 
@@ -149,7 +272,6 @@ let rec compile_stmt = function
     popq rdi ++
     call ("printn_" ^ expr_type)
   | PSprint (e, t) ->
-  
     (* 1 - Extrair tipo da expressão e *)
     let expr_type = get_str_type t in
     (* 2 - Vai buscar o valor de e *)
@@ -174,9 +296,11 @@ let rec compile_stmt = function
      
     jmp (current_loop ^  "_fim")
     
-  | PSreturn _ -> nop
+  | PSreturn e -> nop
   | PSnothing  -> nop
-  | PSexpr _   -> assert false
+  | PSexpr e   ->
+    (* compile e *)
+    compile_expr e
         
 and compile_block_stmt = function
   | [] -> [nop]

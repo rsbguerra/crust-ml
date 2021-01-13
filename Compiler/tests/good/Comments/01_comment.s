@@ -3,19 +3,42 @@
 main:
 	subq $0, %rsp
 	leaq -8(%rsp), %rbp
-while_1_inicio:
 	movq $1, %rax
 	pushq %rax
 	popq %rax
+	cmpq $1, %rax
+	je lazy_evaluation_1
+	movq $0, %rax
+	pushq %rax
+	popq %rax
+	orq $1, %rax
+lazy_evaluation_1:
+	pushq %rax
+	popq %rax
 	cmpq $0, %rax
-	je while_1_fim
-	movq $5, %rax
+	je if_else_11
+	movq $1, %rax
 	pushq %rax
 	popq %rdi
-	call printn_int
-	jmp while_1_fim
-	jmp while_1_inicio
-while_1_fim:
+	call print_bool
+	jmp if_end_1
+if_else_11:
+	movq $0, %rax
+	pushq %rax
+	popq %rax
+	cmpq $0, %rax
+	je if_else_21
+	movq $0, %rax
+	pushq %rax
+	popq %rdi
+	call print_bool
+	jmp if_end_1
+if_else_21:
+	movq $69, %rax
+	pushq %rax
+	popq %rdi
+	call print_int
+if_end_1:
 end:
 	addq $0, %rsp
 	movq $0, %rax
@@ -29,6 +52,38 @@ printn_int:
 print_int:
 	movq %rdi, %rsi
 	leaq .Sprint_int, %rdi
+	movq $0, %rax
+	call printf
+	ret
+print_bool:
+	cmpq $0, %rdi
+	je .print_false
+	jne .print_true
+.print_true:
+	movq %rdi, %rsi
+	movq $.true, %rdi
+	movq $0, %rax
+	call printf
+	ret
+.print_false:
+	movq %rdi, %rsi
+	movq $.false, %rdi
+	movq $0, %rax
+	call printf
+	ret
+printn_bool:
+	cmpq $0, %rdi
+	je .printn_false
+	jne .printn_true
+.printn_true:
+	movq %rdi, %rsi
+	movq $.truen, %rdi
+	movq $0, %rax
+	call printf
+	ret
+.printn_false:
+	movq %rdi, %rsi
+	movq $.falsen, %rdi
 	movq $0, %rax
 	call printf
 	ret
@@ -68,6 +123,14 @@ print_error_f:
 	.string "%ld\n"
 .Sprint_int:
 	.string "%ld"
+.true:
+	.string "true"
+.false:
+	.string "false"
+.truen:
+	.string "true\n"
+.falsen:
+	.string "false\n"
 .Sprint_error_z:
 	.string "\nErro: Divisao por zero.\n\n"
 .Sprint_error_t:

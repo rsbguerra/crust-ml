@@ -2,7 +2,9 @@
 
 fn print() -> i32
 {  
-  if false {
+  
+
+  if true || false {
     print!(true);
   } else if false{
     print!(false);
