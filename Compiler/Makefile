@@ -15,5 +15,10 @@ print-past:
 test:
 	bash ./tests/run-tests
 
+test-s:
+	dune exec $(release) -- ./crust.exe ./tests/good/Comments/01_comment.rs
+	gcc -g -no-pie ./tests/good/Comments/01_comment.s
+	./a.out
+
 clean:
 	dune clean

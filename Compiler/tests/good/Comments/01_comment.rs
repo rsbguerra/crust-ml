@@ -2,13 +2,12 @@
 
 fn print() -> i32
 {  
-
-  while(true)
-  {
-    print!(5);
-    break;
-    
+  if false {
+    print!(true);
+  } else if false{
+    print!(false);
+  } else {
+    print!(69);
   }
   return 2;
 }
-
