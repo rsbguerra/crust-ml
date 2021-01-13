@@ -18,9 +18,9 @@ let var_ctx    = fun (c, _, _) -> c
 let fun_ctx    = fun (_, c, _) -> c
 let struct_ctx = fun (_, _, c) -> c
 
-let var_ctx_hd    = fun l -> var_ctx (List.hd l)
-let fun_ctx_hd    = fun l -> fun_ctx (List.hd l)
-let struct_ctx_hd = fun l -> struct_ctx (List.hd l)
+let var_ctx_hd l = var_ctx (List.hd l)
+let fun_ctx_hd l = fun_ctx (List.hd l)
+let struct_ctx_hd l = struct_ctx (List.hd l)
 
 let id_exists id =
   List.exists(fun (v,s,f) -> Hashtbl.mem v id || Hashtbl.mem f id || Hashtbl.mem s id)
@@ -66,7 +66,7 @@ and pcompile_stmt ctxs next = function
           (* 2. Pre-compilar stmts do corpo *)
           let p_body_elif, next = pcompile_stmt ((make_ctx())::ctxs) next if_stmt in
           (* 3. Devolver corpo tipado e último next *)
-          (next, p_body_elif)
+          (next, (p_elif, p_body_elif))
       ) next elif in
       PSif(pe, ps, if_list), next
 
@@ -77,7 +77,7 @@ and pcompile_stmt ctxs next = function
 
   | TSdeclare (id, t, e, _) -> 
       let ep, next = (pcompile_expr ctxs next e) in
-      Hashtbl.replace (var_ctx_hd ctxs) id -next;
+      Hashtbl.replace (var_ctx_hd ctxs) id (-next);
       PSdeclare (id, t, ep), next+8
 
   | TSassign (id, e, _) ->
@@ -91,8 +91,8 @@ and pcompile_stmt ctxs next = function
        let ep, next = (pcompile_expr ctxs next e) in
       PSprintn ep, next
   | TSblock (stmts, _) -> 
-      
-      PSblock (List.map (fun s -> pcompile_stmt ((make_ctx())::ctxs) s) stmts), next
+      let pblock, next = pcompile_block_stmt ctxs next stmts in
+      PSblock pblock, next
   | TSreturn (e, _) ->
       let ep, next = (pcompile_expr ctxs next e) in
       PSreturn ep, next
@@ -109,20 +109,18 @@ and pcompile_block_stmt ctxs next block_stmt =
     next, p_body) next block_stmt in
     p_body, next
 
-
-
 and pcompile_global_stmt ctxs = function
   | TGSblock stmts -> 
-    PGSblock (List.map (fun s -> pcompile_global_stmt ((make_ctx())::ctxs) s) stmts, 0)
+    PGSblock (List.map (fun s -> pcompile_global_stmt ((make_ctx())::ctxs) s) stmts)
   | TGSfunction (x, args, t, stmt) -> 
       let new_ctxs = make_ctx()::ctxs in
       let next = List.fold_left(
-        fun fp (arg, _) -> 
-          Hashtbl.add (var_ctx_hd new_ctxs) x -next;
-          fp+8) 8 args in
+        fun next (arg, _) -> 
+          Hashtbl.add (var_ctx_hd new_ctxs) x (-next);
+          next+8) 8 args in
       let p_stmt, next = pcompile_stmt new_ctxs next stmt in
-      Hashtbl.replace (fun_ctx_hd new_ctxs) x -next;
-      PGSfunction(x, args, t, s, next)
+      Hashtbl.replace (fun_ctx_hd new_ctxs) x (-next);
+      PGSfunction(x, args, t, p_stmt)
   | TGSstruct (ident, args) -> assert false
 
 let precompile = pcompile_global_stmt [make_ctx()]

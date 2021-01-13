@@ -1,11 +1,9 @@
 // Single Line Comment
 
-fn somar(x : i32, y : i32) -> i32
+fn somar() -> i32
 {
-  return x + y;
-}
-
-fn print(x : i32) -> i32
-{
-  somar(6, 4)
+  let x : i32 = 5;  // -8
+  let y : i32 = 10; // -16
+  
+  return x;
 }

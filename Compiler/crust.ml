@@ -23,7 +23,7 @@ let options =
   "  Prints the AST of a givin file ";
   "-print-tast", Arg.Set print_tast,
   "  Prints the TAST of a givin file ";
-  "-print-past", Arg.Set print_ast,
+  "-print-past", Arg.Set print_past,
   "  Prints the PAST of a givin print_past ";
    "-o", Arg.String (set_file ofile),
    "<file>  To indicate the name of the output file"]
@@ -71,7 +71,7 @@ let () =
 
     (* Pára-se aqui se só queremos o parsing *)
     if !parse_only then exit 0;
-    if !print_ast then Printer.print_file p;
+    if !print_ast || !print_tast || !print_past then Printer.print_file p;
 
     (* Compilação da árvore de sintaxe abstracta p. O código máquina
        resultante desta transformação deve ficar escrito no ficheiro alvo ofile. *)
@@ -79,8 +79,8 @@ let () =
     if !print_tast then Printer_tast.print_typed_ast typed_p;
     let precomp_p = Pre_compile.precompile typed_p in
     if !print_past then Printer_past.print_precomp_past precomp_p;
-
-    Compile.compile_program precomp_p !ofile
+    ()
+    (*Compile.compile_program precomp_p !ofile*)
 
   with
   | Lexer.Lexing_error c ->

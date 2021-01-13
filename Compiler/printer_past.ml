@@ -72,11 +72,11 @@ and string_of_elif l =
 
 
 and string_of_block_precomp_stmt bl =
-    List.fold_left (fun str s -> string_of_precomp_stmt s ^ str) "" bl
+    List.fold_left (fun str s -> str ^ (string_of_precomp_stmt s) ^ "\n") "" bl
 
 
 and string_of_block_precomp_global_stmt gbl = 
-  List.fold_left (fun str s -> string_of_precomp_global_stmt s ^ str) "" gbl
+  List.fold_left (fun str s -> str ^ (string_of_precomp_global_stmt s) ^ "\n") "" gbl
 
 
 and string_of_precomp_global_stmt = function
