@@ -1,22 +1,29 @@
 	.text
 	.globl	main
 main:
-	subq $16, %rsp
-	leaq 8(%rsp), %rbp
-
+	subq $32, %rsp
+	leaq 24(%rsp), %rbp
+	movq $5, %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -16(%rbp)
+	movq $420, %rax
+	pushq %rax
 	movq $69, %rax
 	pushq %rax
 	movq $42, %rax
 	pushq %rax
 	call print
-	addq $16, %rsp
-
+	addq $24, %rsp
 	pushq %rax
 	popq %rax
-	movq %rax, -8(%rbp)
-end:
-	addq $16, %rsp
+	movq %rax, -24(%rbp)
 	movq $0, %rax
+	pushq %rax
+	popq %rax
+	jmp main_fim
+main_fim:
+	addq $32, %rsp
 	ret
 printn_int:
 	movq %rdi, %rsi
@@ -93,19 +100,26 @@ print_error_f:
 	movq $0, %rax
 	call printf
 	jmp end
-
 print:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $24, %rsp
+	subq $48, %rsp
+	movq $5, %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -40(%rbp)
 	movq 16(%rbp), %rax
 	pushq %rax
 	popq %rdi
 	call print_int
-	addq $24, %rsp
+	movq 24(%rbp), %rax
+	pushq %rax
+	popq %rax
+	jmp print_fim
+print_fim:
+	addq $48, %rsp
 	popq %rbp
 	ret
-
 	.data
 .Sprintn_int:
 	.string "%ld\n"

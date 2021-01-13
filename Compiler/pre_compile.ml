@@ -130,7 +130,7 @@ and pcompile_global_stmt ctxs = function
         fun next (arg, t_arg) -> 
           Hashtbl.add (var_ctx_hd new_ctxs) arg next;
           (next+8), (arg, t_arg, next)
-      ) 8 args in
+      ) 16 args in
 
       (* 2 - Pre compilar corpo *)
       let p_stmt, next = pcompile_stmt new_ctxs next stmt in

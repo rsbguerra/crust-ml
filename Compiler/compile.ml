@@ -14,7 +14,8 @@ let number_of_and_or = ref 0
 let number_of_ifs    = ref 0
 let number_of_bool_tests = ref 0
 
-let loops = ref []
+let loops     = ref []
+let functions = ref []
 
 let function_code = ref nop
 
@@ -344,10 +345,13 @@ let rec compile_stmt = function
     jmp (current_loop ^  "_fim")
     
   | PSreturn e -> 
-  (* TODO: verificar se estamos numa função *)
-    (*compile_expr e ++
-    popq rax*)
-    nop
+    if List.length !functions <= 0 then error "Using the break statement outside of a loop";
+    let current_function = List.hd !functions in
+    
+    compile_expr e ++
+    popq rax ++
+    jmp (current_function ^ "_fim")
+    
   | PSnothing  -> nop
   | PSexpr e   ->
     (* compile e *)
@@ -367,18 +371,26 @@ and compile_global_stmt = function
     List.fold_right (++) block nop
   | PGSfunction("main", args, t, body, fp) ->
     (* 1 - Inicio da função *)
-    globl "main" ++ label "main" ++
-    subq (imm fp) (reg rsp) ++ (* aloca a frame *)
-    leaq (ind ~ofs:(fp - 8) rsp) rbp ++ (* %rbp = ... *)
+    functions := "main"::(!functions);
+    
+    let code = globl "main" ++ label "main" ++
+      subq (imm fp) (reg rsp) ++ (* aloca a frame *)
+      leaq (ind ~ofs:(fp - 8) rsp) rbp ++ (* %rbp = ... *)
 
-    compile_stmt body ++
+      compile_stmt body ++
 
-    label "end" ++
-    addq (imm fp) (reg rsp) ++ (* desaloca a frame *)
-    movq (imm64 0L) (reg rax) ++ (* exit *)
-    ret
+      label ("main_fim") ++
+      addq (imm fp) (reg rsp) ++ (* desaloca a frame *)
+      ret 
+    in
+
+    functions := List.tl !functions;
+
+    code
   | PGSfunction(id, args, t, body, fp) ->
     
+    functions := id::(!functions);
+
     (* 1 - Inicio da função *)
     function_code := (!function_code) ++
       label id ++
@@ -386,10 +398,14 @@ and compile_global_stmt = function
       movq (reg rsp) (reg rbp) ++ 
       pushn fp ++
       compile_stmt body ++ 
+
+      label (id ^ "_fim") ++ 
       popn fp ++
       popq rbp ++ 
       ret;
 
+    functions := List.tl !functions;
+    
     nop
 
   | _ -> assert false
