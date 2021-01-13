@@ -161,8 +161,47 @@ let rec compile_expr = function
     (* 7a - Termina *)
     label ("bool_end_" ^ current_bool_test)
 
-  | PEunop _ -> assert false
+  | PEunop (Unot, e1) ->
+    (* 1 - Incrementar numero de verificacoes *)
+    number_of_bool_tests := !number_of_bool_tests + 1;
+    let current_bool_test = string_of_int(!number_of_bool_tests) in
+  
+    (* 2 - Colocar e1 na pilha *)  
+    compile_expr e1 ++
+      
+    (* 3 - Recebe o valor de e1 *)  
+    popq rax ++
+
+    (* 4 - Verifica se e falso *)
+    cmpq (imm64 0L) (reg rax) ++
+    je ("bool_true_" ^ current_bool_test) ++
+      
+    (* 5a - Se a comparacao falhar entao retornamos 0 *)
+    movq (imm64 0L) (reg rax) ++
+    pushq (reg rax) ++
+      
+    (* 6a - Terminamos *)  
+    jmp ("bool_end_" ^ current_bool_test) ++
+      
+    (* 5b - Se a comparacao acertar entao retornamos 1 *)
+    label ("bool_true_" ^ current_bool_test) ++
+    movq (imm64 1L) (reg rax) ++
+    pushq (reg rax) ++
+
+    (* 6b - Terminamos *)  
+    label ("bool_end_" ^ current_bool_test)
+
+  | PEunop (Uneg, e) -> 
+    (* 1 - Compila e *)  
+    compile_expr e ++
+    popq rax ++
+      
+    (* 2 - nega o valor de e *)
+    negq (reg rax) ++
+    pushq (reg rax)
+  
   | PEcall _ -> assert false
+  | _ -> assert false
 
 
 let rec compile_stmt = function

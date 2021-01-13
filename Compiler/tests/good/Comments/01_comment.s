@@ -16,6 +16,16 @@ lazy_evaluation_1:
 	pushq %rax
 	popq %rax
 	cmpq $0, %rax
+	je bool_true_1
+	movq $0, %rax
+	pushq %rax
+	jmp bool_end_1
+bool_true_1:
+	movq $1, %rax
+	pushq %rax
+bool_end_1:
+	popq %rax
+	cmpq $0, %rax
 	je if_else_11
 	movq $1, %rax
 	pushq %rax
@@ -35,6 +45,9 @@ if_else_11:
 	jmp if_end_1
 if_else_21:
 	movq $69, %rax
+	pushq %rax
+	popq %rax
+	negq %rax
 	pushq %rax
 	popq %rdi
 	call print_int
