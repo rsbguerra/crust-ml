@@ -106,7 +106,7 @@ and type_expr ctxs = function
     (* 3 - Retorna a expressão tipada *)
     Tast.TEunop(Ast.Uneg, te, Ast.Ti32), Ast.Ti32
   | Eunop (Ast.Unot, e, line) ->
-      (* 1 - Tipar e*)
+    (* 1 - Tipar e*)
     let te, t = type_expr ctxs e in
     (* 2 - Verificar t*)
     if not (compare_crust_types (Ast.Tbool, t)) then error ("Wrong type given to operand Ast.Unot, was given"^Printer.string_of_crust_types t^" but a "^Printer.string_of_crust_types Ast.Tbool^" was expected.") line;
@@ -170,7 +170,7 @@ and type_stmt ctxs = function
     if not (is_id_unique id ctxs) then error ("The identifier " ^ id ^ " was already defined.") line;
     (* 2 - Tipar e verificar a expressão e*)
     let te, t1 = type_expr ctxs e in
-    if not (compare_crust_types (t, t1)) then error ("Wrong type in the declaration of variable"^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
+    if not (compare_crust_types (t, t1)) then error ("Wrong type in the declaration of variable "^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
     (* 3 - Adicionar variável ao contexto *)
     let v_ctx,_,_ = (List.hd ctxs) in 
     Hashtbl.add v_ctx id t;
