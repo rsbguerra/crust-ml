@@ -9,11 +9,11 @@ and expr =
   | PEident of ident * int
   | PEbinop of Ast.binop * expr * expr
   | PEunop of Ast.unop * expr
-  | PEaccess of expr * ident (* S.x (S-> struct, x -> element of struct)*)
+  | PEcall of ident * expr list
+  (*| PEaccess of expr * ident (* S.x (S-> struct, x -> element of struct)*)
   | PElen of expr
   | PEvec_access of expr * expr
-  | PEvec_decl of expr list
-  | PEcall of ident * expr list
+  | PEvec_decl of expr list*)
 
 and stmt =
   | PSif of expr * stmt * elif list

@@ -3,6 +3,19 @@
 main:
 	subq $0, %rsp
 	leaq -8(%rsp), %rbp
+while_1_inicio:
+	movq $1, %rax
+	pushq %rax
+	popq %rax
+	cmpq $0, %rax
+	je while_1_fim
+	movq $5, %rax
+	pushq %rax
+	popq %rdi
+	call printn_int
+	jmp while_1_fim
+	jmp while_1_inicio
+while_1_fim:
 end:
 	addq $0, %rsp
 	movq $0, %rax

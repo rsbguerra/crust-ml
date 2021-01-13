@@ -21,8 +21,6 @@ let rec string_of_precomp_expr = function
   | PEcall (f, el) ->
       "PEcall(" ^ f ^ ", " ^ 
       string_of_precomp_expr_list el ^ ", (" ^ ") " ^")"
-  | _ -> assert false
-
 
 and string_of_precomp_expr_list exprs = 
     List.map (fun e -> string_of_precomp_expr e) exprs |> 

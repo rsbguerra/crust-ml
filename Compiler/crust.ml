@@ -79,8 +79,8 @@ let () =
     if !print_tast then Printer_tast.print_typed_ast typed_p;
     let precomp_p = Pre_compile.precompile typed_p in
     if !print_past then Printer_past.print_precomp_past precomp_p;
-    ()
-    (*Compile.compile_program precomp_p !ofile*)
+    
+    Compile.compile_program precomp_p !ofile
 
   with
   | Lexer.Lexing_error c ->
@@ -101,3 +101,7 @@ let () =
       eprintf "\n\nFile \"%s\", line %d:\n" !ifile line;
       eprintf "\nerror:\n\n  Semmantic Analysis:\n  %s\n@." s;
       exit 1
+  | Compile.Error s->
+	  (* Erro de utilização de variáveis durante a compilação *)
+	  eprintf "\nerror:\n\n  Compilation error:\n  %s\n@." s;
+    exit 1
