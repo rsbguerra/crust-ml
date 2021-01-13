@@ -119,15 +119,23 @@ and pcompile_block_stmt ctxs next block_stmt =
 and pcompile_global_stmt ctxs = function
   | TGSblock stmts -> 
     PGSblock (List.map (fun s -> pcompile_global_stmt ((make_ctx())::ctxs) s) stmts)
-  | TGSfunction (x, args, t, stmt) -> 
-      let new_ctxs = make_ctx()::ctxs in
+  | TGSfunction (x, args, t, stmt) ->
+      let new_ctxs = (make_ctx())::ctxs in
+
+      (* 1- Precompilar argumentos *)
       let next, p_args = List.fold_left_map(
         fun next (arg, t_arg) -> 
-          Hashtbl.add (var_ctx_hd new_ctxs) x (-next);
-          (next+8), (arg, t_arg, (-next))) 8 args in
+          Hashtbl.add (var_ctx_hd new_ctxs) arg (-next);
+          (next+8), (arg, t_arg, (-next))
+      ) 8 args in
+
+      (* 2 - Pre compilar corpo *)
       let p_stmt, next = pcompile_stmt new_ctxs next stmt in
       Hashtbl.replace (fun_ctx_hd new_ctxs) x (-next);
+      
       PGSfunction(x, p_args, t, p_stmt)
+
+
   | TGSstruct (ident, args) -> assert false
 
 let precompile = pcompile_global_stmt [make_ctx()]

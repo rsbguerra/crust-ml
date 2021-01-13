@@ -6,6 +6,9 @@ all:
 print:
 	dune exec  $(release) -- ./crust.exe -print-ast ./tests/good/Comments/01_comment.rs
 
+print-tast:
+	dune exec  $(release) -- ./crust.exe -print-tast ./tests/good/Comments/01_comment.rs
+
 print-past:
 	dune exec  $(release) -- ./crust.exe -print-past ./tests/good/Comments/01_comment.rs
 
