@@ -1,15 +1,14 @@
 // Single Line Comment
+fn print(x:i32, y:i32) -> i32
+{
+  print!(x);
 
-fn print() -> i32
-{  
-  
+  return x;
+}
 
-  if !(true || false) {
-    print!(true);
-  } else if false{
-    print!(false);
-  } else {
-    print!(-69);
-  }
-  return 2;
+fn main() -> i32
+{
+  let a :i32 = print(42, 69);
+
+  return 0;
 }

@@ -1,70 +1,32 @@
 	.text
 	.globl	main
 main:
-	subq $0, %rsp
-	leaq -8(%rsp), %rbp
-	movq $1, %rax
-	pushq %rax
-	popq %rax
-	cmpq $1, %rax
-	je lazy_evaluation_1
-	movq $0, %rax
-	pushq %rax
-	popq %rax
-	orq $1, %rax
-lazy_evaluation_1:
-	pushq %rax
-	popq %rax
-	cmpq $0, %rax
-	je bool_true_1
-	movq $0, %rax
-	pushq %rax
-	jmp bool_end_1
-bool_true_1:
-	movq $1, %rax
-	pushq %rax
-bool_end_1:
-	popq %rax
-	cmpq $0, %rax
-	je if_else_11
-	movq $1, %rax
-	pushq %rax
-	popq %rdi
-	call print_bool
-	jmp if_end_1
-if_else_11:
-	movq $0, %rax
-	pushq %rax
-	popq %rax
-	cmpq $0, %rax
-	je if_else_21
-	movq $0, %rax
-	pushq %rax
-	popq %rdi
-	call print_bool
-	jmp if_end_1
-if_else_21:
+	subq $16, %rsp
+	leaq 8(%rsp), %rbp
+
 	movq $69, %rax
 	pushq %rax
-	popq %rax
-	negq %rax
+	movq $42, %rax
 	pushq %rax
-	popq %rdi
-	call print_int
-if_end_1:
+	call print
+	addq $16, %rsp
+
+	pushq %rax
+	popq %rax
+	movq %rax, -8(%rbp)
 end:
-	addq $0, %rsp
+	addq $16, %rsp
 	movq $0, %rax
 	ret
 printn_int:
 	movq %rdi, %rsi
-	leaq .Sprintn_int, %rdi
+	movq $.Sprintn_int, %rdi
 	movq $0, %rax
 	call printf
 	ret
 print_int:
 	movq %rdi, %rsi
-	leaq .Sprint_int, %rdi
+	movq $.Sprint_int, %rdi
 	movq $0, %rax
 	call printf
 	ret
@@ -131,6 +93,19 @@ print_error_f:
 	movq $0, %rax
 	call printf
 	jmp end
+
+print:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $24, %rsp
+	movq 16(%rbp), %rax
+	pushq %rax
+	popq %rdi
+	call print_int
+	addq $24, %rsp
+	popq %rbp
+	ret
+
 	.data
 .Sprintn_int:
 	.string "%ld\n"

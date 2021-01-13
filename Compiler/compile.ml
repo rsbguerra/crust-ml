@@ -16,6 +16,8 @@ let number_of_bool_tests = ref 0
 
 let loops = ref []
 
+let function_code = ref nop
+
 (* Tamanho da frame, em byte (cada variável local ocupa 8 bytes) *)
 let frame_size = ref 0
 
@@ -99,24 +101,24 @@ let rec compile_expr = function
       | _    -> assert false
     in
 
-      (* 2 - Colocar e1 na pilha*)  
-      compile_expr e1 ++
-      popq rax ++
+    (* 2 - Colocar e1 na pilha*)  
+    compile_expr e1 ++
+    popq rax ++
       
-      (* 3 - Verificar se podemos terminar a expressao *)
-      cmpq (imm64 1L) (reg rax) ++
-      cmp_op ("lazy_evaluation_" ^ current_and_or) ++
+    (* 3 - Verificar se podemos terminar a expressao *)
+    cmpq (imm64 1L) (reg rax) ++
+    cmp_op ("lazy_evaluation_" ^ current_and_or) ++
 
-      (* 4 - COlocar e2 no topo da pilha*)
-      compile_expr e2 ++
-      popq rax ++
+    (* 4 - COlocar e2 no topo da pilha*)
+    compile_expr e2 ++
+    popq rax ++
 
-      (* 5 - Realiza a operacao e coloca o resultado na pilha *)
-      op  (imm64 1L) (reg rax) ++
+    (* 5 - Realiza a operacao e coloca o resultado na pilha *)
+    op  (imm64 1L) (reg rax) ++
 
-      (* 6 - termina *)
-      label ("lazy_evaluation_" ^ current_and_or) ++
-      pushq (reg rax)
+    (* 6 - termina *)
+    label ("lazy_evaluation_" ^ current_and_or) ++
+    pushq (reg rax)
 
   | PEbinop (Ast.Beq | Ast.Bneq | Ast.Blt | Ast.Ble | Ast.Bgt | Ast.Bge as o, e1, e2) ->
     (* 1 - Dependendo da operacao queremos uma operacao diferente *)
@@ -200,7 +202,13 @@ let rec compile_expr = function
     negq (reg rax) ++
     pushq (reg rax)
   
-  | PEcall _ -> assert false
+  | PEcall(id, args) ->
+    List.fold_left (fun code e -> code ++ compile_expr e) nop args ++
+    
+    call id ++
+    popn (8 * List.length args) ++
+    pushq (reg rax)
+
   | _ -> assert false
 
 
@@ -335,7 +343,11 @@ let rec compile_stmt = function
      
     jmp (current_loop ^  "_fim")
     
-  | PSreturn e -> nop
+  | PSreturn e -> 
+  (* TODO: verificar se estamos numa função *)
+    (*compile_expr e ++
+    popq rax*)
+    nop
   | PSnothing  -> nop
   | PSexpr e   ->
     (* compile e *)
@@ -353,8 +365,33 @@ and compile_global_stmt = function
   | PGSblock bl -> 
     let block = List.rev(compile_block_global_stmt bl) in
     List.fold_right (++) block nop
-  | PGSfunction(_, _, _, body) ->
-    compile_stmt body
+  | PGSfunction("main", args, t, body, fp) ->
+    (* 1 - Inicio da função *)
+    globl "main" ++ label "main" ++
+    subq (imm fp) (reg rsp) ++ (* aloca a frame *)
+    leaq (ind ~ofs:(fp - 8) rsp) rbp ++ (* %rbp = ... *)
+
+    compile_stmt body ++
+
+    label "end" ++
+    addq (imm fp) (reg rsp) ++ (* desaloca a frame *)
+    movq (imm64 0L) (reg rax) ++ (* exit *)
+    ret
+  | PGSfunction(id, args, t, body, fp) ->
+    
+    (* 1 - Inicio da função *)
+    function_code := (!function_code) ++
+      label id ++
+      pushq (reg rbp) ++
+      movq (reg rsp) (reg rbp) ++ 
+      pushn fp ++
+      compile_stmt body ++ 
+      popn fp ++
+      popq rbp ++ 
+      ret;
+
+    nop
+
   | _ -> assert false
 
 (* Compilação do programa p e grava o código no ficheiro ofile *)
@@ -362,24 +399,19 @@ let compile_program p ofile =
   let code = compile_global_stmt p in
   let p =
     { text =
-        globl "main" ++ label "main" ++
-        subq (imm !frame_size) (reg rsp) ++ (* aloca a frame *)
-        leaq (ind ~ofs:(!frame_size - 8) rsp) rbp ++ (* %rbp = ... *)
+       
         code ++
-        label "end" ++
-        addq (imm !frame_size) (reg rsp) ++ (* desaloca a frame *)
-        movq (imm64 0L) (reg rax) ++ (* exit *)
-        ret ++
+       
         label "printn_int" ++
         movq (reg rdi) (reg rsi) ++
-        leaq (lab ".Sprintn_int") rdi ++
-        movq (imm64 0L) (reg rax) ++
+        movq (ilab ".Sprintn_int") (reg rdi) ++
+        movq (imm 0) (reg rax) ++
         call "printf" ++
         ret ++
         label "print_int" ++
         movq (reg rdi) (reg rsi) ++
-        leaq (lab ".Sprint_int") rdi ++
-        movq (imm64 0L) (reg rax) ++
+        movq (ilab ".Sprint_int") (reg rdi) ++
+        movq (imm 0) (reg rax) ++
         call "printf" ++
         ret ++
         (* print bool *)
@@ -454,7 +486,8 @@ let compile_program p ofile =
         leaq (lab ".Sprint_error_f") rdi ++
         movq (imm64 0L) (reg rax) ++
         call "printf" ++
-        jmp "end";
+        jmp "end" ++
+        !function_code;
       data = 
         label ".Sprintn_int" ++ string "%ld\n" ++
         label ".Sprint_int" ++ string "%ld" ++

@@ -84,10 +84,11 @@ and string_of_pairs acc = function
 
 and string_of_precomp_global_stmt = function
   | PGSblock bl -> string_of_block_precomp_global_stmt bl
-  | PGSfunction (f, args, return, body) ->
+  | PGSfunction (f, args, return, body, fp) ->
       "PGSfunction(" ^ f ^ ", (" ^ string_of_pairs "" args ^ "), "
       ^ Printer.string_of_crust_types return
-      ^ ", \n    " ^ string_of_precomp_stmt body
+      ^ ", \n    " ^ string_of_precomp_stmt body 
+      ^ string_of_int fp ^ ")" 
   | PGSstruct (id, elements) ->
       "PSstruct(" ^ id ^ "(," ^ string_of_pairs "" elements ^ ")"
 

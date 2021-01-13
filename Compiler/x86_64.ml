@@ -293,6 +293,9 @@ let space n = ins ".space %d" n
 let pushq a = ins "pushq %a" a ()
 let popq r = ins "popq %s" r
 
+let popn n = addq (imm n) (reg rsp)
+let pushn n = subq (imm n) (reg rsp)
+
 type program = {
   text : [ `text ] asm;
   data : [ `data ] asm;

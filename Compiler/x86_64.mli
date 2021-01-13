@@ -322,6 +322,11 @@ val pushq : [`Q] operand -> text
 val popq : [`Q] register -> text
   (** [popq r] coloca a palavra presente no topo da pilha em [r] e desempilha *)
 
+(* dario 10929, raquel 10625 *)
+val popn : int -> text
+
+val pushn : int -> text
+
 (** {2 Diversos } *)
 
 val label : label -> [> ] asm

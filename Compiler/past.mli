@@ -33,7 +33,7 @@ and elif = expr * stmt
 
 and global_stmt =
   | PGSblock of global_stmt list
-  | PGSfunction of ident * pairs list * Ast.crust_types * stmt
+  | PGSfunction of ident * pairs list * Ast.crust_types * stmt * int
   | PGSstruct of ident * pairs list
 
 and pairs = ident * Ast.crust_types * int

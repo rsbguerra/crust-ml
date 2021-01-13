@@ -128,15 +128,15 @@ and pcompile_global_stmt ctxs = function
       (* 1- Precompilar argumentos *)
       let next, p_args = List.fold_left_map(
         fun next (arg, t_arg) -> 
-          Hashtbl.add (var_ctx_hd new_ctxs) arg (-next);
-          (next+8), (arg, t_arg, (-next))
+          Hashtbl.add (var_ctx_hd new_ctxs) arg next;
+          (next+8), (arg, t_arg, next)
       ) 8 args in
 
       (* 2 - Pre compilar corpo *)
       let p_stmt, next = pcompile_stmt new_ctxs next stmt in
-      Hashtbl.replace (fun_ctx_hd new_ctxs) x (-next);
+      Hashtbl.replace (fun_ctx_hd new_ctxs) x next;
       
-      PGSfunction(x, p_args, t, p_stmt)
+      PGSfunction(x, p_args, t, p_stmt, next)
 
 
   | TGSstruct (ident, args) -> assert false
