@@ -192,12 +192,12 @@ and type_stmt ctxs = function
   | Sprintn (e, _) ->
     (* 1 - Tipar expressão *)
     let te, t = type_expr ctxs e in
-    Tast.TSprintn(te, Ast.Tunit), Ast.Tunit
+    Tast.TSprintn(te, t, Ast.Tunit), Ast.Tunit
 
   | Sprint (e, _) ->
     (* 1 - Tipar expressão *)
     let te, t = type_expr ctxs e in
-    Tast.TSprint(te, Ast.Tunit), Ast.Tunit
+    Tast.TSprint(te, t, Ast.Tunit), Ast.Tunit
 
   | Sblock (bl, _) ->
     (* 1 - Tipar bloco*)

@@ -41,15 +41,18 @@ and string_of_precomp_stmt = function
        Printer.string_of_crust_types t ^ ", " ^ 
        string_of_precomp_expr e ^ ", " ^
        (string_of_int fp) ^ ")"
-  | PSassign (id, e) -> 
+  | PSassign (id, e, pos) -> 
       "PSassign(" ^ id ^ ", " ^ 
-      string_of_precomp_expr e ^ ")"
-  | PSprintn e -> 
+      string_of_precomp_expr e ^  ", " ^
+      (string_of_int pos) ^ ")"
+  | PSprintn (e, t) -> 
       "PSprintln(" ^ 
-      string_of_precomp_expr e ^ ")"
-  | PSprint e -> 
+      string_of_precomp_expr e ^ ","^
+      (Printer.string_of_crust_types t)^")"
+  | PSprint (e, t) -> 
       "PSprint(" ^ 
-      string_of_precomp_expr e  ^ ")"
+      string_of_precomp_expr e  ^ ","^
+      (Printer.string_of_crust_types t)^")"
   | PSblock bl -> string_of_block_precomp_stmt bl
   | PScontinue-> "PScontinue"
   | PSbreak-> "PSbreak"

@@ -19,9 +19,9 @@ and stmt =
   | PSif of expr * stmt * elif list
   | PSwhile of expr * stmt
   | PSdeclare of ident * Ast.crust_types * expr * int
-  | PSassign of ident * expr
-  | PSprintn of expr
-  | PSprint of expr
+  | PSassign of ident * expr * int
+  | PSprintn of expr * Ast.crust_types
+  | PSprint of expr * Ast.crust_types
   | PSblock of stmt list
   | PScontinue
   | PSbreak

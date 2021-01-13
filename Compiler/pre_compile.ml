@@ -38,12 +38,12 @@ let rec find_var_id id = function
 let rec pcompile_expr ctxs next = function
   | TEcst (c, t) -> 
       PEcst c, next
-    | TEident (id, t) -> begin
-      match find_var_id id ctxs with
-      | None -> assert false
-      | Some ct -> let fp = Hashtbl.find ct id in
-        PEident(id, fp), next
-      end
+  | TEident (id, t) -> begin
+    match find_var_id id ctxs with
+    | None -> assert false
+    | Some ct -> let fp = Hashtbl.find ct id in
+      PEident(id, fp), next
+    end
   | TEbinop (op, e1, e2, t) -> 
       let e1, fp1 = pcompile_expr ctxs next e1 in
       let e2, fp2 = pcompile_expr ctxs next e2 in
@@ -89,14 +89,17 @@ and pcompile_stmt ctxs next = function
 
   | TSassign (id, e, _) ->
       let ep, next = (pcompile_expr ctxs next e) in
-      Hashtbl.replace (var_ctx_hd ctxs) id next;
-      PSassign (id, ep), next
-  | TSprintn (e, _) -> 
+      let pos = match find_var_id id ctxs with
+        | None -> assert false
+        | Some ct -> Hashtbl.find ct id in
+
+      PSassign (id, ep, pos), next
+  | TSprintn (e, t, _) -> 
       let ep, next = (pcompile_expr ctxs next e) in
-      PSprintn ep, next
-  | TSprint (e, _) ->
+      PSprintn (ep, t), next
+  | TSprint (e, t, _) ->
        let ep, next = (pcompile_expr ctxs next e) in
-      PSprintn ep, next
+      PSprint (ep, t), next
   | TSblock (stmts, _) -> 
       let pblock, next = pcompile_block_stmt ctxs next stmts in
       PSblock pblock, next

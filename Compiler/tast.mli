@@ -17,8 +17,8 @@ and typed_stmt =
   | TSwhile    of typed_expr * typed_stmt * Ast.crust_types
   | TSdeclare  of ident * Ast.crust_types * typed_expr * Ast.crust_types
   | TSassign   of ident * typed_expr * Ast.crust_types
-  | TSprintn   of typed_expr * Ast.crust_types
-  | TSprint    of typed_expr * Ast.crust_types
+  | TSprintn   of typed_expr * Ast.crust_types * Ast.crust_types
+  | TSprint    of typed_expr * Ast.crust_types * Ast.crust_types
   | TSblock    of typed_stmt list * Ast.crust_types
   | TScontinue of Ast.crust_types
   | TSbreak    of Ast.crust_types
