@@ -17,19 +17,19 @@ prog:
 ;
 
 global_stmt:
-| KW_STRUCT i = ident "{" l = separated_list(",", struct_elements) "}" { GSstruct (i, l, !Lexer.line_num) }
-| KW_FN f = ident "(" x = separated_list(",", argument_list) ")" r = option(function_return) s = function_suite
-  
+| KW_STRUCT i = ident "{" l = separated_list(",", pair) "}" { GSstruct (i, l, !Lexer.line_num) }
+| KW_FN f = ident x = function_argument r = option(function_return) s = function_suite
   { let r = (match r with | None -> Tunit | Some t -> t) in 
       GSfunction(f, x, r, s, !Lexer.line_num)} 
 ;
 
-struct_elements:
+pair:
 |  id = ident ":" t = crust_types {(id, t)}
 ;
 
-argument_list:
-|  id = ident ":" t = crust_types {(id, t)}
+function_argument:
+| "(" x = separated_list(",", pair) ")" {x}
+| UNIT                                  {[]}
 ;
 
 function_suite:
@@ -67,7 +67,7 @@ simple_stmt:
 ;
 
 
-pair:
+expr_pair:
 | id = ident ":" e = expr {(id, e)}
 ;
 
@@ -79,7 +79,7 @@ expr:
 | e1 = expr o = binop e2 = expr     { Ebinop (o, e1, e2, !Lexer.line_num) }
 | id = ident                        { Eident (id, !Lexer.line_num) }
 | id = ident "(" l = separated_list("," , expr) ")" {Ecall(id, l, !Lexer.line_num)}
-| id = ident "{" l = separated_list("," , pair) "}" {Estrc_decl(id, l, !Lexer.line_num)}
+| id = ident "{" l = separated_list("," , expr_pair) "}" {Estrc_decl(id, l, !Lexer.line_num)}
 | id1 = ident "." id2 = ident       { Estrc_access(id1, id2, !Lexer.line_num)}
 | "(" e = expr ")"                  { e }
 ;
