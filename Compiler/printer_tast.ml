@@ -19,9 +19,9 @@ and string_of_typed_expr = function
 
 and string_of_typed_stmt = function
   | TSif (e, s1, elifs, t)-> "TSif("^(string_of_typed_expr e)^", "^(string_of_typed_stmt s1)^", "^(string_of_elif elifs)^","^(Printer.string_of_crust_types t)^")"
-  | TSwhile(e, bl,t)   -> "TSwhile("^(string_of_typed_expr e)^"\n"^(string_of_typed_stmt bl)^","^(Printer.string_of_crust_types t)^")"
+  | TSwhile(e, bl,t)    -> "TSwhile("^(string_of_typed_expr e)^"\n"^(string_of_typed_stmt bl)^","^(Printer.string_of_crust_types t)^")"
   | TSdeclare(id,t,e,ts)-> "TSdeclare("^id^", "^(Printer.string_of_crust_types t)^", "^(string_of_typed_expr e)^","^(Printer.string_of_crust_types ts)^")"
-  | TSassign(id, e, t) -> "TSassign("^id^", "^(string_of_typed_expr e)^","^(Printer.string_of_crust_types t)^")"
+  | TSassign(id, e, t)  -> "TSassign("^id^", "^(string_of_typed_expr e)^","^(Printer.string_of_crust_types t)^")"
   | TSprintn (e, te, t) -> "TSprintln("^(string_of_typed_expr e)^","^(Printer.string_of_crust_types te)^","^(Printer.string_of_crust_types t)^")"
   | TSprint (e, te, t)  -> "TSprint("^(string_of_typed_expr e)^","^(Printer.string_of_crust_types te)^","^(Printer.string_of_crust_types t)^")"
   | TSblock (bl, t)    -> string_of_block_typed_stmt "" bl

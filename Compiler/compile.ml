@@ -369,24 +369,6 @@ and compile_global_stmt = function
   | PGSblock bl -> 
     let block = List.rev(compile_block_global_stmt bl) in
     List.fold_right (++) block nop
-  | PGSfunction("main", args, t, body, fp) ->
-    (* 1 - Inicio da função *)
-    functions := "main"::(!functions);
-    
-    let code = globl "main" ++ label "main" ++
-      subq (imm fp) (reg rsp) ++ (* aloca a frame *)
-      leaq (ind ~ofs:(fp - 8) rsp) rbp ++ (* %rbp = ... *)
-
-      compile_stmt body ++
-
-      label ("main_fim") ++
-      addq (imm fp) (reg rsp) ++ (* desaloca a frame *)
-      ret 
-    in
-
-    functions := List.tl !functions;
-
-    code
   | PGSfunction(id, args, t, body, fp) ->
     
     functions := id::(!functions);
@@ -397,11 +379,13 @@ and compile_global_stmt = function
       pushq (reg rbp) ++
       movq (reg rsp) (reg rbp) ++ 
       pushn fp ++
+
       compile_stmt body ++ 
 
       label (id ^ "_fim") ++ 
       popn fp ++
-      popq rbp ++ 
+      popq rbp ++
+
       ret;
 
     functions := List.tl !functions;
@@ -415,7 +399,7 @@ let compile_program p ofile =
   let code = compile_global_stmt p in
   let p =
     { text =
-       
+        globl "main" ++ 
         code ++
        
         label "printn_int" ++

@@ -1,22 +1,5 @@
 	.text
 	.globl	main
-main:
-	subq $16, %rsp
-	leaq 8(%rsp), %rbp
-	movq $5, %rax
-	pushq %rax
-	call addOne
-	addq $8, %rsp
-	pushq %rax
-	popq %rdi
-	call printn_int
-	movq $0, %rax
-	pushq %rax
-	popq %rax
-	jmp main_fim
-main_fim:
-	addq $16, %rsp
-	ret
 printn_int:
 	movq %rdi, %rsi
 	movq $.Sprintn_int, %rdi
@@ -103,7 +86,7 @@ addOne:
 	popq %rbx
 	popq %rax
 	cmpq %rbx, %rax
-	jge bool_true_1
+	jg bool_true_1
 	movq $0, %rax
 	pushq %rax
 	jmp bool_end_1
@@ -140,6 +123,25 @@ if_end_1:
 	jmp addOne_fim
 addOne_fim:
 	addq $24, %rsp
+	popq %rbp
+	ret
+main:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $16, %rsp
+	movq $5, %rax
+	pushq %rax
+	call addOne
+	addq $8, %rsp
+	pushq %rax
+	popq %rdi
+	call printn_int
+	movq $0, %rax
+	pushq %rax
+	popq %rax
+	jmp main_fim
+main_fim:
+	addq $16, %rsp
 	popq %rbp
 	ret
 	.data

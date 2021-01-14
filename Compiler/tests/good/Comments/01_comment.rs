@@ -19,9 +19,10 @@ fn main() -> i32
 
 fn addOne(x:i32) ->i32
 {
-   if x >= 10 {
+   if x > 10 {
        return x;
     }
+    
     println!(x);
 
     return addOne(x+1);
