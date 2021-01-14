@@ -166,7 +166,7 @@ and type_expr ctxs = function
         if id1 <> id2 then error ("Wrong name given in the declaration of a struct condition, was given "^id1 ^" but "^id2^" was expected.") line;
         (* 2.1 - Verificar se os tipos de e2 estão corretos *)
         if not (compare_crust_types (t1, t2)) then error ("Wrong type in the if condition, was given " ^ Printer.string_of_crust_types t2 ^ " but a " ^ Printer.string_of_crust_types t1 ^ " was expected.") line;
-        typed_el := (!typed_el)@[(id2,te2)]
+        typed_el := (!typed_el)@[(id2,te2,t2)]
       ) elements el;
       
       TEstrc_decl(id, !typed_el, (Tstruct id)), (Tstruct id)
@@ -282,7 +282,6 @@ and type_stmt ctxs = function
 
     (* 3 - Verificar o tipo do retorno e da função *)
     if not (compare_crust_types (function_type, t)) then error ("Incompatible return type, function has type "^Printer.string_of_crust_types function_type^" but the return has type "^Printer.string_of_crust_types t^".") line;
-
     
     Tast.TSreturn(te1, t), t
 

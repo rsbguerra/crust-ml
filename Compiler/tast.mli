@@ -11,7 +11,7 @@ and typed_expr =
   | TEbinop   of Ast.binop * typed_expr * typed_expr * Ast.crust_types
   | TEunop    of Ast.unop * typed_expr * Ast.crust_types
   | TEstrc_access  of ident * ident * Ast.crust_types * Ast.crust_types
-  | TEstrc_decl  of ident * (ident * typed_expr) list  * Ast.crust_types
+  | TEstrc_decl  of ident * (ident * typed_expr * Ast.crust_types) list  * Ast.crust_types
   | TEcall    of ident * typed_expr list * Ast.crust_types
   
 and typed_stmt =
