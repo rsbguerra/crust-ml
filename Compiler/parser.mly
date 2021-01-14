@@ -61,6 +61,10 @@ simple_stmt:
 ;
 
 
+pair:
+| id = ident ":" e = expr {(id, e)}
+;
+
 expr:
 | c = CST                           { Ecst (c, !Lexer.line_num) }
 | KW_TRUE                           { Ecst ((Cbool true), !Lexer.line_num) }
@@ -68,13 +72,16 @@ expr:
 | u  = unop e1 = expr               { Eunop (u, e1, !Lexer.line_num) }
 | e1 = expr o = binop e2 = expr     { Ebinop (o, e1, e2, !Lexer.line_num) }
 | id = ident                        { Eident (id, !Lexer.line_num) }
-| id = ident "(" l = separated_list("," , expr) ")" { Ecall(id, l, !Lexer.line_num)}
+| id = ident "(" l = separated_list("," , expr) ")" {Ecall(id, l, !Lexer.line_num)}
+| id = ident "{" l = separated_list("," , pair) "}" {Edeclstruct(id, l, !Lexer.line_num)}
+| id1 = ident "." id2 = ident       { Eaccess(id1, id2, !Lexer.line_num)}
 | "(" e = expr ")"                  { e }
 ;
 
 %inline crust_types:
 | I32    { Ti32  }
 | BOOL   { Tbool }
+| id = ident { Tstruct id}
 ;
 
 %inline unop:

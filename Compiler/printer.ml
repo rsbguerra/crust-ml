@@ -4,6 +4,7 @@ let string_of_crust_types = function
   | Tunit -> "Tunit"
   | Ti32  -> "Ti32"
   | Tbool -> "Tbool"
+  | Tstruct s -> "Tstruct (" ^ s ^ ")"
 
 let string_of_unop = function
   | Uneg -> "-"
@@ -36,16 +37,22 @@ let rec string_of_expr_list acc = function
   | []      -> acc
   | hd::tl -> string_of_expr_list (acc^(string_of_expr hd)^", ") tl
 
+and string_of_struct_pair_list acc = function
+  | []      -> acc
+  | (id, e)::tl -> string_of_struct_pair_list (acc^id^" : "^(string_of_expr e)^", ") tl
+
+
 and string_of_expr = function
   | Ecst (n, _)              -> "Ecst("^(string_of_crust_consts n)^")"
   | Eident (id, _)           -> "Eident("^id^")"
   | Ebinop (binop, e1, e2, _)-> "Ebinop("^(string_of_binop binop)^", "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
   | Eunop (unop , e1, _)     -> "Eunop("^(string_of_unop unop)^", "^(string_of_expr e1)^")"
+  | Eaccess (id, el, _)      -> "Eaccess("^ id^", "^el^")"
+  | Edeclstruct (id, el, _)  -> "Edeclstruct("^ id^", "^(string_of_struct_pair_list "" el)^")"
   | Ecall (f, el, _)         -> "Ecall("^f^", "^(string_of_expr_list "" el)^")"  
-  | Eaccess (e1, e2)         -> "Eaccess("^(string_of_expr e1)^", "^e2^")"
   | Elen (e)                 -> "Elen"^(string_of_expr e)
   | Evec_access(e1, e2)      -> "Evec_access("^(string_of_expr e1)^", "^(string_of_expr e2)^")"
-  | Evec_decl(el)             -> "Evec_decl("^(string_of_expr_list "" el)^")" 
+  | Evec_decl(el)            -> "Evec_decl("^(string_of_expr_list "" el)^")" 
 
 and string_of_stmt = function
   | Sif (e, s1, elifs, _)-> "Sif("^(string_of_expr e)^", "^(string_of_stmt s1)^", "^(string_of_elif elifs)^")"

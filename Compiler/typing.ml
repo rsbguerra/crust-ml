@@ -45,8 +45,12 @@ let rec find_fun_id id = function
   | (_,ct,_)::tl -> if Hashtbl.mem ct id then (Some ct) else (find_fun_id id tl) 
 
 let rec find_struct_id id = function
-  | []     -> None
+  | []           -> None
   | (_,_,ct)::tl -> if Hashtbl.mem ct id then (Some ct) else (find_struct_id id tl) 
+
+let rec find_struct_element el = function
+  | []         -> None
+  | (id,t)::tl -> if id = el then Some t else (find_struct_element el tl)
 
 let rec is_id_unique id = function
   | []          -> true
@@ -61,8 +65,14 @@ let compare_crust_types = function
   | Ast.Ti32 , Ast.Ti32  -> true
   | Ast.Tbool, Ast.Tbool -> true
   | Ast.Tunit, Ast.Tunit -> true
+  | Ast.Tstruct(t1), Ast.Tstruct(t2) -> t1 = t2
   | _, _                 -> false
+
+let string_of_tstruct = function 
+  | Ast.Tstruct(t1) -> Some t1
+  | _               -> None
   
+
 let rec type_binop_expr op te1 t1 te2 t2 line = match op with
  | Ast.Badd | Ast.Bsub | Ast.Bmul | Ast.Bdiv | Ast.Bmod ->
     (* 1 - Verificar t1 e t2 *)
@@ -112,6 +122,53 @@ and type_expr ctxs = function
     if not (compare_crust_types (Ast.Tbool, t)) then error ("Wrong type given to operand Ast.Unot, was given"^Printer.string_of_crust_types t^" but a "^Printer.string_of_crust_types Ast.Tbool^" was expected.") line;
     (* 3 - Retorna a expressão tipada *)
     Tast.TEunop(Ast.Unot, te, Ast.Tbool), Ast.Tbool
+
+  | Eaccess(id, el, line) ->
+    (* p.x *)
+    (* 1 - ir buscar a estrutura com nome id *)
+    let tid = match find_var_id id ctxs with
+      | None     -> error ("The identifier " ^ id ^ " was not defined.") line
+      | Some ctx -> Hashtbl.find ctx id in
+
+    (* 2 - ir buscar o tipo estrutura *)
+    let strct = match string_of_tstruct tid with
+      | None   -> error ("The structure " ^ Printer.string_of_crust_types tid ^ " was not defined.") line
+      | Some s -> 
+        begin match find_struct_id s ctxs with
+          | None     -> error ("The structure with the identifier " ^ s ^ " was not defined.") line
+          | Some ctx -> Hashtbl.find ctx s 
+        end 
+      in
+    
+    (* 3 - verificar se a estrutura tem o elemento el *)
+    begin match find_struct_element el strct with
+       | None   -> error ("Trying to access element "^ el ^" of struct "^ Printer.string_of_crust_types tid ^" but this structure does not contain it.") line;
+       | Some tel -> TEaccess(id, el, tid, tel), tel
+    end 
+
+  | Edeclstruct(id, el, line) ->
+    (* 1 - Verificar se a estrutura id existe *)
+    begin match find_struct_id id ctxs with
+    | None     -> error ("The structure with the identifier " ^ id ^ " was not defined.") line
+    | Some ctx ->
+      (* 2 - Verificar se todos os elementos de el existem na estrutura id *)
+      let elements = Hashtbl.find ctx id in
+      
+      if (List.length elements) <> (List.length el) then error ("The structure with the identifier "^id^" has "^(string_of_int (List.length elements))^" elements but were givin "^string_of_int(List.length el)^".") line;
+      
+      let typed_el = ref [] in
+      List.iter2(fun (id1,t1) (id2,e2) -> 
+        let te2, t2 = type_expr ctxs e2 in
+        (* 2.1 - Verificar se os nomes de e2 estão corretos *)
+        if id1 <> id2 then error ("Wrong name given in the declaration of a struct condition, was given "^id1 ^" but "^id2^" was expected.") line;
+        (* 2.1 - Verificar se os tipos de e2 estão corretos *)
+        if not (compare_crust_types (t1, t2)) then error ("Wrong type in the if condition, was given " ^ Printer.string_of_crust_types t2 ^ " but a " ^ Printer.string_of_crust_types t1 ^ " was expected.") line;
+        typed_el := (!typed_el)@[(id2,te2)]
+      ) elements el;
+      
+      TEdeclstruct(id, !typed_el, (Tstruct id)), (Tstruct id)
+
+    end
   | Ecall(id, args, line) ->
     (* 1 - Verificar se a função existe *)
     let params, r = match find_fun_id id ctxs with

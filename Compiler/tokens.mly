@@ -5,7 +5,7 @@
 %token <Ast.crust_const>     CST
 %token <Ast.ident> IDENT
 
-%token I32 BOOL
+%token I32 BOOL 
 %token KW_IF KW_ELSE
 %token KW_WHILE
 %token KW_CONTINUE KW_BREAK
@@ -25,6 +25,7 @@
 %token NOT "!"
 %token ASSIGN "="
 %token COLON ":"
+%token DOT "."
 %token DELIMITER ";"
 %token COMMA ","
 %token EOF

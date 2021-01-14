@@ -22,12 +22,13 @@ and expr =
   | Eident   of ident * int
   | Ebinop   of binop * expr * expr * int
   | Eunop    of unop * expr * int
-  | Eaccess  of expr * ident             (* S.x (S-> struct, x -> element of struct)*)
+  | Eaccess  of ident * ident * int            (* S.x (S-> struct, x -> element of struct)*)
+  | Edeclstruct of ident * (ident * expr) list  * int            
   | Elen     of expr  
   | Evec_access of expr * expr
   | Evec_decl   of expr list
   | Ecall    of ident * expr list * int
-  
+
 and stmt =
   | Sif       of expr * stmt * elif list * int
   | Swhile    of expr * stmt * int
@@ -50,7 +51,7 @@ and crust_const =
   | Cunit
   
 and crust_types =
-  | Tunit | Ti32 | Tbool
+  | Tunit | Ti32 | Tbool | Tstruct of ident
 
 and global_stmt = 
   | GSblock    of global_stmt list * int

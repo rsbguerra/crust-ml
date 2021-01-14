@@ -97,6 +97,7 @@ rule analisador = parse
   | "||"            { [OR] }
   | "&&"            { [AND] }
   | '!'             { [NOT] }
+  | '.'             { [DOT] }
   | ':'             { [COLON] }
   | "->"            { [ARROW] }
   | ';'             { [DELIMITER] }
