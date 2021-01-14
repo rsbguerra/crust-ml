@@ -20,7 +20,8 @@ fn main() -> i32
     let i2:i32 = 68;
     let i3:i32 = 69;
     
-    //print!(p.x); // p.x = p 
+    print!(p3.y); // p.x = p 
+    print!(p3.x); // p.x = p 
     // (pos at rbp) + Point2D[x] 
     // -(8 + 0) = -8
     

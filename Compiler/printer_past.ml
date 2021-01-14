@@ -24,7 +24,9 @@ let rec string_of_precomp_expr = function
   | PEstrc_decl(id, pairs) -> 
     "PEstrc_decl(" ^ id ^ ", " ^ 
     string_of_struct_pairs "" pairs ^ ")"
-  | _ -> assert false
+  | PEstrc_access(id, el, el_pos) ->
+    "PEstrc_access(" ^ id ^ ", " ^ el ^ ", " ^
+    string_of_int el_pos ^ ")"
 
 and string_of_precomp_expr_list exprs = 
   List.map (fun e -> string_of_precomp_expr e) exprs |> 

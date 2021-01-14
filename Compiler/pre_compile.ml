@@ -50,6 +50,14 @@ let rec find_struct_id id = function
   | (_,_,ct)::tl -> 
     if Hashtbl.mem ct id then (Some ct) else (find_struct_id id tl) 
 
+let rec find_struct_element el = function
+  | []         -> assert false
+  | (id, t, pos)::tl -> if id = el then pos else (find_struct_element el tl)
+
+let string_of_tstruct = function 
+  | Ast.Tstruct(t1) -> t1
+  | _               -> assert false
+
 let get_type_start ctxs = function
   | Ti32 | Tbool | Tunit -> 0
   | Tstruct s -> begin
@@ -57,7 +65,6 @@ let get_type_start ctxs = function
     | None -> error s
     | Some ct -> -snd(Hashtbl.find ct s) 
     end
-
 
 let get_type_size ctxs = function
   | Ti32 | Tbool -> 8
@@ -93,9 +100,8 @@ let rec pcompile_expr ctxs next = function
           (e::l, max fp fpmax))
         ([], next) args in
     PEcall(id, exprs), fpmax
-  (*  
-  | PEstrc_decl of ident * (ident * int) list
-  *)
+
+
   | TEstrc_decl (id, pairs, t) -> 
     (* 1. Precompilação de pares *)
     let next, p_els = List.fold_left_map(
@@ -105,10 +111,20 @@ let rec pcompile_expr ctxs next = function
         (next+(get_type_size ctxs t_e)), (el, p_el, (-next))
     ) next pairs in
 
+    PEstrc_decl (id, p_els), next
 
-
-    PEstrc_decl(id, p_els), next
-  | _ -> assert false
+  | TEstrc_access (id, el, tid, tel) ->
+    (* 1. Buscar posição de id na pilha *)
+    let id_pos = match find_var_id id ctxs with
+      | None -> assert false
+      | Some ct -> Hashtbl.find ct id in
+    (* 2. Buscar a positiva do el relativo ao primeiro elemento*)
+    let struct_els = match find_struct_id (string_of_tstruct tid) ctxs with
+      | None -> assert false
+      | Some ct -> fst(Hashtbl.find ct (string_of_tstruct tid)) in
+    (* 3. *)
+    let el_pos = find_struct_element el struct_els in
+    PEstrc_access(id, el, id_pos+el_pos), next
 
 and pcompile_stmt ctxs next = function
   | TSif (e, s, elif, _) ->
