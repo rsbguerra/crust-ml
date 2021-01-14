@@ -18,8 +18,10 @@ prog:
 
 global_stmt:
 | KW_STRUCT i = ident "{" l = separated_list(",", struct_elements) "}" { GSstruct (i, l, !Lexer.line_num) }
-| KW_FN f = ident "(" x = separated_list(",", argument_list) ")" ARROW r = crust_types s = function_suite
-                      { GSfunction(f, x, r, s, !Lexer.line_num)} 
+| KW_FN f = ident "(" x = separated_list(",", argument_list) ")" r = option(function_return) s = function_suite
+  
+  { let r = (match r with | None -> Tunit | Some t -> t) in 
+      GSfunction(f, x, r, s, !Lexer.line_num)} 
 ;
 
 struct_elements:
@@ -32,6 +34,10 @@ argument_list:
 
 function_suite:
 | "{" l = list(stmt) "}"     {Sblock (l, !Lexer.line_num) }
+;
+
+function_return:
+| ARROW r = crust_types { r }
 ;
 
 suite:

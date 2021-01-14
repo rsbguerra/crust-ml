@@ -29,7 +29,7 @@ fn addOne(x:i32) -> ()
 
 fn main( ) -> i32
 {
-  println!(5);
+  println!(addOne(5));
  
-  return;
+  return 0;
 } 
