@@ -208,8 +208,18 @@ let rec compile_expr = function
     popn (8 * List.length args) ++
     pushq (reg rax)
 
-  | _ -> assert false
-
+  | PEstrc_access (id, el, pos) ->
+    movq (ind ~ofs:pos rbp) (reg rax) ++
+    pushq (reg rax)
+  | PEstrc_decl (id, pairs) -> 
+    List.fold_left(fun code (id, e, pos) -> 
+      code ++
+      (* 1 - Calcular o valor da expressao  *)
+      compile_expr e ++
+      popq rax ++
+      (* 2 - Guardar o valor da expressao na posicao ofs *)
+      movq (reg rax) (ind ~ofs:pos rbp) 
+      ) nop pairs
 
 let rec compile_stmt = function
   | PSif (e, s1, elifs)-> 
@@ -294,13 +304,16 @@ let rec compile_stmt = function
     loop_labels := List.tl !loop_labels;
     code
 
-  | PSdeclare(id, t, e, pos) -> 
-    (* 1 - Calcular o valor da expressao  *)
-    compile_expr e ++
-    popq rax ++
-  
-    (* 2 - Guardar o valor da expressao na posicao ofs *)
-    movq (reg rax) (ind ~ofs:pos rbp)
+  | PSdeclare(id, t, e, pos) -> begin
+    match t with 
+    | Ti32 | Tbool -> 
+      (* 1 - Calcular o valor da expressao  *)
+      compile_expr e ++
+      popq rax ++
+      (* 2 - Guardar o valor da expressao na posicao ofs *)
+      movq (reg rax) (ind ~ofs:pos rbp)
+    | _ -> compile_expr e
+    end
 
   | PSassign (id, e, pos) -> 
     (* 1 - Atualiza o valor que esta no endereço ofs*)
@@ -390,7 +403,7 @@ and compile_global_stmt = function
 
     code
 
-  | _ -> assert false
+  | PGSstruct(id, els, size) -> nop
 
 (* Compilação do programa p e grava o código no ficheiro ofile *)
 let compile_program p ofile =
