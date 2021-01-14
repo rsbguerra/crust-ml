@@ -419,74 +419,46 @@ let compile_program p ofile =
         cmpq (imm 0) (reg rdi) ++
         je ".print_false" ++
         jne ".print_true" ++
-        
         label ".print_true" ++
         movq (reg rdi) (reg rsi) ++
         movq (ilab ".true") (reg rdi) ++      
         movq (imm 0) (reg rax) ++
         call "printf" ++
         ret ++
-
         label ".print_false" ++
         movq (reg rdi) (reg rsi) ++
         movq (ilab ".false") (reg rdi) ++      
         movq (imm 0) (reg rax) ++
         call "printf" ++
         ret ++
-
         label "printn_bool" ++
         cmpq (imm 0) (reg rdi) ++
         je ".printn_false" ++
         jne ".printn_true" ++
-        
         label ".printn_true" ++
         movq (reg rdi) (reg rsi) ++
         movq (ilab ".truen") (reg rdi) ++      
         movq (imm 0) (reg rax) ++
         call "printf" ++
         ret ++
-
         label ".printn_false" ++
         movq (reg rdi) (reg rsi) ++
         movq (ilab ".falsen") (reg rdi) ++      
         movq (imm 0) (reg rax) ++
         call "printf" ++
         ret ++
-
-        label "scanf_int" ++
-        
-        leaq (lab ".Sscanf_int") rdi ++
-        leaq (lab "input") rsi  ++
-        xorq (reg rax) (reg rax) ++
-  
-        call "scanf" ++
-        movq (lab "input") (reg rax) ++
-        ret ++
-
-        label "print_error_t" ++
-        movq (reg rdi) (reg rsi) ++
-        leaq (lab ".Sprint_error_t") rdi ++
-        movq (imm64 0L) (reg rax) ++
-        call "printf" ++
-        jmp "end" ++
-        label "print_error_s" ++
-        movq (reg rdi) (reg rsi) ++
-        leaq (lab ".Sprint_error_s") rdi ++
-        movq (imm64 0L) (reg rax) ++
-        call "printf" ++
-        jmp "end" ++
         label "print_error_z" ++
         movq (reg rdi) (reg rsi) ++
         leaq (lab ".Sprint_error_z") rdi ++
         movq (imm64 0L) (reg rax) ++
         call "printf" ++
-        jmp "end" ++
+        jmp "main_fim" ++
         label "print_error_f" ++
         movq (reg rdi) (reg rsi) ++
         leaq (lab ".Sprint_error_f") rdi ++
         movq (imm64 0L) (reg rax) ++
         call "printf" ++
-        jmp "end" ++
+        jmp "main_fim" ++
         !function_code;
       data = 
         label ".Sprintn_int" ++ string "%ld\n" ++
@@ -496,14 +468,9 @@ let compile_program p ofile =
         label ".truen" ++ string "true\n" ++ 
         label ".falsen" ++ string "false\n" ++
         label ".Sprint_error_z" ++ string "\nErro: Divisao por zero.\n\n" ++
-        label ".Sprint_error_t" ++ string "\nRun-time error:\n\n     Value out of bounds.\n\n" ++
-        label ".Sprint_error_s" ++ string "\nRun-time error:\n\n     Invalid size of set. A set needs to have atleast the size of one.\n\n" ++
         label ".Sprint_error_f" ++ string "\nFuncao sem retorno\n\n" ++
-        label ".Sscanf_int" ++ string "%ld" ++
         label "is_in_function" ++ dquad [0] ++
-        label "number_of_loop" ++ dquad [0] ++
-        label "input"  ++ dquad [0] ++
-        label "shift"  ++ dbyte [0]
+        label "number_of_loop" ++ dquad [0]
     }
   in
   let f = open_out ofile in
