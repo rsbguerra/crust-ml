@@ -4,7 +4,7 @@ open Ast
 (* table_ctx representa um scope, contexto *)
 type tbl_variables_ctx = (string, int) Hashtbl.t
 type tbl_functions_ctx = (string, int) Hashtbl.t
-type tbl_structs_ctx = (string, Ast.pairs list) Hashtbl.t
+type tbl_structs_ctx = (string, int) Hashtbl.t
 
 type tbl_ctx = tbl_variables_ctx * tbl_functions_ctx * tbl_structs_ctx
 
@@ -137,8 +137,15 @@ and pcompile_global_stmt ctxs = function
       Hashtbl.replace (fun_ctx_hd new_ctxs) x next;
       
       PGSfunction(x, p_args, t, p_stmt, next)
+  | TGSstruct (ident, args) -> 
+    (* 1 - Adiocionar identificador da struct ao contexto *)
+    Hashtbl.replace (struct_ctx_hd ctxs) ident 0;
+    (* 2 - Calcular espaço na memória*)
+    let _, pcompiled_fields = 
+      List.fold_left_map(fun next (id, t) -> 
+        let fp = next+8 in 
+        fp, (id, t, (-fp))) 8 args in
+    PGSstruct(ident, pcompiled_fields)
 
-
-  | TGSstruct (ident, args) -> assert false
 
 let precompile = pcompile_global_stmt [make_ctx()]
