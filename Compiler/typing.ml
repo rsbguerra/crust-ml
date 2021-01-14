@@ -246,14 +246,20 @@ and type_stmt ctxs = function
     if not (compare_crust_types (t, t1)) then error ("Wrong type in the assign of variable"^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
     Tast.TSassign(id, te, Ast.Tunit), Ast.Tunit
 
-  | Sprintn (e, _) ->
+  | Sprintn (e, line) ->
     (* 1 - Tipar expressão *)
     let te, t = type_expr ctxs e in
+    (* 2 - Só conseguimos imprimir Tbool e Ti32 *)
+    if not ((compare_crust_types (t, Ti32)) || (compare_crust_types (t, Tbool)))then error ("Wrong type in the print statement, was given "^Printer.string_of_crust_types t^" but a Ti32 or Tbool was expected.") line;
+
     Tast.TSprintn(te, t, Ast.Tunit), Ast.Tunit
 
-  | Sprint (e, _) ->
+  | Sprint (e, line) ->
     (* 1 - Tipar expressão *)
     let te, t = type_expr ctxs e in
+    (* 2 - Só conseguimos imprimir Tbool e Ti32 *)
+    if not ((compare_crust_types (t, Ti32)) || (compare_crust_types (t, Tbool)))then error ("Wrong type in the print statement, was given "^Printer.string_of_crust_types t^" but a Ti32 or Tbool was expected.") line;
+
     Tast.TSprint(te, t, Ast.Tunit), Ast.Tunit
 
   | Sblock (bl, _) ->
