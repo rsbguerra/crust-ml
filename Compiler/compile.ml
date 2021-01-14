@@ -4,7 +4,6 @@ open Format
 open X86_64
 open Past
       
-exception VarUndef of string
 exception Error    of string
 let error s = raise (Error s)
 
@@ -14,13 +13,13 @@ let number_of_and_or = ref 0
 let number_of_ifs    = ref 0
 let number_of_bool_tests = ref 0
 
-let loops     = ref []
-let functions = ref []
-
-let function_code = ref nop
-
-(* Tamanho da frame, em byte (cada variável local ocupa 8 bytes) *)
-let frame_size = ref 0
+(* 
+  Variaveis que guardam as labels dos loops e funções em que estamos, 
+  utilizado para se saber em que loop ou função o break, continue e return 
+  estão a funcionar 
+*)
+let loop_labels     = ref []
+let function_labels = ref []
 
 let get_value = function
   | Ast.Ci32 v  -> v
@@ -272,7 +271,7 @@ let rec compile_stmt = function
     (* 1 - Incrementa o numero de whiles existentes *)
     number_of_while := !number_of_while + 1;
     let while_index = string_of_int(!number_of_while) in
-    loops := [("while_" ^ while_index)]@(!loops);
+    loop_labels := [("while_" ^ while_index)]@(!loop_labels);
        
     let code = 
       (* 2.1 - Cria a label de inicio do while *)
@@ -293,7 +292,7 @@ let rec compile_stmt = function
       label ("while_" ^ while_index ^ "_fim")
     in
 
-    loops := List.tl !loops;
+    loop_labels := List.tl !loop_labels;
     code
 
   | PSdeclare(id, t, e, pos) -> 
@@ -334,19 +333,19 @@ let rec compile_stmt = function
     List.fold_right (++) block nop
   
   | PScontinue -> 
-    if List.length !loops <= 0 then error "Using the continue statement outside of a loop";
-    let current_loop = List.hd !loops in
+    if List.length !loop_labels <= 0 then error "Using the continue statement outside of a loop";
+    let current_loop = List.hd !loop_labels in
     jmp (current_loop ^  "_inicio")
 
   | PSbreak    ->
-    if List.length !loops <= 0 then error "Using the break statement outside of a loop";
-    let current_loop = List.hd !loops in
+    if List.length !loop_labels <= 0 then error "Using the break statement outside of a loop";
+    let current_loop = List.hd !loop_labels in
      
     jmp (current_loop ^  "_fim")
     
   | PSreturn e -> 
-    if List.length !functions <= 0 then error "Using the break statement outside of a loop";
-    let current_function = List.hd !functions in
+    if List.length !function_labels <= 0 then error "Using the break statement outside of a loop";
+    let current_function = List.hd !function_labels in
     
     compile_expr e ++
     popq rax ++
@@ -371,10 +370,10 @@ and compile_global_stmt = function
     List.fold_right (++) block nop
   | PGSfunction(id, args, t, body, fp) ->
     
-    functions := id::(!functions);
+    function_labels := id::(!function_labels);
 
     (* 1 - Inicio da função *)
-    function_code := (!function_code) ++
+    let code =
       label id ++
       pushq (reg rbp) ++
       movq (reg rsp) (reg rbp) ++ 
@@ -386,11 +385,11 @@ and compile_global_stmt = function
       popn fp ++
       popq rbp ++
 
-      ret;
+      ret in
 
-    functions := List.tl !functions;
-    
-    nop
+    function_labels := List.tl !function_labels;
+
+    code
 
   | _ -> assert false
 
@@ -399,9 +398,8 @@ let compile_program p ofile =
   let code = compile_global_stmt p in
   let p =
     { text =
-        globl "main" ++ 
+        globl "main" ++
         code ++
-       
         label "printn_int" ++
         movq (reg rdi) (reg rsi) ++
         movq (ilab ".Sprintn_int") (reg rdi) ++
@@ -458,8 +456,7 @@ let compile_program p ofile =
         leaq (lab ".Sprint_error_f") rdi ++
         movq (imm64 0L) (reg rax) ++
         call "printf" ++
-        jmp "main_fim" ++
-        !function_code;
+        jmp "main_fim";
       data = 
         label ".Sprintn_int" ++ string "%ld\n" ++
         label ".Sprint_int" ++ string "%ld" ++
@@ -467,8 +464,8 @@ let compile_program p ofile =
         label ".false" ++ string "false" ++
         label ".truen" ++ string "true\n" ++ 
         label ".falsen" ++ string "false\n" ++
-        label ".Sprint_error_z" ++ string "\nErro: Divisao por zero.\n\n" ++
-        label ".Sprint_error_f" ++ string "\nFuncao sem retorno\n\n" ++
+        label ".Sprint_error_z" ++ string "\nError: Division by zero.\n\n" ++
+        label ".Sprint_error_f" ++ string "\nFunction without return.\n\n" ++
         label "is_in_function" ++ dquad [0] ++
         label "number_of_loop" ++ dquad [0]
     }

@@ -1,61 +1,5 @@
 	.text
 	.globl	main
-printn_int:
-	movq %rdi, %rsi
-	movq $.Sprintn_int, %rdi
-	movq $0, %rax
-	call printf
-	ret
-print_int:
-	movq %rdi, %rsi
-	movq $.Sprint_int, %rdi
-	movq $0, %rax
-	call printf
-	ret
-print_bool:
-	cmpq $0, %rdi
-	je .print_false
-	jne .print_true
-.print_true:
-	movq %rdi, %rsi
-	movq $.true, %rdi
-	movq $0, %rax
-	call printf
-	ret
-.print_false:
-	movq %rdi, %rsi
-	movq $.false, %rdi
-	movq $0, %rax
-	call printf
-	ret
-printn_bool:
-	cmpq $0, %rdi
-	je .printn_false
-	jne .printn_true
-.printn_true:
-	movq %rdi, %rsi
-	movq $.truen, %rdi
-	movq $0, %rax
-	call printf
-	ret
-.printn_false:
-	movq %rdi, %rsi
-	movq $.falsen, %rdi
-	movq $0, %rax
-	call printf
-	ret
-print_error_z:
-	movq %rdi, %rsi
-	leaq .Sprint_error_z, %rdi
-	movq $0, %rax
-	call printf
-	jmp main_fim
-print_error_f:
-	movq %rdi, %rsi
-	leaq .Sprint_error_f, %rdi
-	movq $0, %rax
-	call printf
-	jmp main_fim
 addOne:
 	pushq %rbp
 	movq %rsp, %rbp
@@ -125,6 +69,62 @@ main_fim:
 	addq $16, %rsp
 	popq %rbp
 	ret
+printn_int:
+	movq %rdi, %rsi
+	movq $.Sprintn_int, %rdi
+	movq $0, %rax
+	call printf
+	ret
+print_int:
+	movq %rdi, %rsi
+	movq $.Sprint_int, %rdi
+	movq $0, %rax
+	call printf
+	ret
+print_bool:
+	cmpq $0, %rdi
+	je .print_false
+	jne .print_true
+.print_true:
+	movq %rdi, %rsi
+	movq $.true, %rdi
+	movq $0, %rax
+	call printf
+	ret
+.print_false:
+	movq %rdi, %rsi
+	movq $.false, %rdi
+	movq $0, %rax
+	call printf
+	ret
+printn_bool:
+	cmpq $0, %rdi
+	je .printn_false
+	jne .printn_true
+.printn_true:
+	movq %rdi, %rsi
+	movq $.truen, %rdi
+	movq $0, %rax
+	call printf
+	ret
+.printn_false:
+	movq %rdi, %rsi
+	movq $.falsen, %rdi
+	movq $0, %rax
+	call printf
+	ret
+print_error_z:
+	movq %rdi, %rsi
+	leaq .Sprint_error_z, %rdi
+	movq $0, %rax
+	call printf
+	jmp main_fim
+print_error_f:
+	movq %rdi, %rsi
+	leaq .Sprint_error_f, %rdi
+	movq $0, %rax
+	call printf
+	jmp main_fim
 	.data
 .Sprintn_int:
 	.string "%ld\n"
@@ -139,9 +139,9 @@ main_fim:
 .falsen:
 	.string "false\n"
 .Sprint_error_z:
-	.string "\nErro: Divisao por zero.\n\n"
+	.string "\nError: Division by zero.\n\n"
 .Sprint_error_f:
-	.string "\nFuncao sem retorno\n\n"
+	.string "\nFunction without return.\n\n"
 is_in_function:
 	.quad 0
 number_of_loop:
