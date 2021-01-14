@@ -1,29 +1,21 @@
 	.text
 	.globl	main
 main:
-	subq $32, %rsp
-	leaq 24(%rsp), %rbp
+	subq $16, %rsp
+	leaq 8(%rsp), %rbp
 	movq $5, %rax
 	pushq %rax
-	popq %rax
-	movq %rax, -16(%rbp)
-	movq $420, %rax
+	call addOne
+	addq $8, %rsp
 	pushq %rax
-	movq $69, %rax
-	pushq %rax
-	movq $42, %rax
-	pushq %rax
-	call print
-	addq $24, %rsp
-	pushq %rax
-	popq %rax
-	movq %rax, -24(%rbp)
+	popq %rdi
+	call printn_int
 	movq $0, %rax
 	pushq %rax
 	popq %rax
 	jmp main_fim
 main_fim:
-	addq $32, %rsp
+	addq $16, %rsp
 	ret
 printn_int:
 	movq %rdi, %rsi
@@ -100,24 +92,54 @@ print_error_f:
 	movq $0, %rax
 	call printf
 	jmp end
-print:
+addOne:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $48, %rsp
-	movq $5, %rax
+	subq $24, %rsp
+	movq 16(%rbp), %rax
+	pushq %rax
+	movq $10, %rax
+	pushq %rax
+	popq %rbx
+	popq %rax
+	cmpq %rbx, %rax
+	jge bool_true_1
+	movq $0, %rax
+	pushq %rax
+	jmp bool_end_1
+bool_true_1:
+	movq $1, %rax
+	pushq %rax
+bool_end_1:
+	popq %rax
+	cmpq $0, %rax
+	je if_else_11
+	movq 16(%rbp), %rax
 	pushq %rax
 	popq %rax
-	movq %rax, -40(%rbp)
+	jmp addOne_fim
+	jmp if_end_1
+if_else_11:
+if_end_1:
 	movq 16(%rbp), %rax
 	pushq %rax
 	popq %rdi
-	call print_int
-	movq 24(%rbp), %rax
+	call printn_int
+	movq 16(%rbp), %rax
+	pushq %rax
+	movq $1, %rax
 	pushq %rax
 	popq %rax
-	jmp print_fim
-print_fim:
-	addq $48, %rsp
+	popq %rbx
+	addq %rax, %rbx
+	pushq %rbx
+	call addOne
+	addq $8, %rsp
+	pushq %rax
+	popq %rax
+	jmp addOne_fim
+addOne_fim:
+	addq $24, %rsp
 	popq %rbp
 	ret
 	.data

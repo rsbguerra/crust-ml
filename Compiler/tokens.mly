@@ -13,8 +13,7 @@
 %token PLUS "+"
 %token MINUS TIMES DIV MOD
 %token BITAND BITOR BITXOR LSHIFT RSHIFT
-%token GT ">"
-%token GET LT LET
+%token GT GET LT LET
 %token EQ NEQ
 %token LPR "(" 
 %token RPR ")"
