@@ -10,6 +10,9 @@ and expr =
   | PEbinop of Ast.binop * expr * expr
   | PEunop of Ast.unop * expr
   | PEcall of ident * expr list
+  | PEstrc_access of ident * ident * int
+  | PEstrc_decl of ident * (ident * expr * int) list
+ 
   (*| PEaccess of expr * ident (* S.x (S-> struct, x -> element of struct)*)
   | PElen of expr
   | PEvec_access of expr * expr
@@ -34,7 +37,7 @@ and elif = expr * stmt
 and global_stmt =
   | PGSblock of global_stmt list
   | PGSfunction of ident * pairs list * Ast.crust_types * stmt * int
-  | PGSstruct of ident * pairs list
+  | PGSstruct of ident * pairs list * int
 
 and pairs = ident * Ast.crust_types * int
 

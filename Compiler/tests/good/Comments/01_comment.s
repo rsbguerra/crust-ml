@@ -1,72 +1,40 @@
 	.text
 	.globl	main
-addOne:
+fudas:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $24, %rsp
-	movq 16(%rbp), %rax
-	pushq %rax
-	movq $10, %rax
-	pushq %rax
-	popq %rbx
-	popq %rax
-	cmpq %rbx, %rax
-	jg bool_true_1
-	movq $0, %rax
-	pushq %rax
-	jmp bool_end_1
-bool_true_1:
-	movq $1, %rax
-	pushq %rax
-bool_end_1:
-	popq %rax
-	cmpq $0, %rax
-	je if_else_11
-	movq 16(%rbp), %rax
+	subq $16, %rsp
+	movq $96, %rax
 	pushq %rax
 	popq %rax
-	jmp addOne_fim
-	jmp if_end_1
-if_else_11:
-if_end_1:
-	movq 16(%rbp), %rax
-	pushq %rax
-	popq %rdi
-	call printn_int
-	movq 16(%rbp), %rax
-	pushq %rax
-	movq $1, %rax
-	pushq %rax
-	popq %rax
-	popq %rbx
-	addq %rax, %rbx
-	pushq %rbx
-	call addOne
-	addq $8, %rsp
-	pushq %rax
-	popq %rax
-	jmp addOne_fim
-addOne_fim:
-	addq $24, %rsp
+	jmp fudas_fim
+fudas_fim:
+	addq $16, %rsp
 	popq %rbp
 	ret
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $16, %rsp
-	movq $5, %rax
+	subq $40, %rsp
+	call fudas
+	addq $0, %rsp
 	pushq %rax
-	call addOne
-	addq $8, %rsp
+	popq %rax
+	movq %rax, -16(%rbp)
+	movq $42, %rax
 	pushq %rax
-	popq %rdi
-	call printn_int
+	popq %rax
+	movq %rax, -24(%rbp)
+	movq $68, %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -32(%rbp)
 	movq $0, %rax
 	pushq %rax
 	popq %rax
 	jmp main_fim
 main_fim:
-	addq $16, %rsp
+	addq $40, %rsp
 	popq %rbp
 	ret
 printn_int:
