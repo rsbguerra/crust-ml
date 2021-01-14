@@ -403,7 +403,7 @@ and compile_global_stmt = function
 
     code
 
-  | PGSstruct(id, els, size) -> nop
+  | PGSstruct _-> nop
 
 (* Compilação do programa p e grava o código no ficheiro ofile *)
 let compile_program p ofile =
