@@ -22,8 +22,8 @@ and expr =
   | Eident   of ident * int
   | Ebinop   of binop * expr * expr * int
   | Eunop    of unop * expr * int
-  | Eaccess  of ident * ident * int            (* S.x (S-> struct, x -> element of struct)*)
-  | Edeclstruct of ident * (ident * expr) list  * int            
+  | Estrc_access  of ident * ident * int            (* S.x (S-> struct, x -> element of struct)*)
+  | Estrc_decl of ident * (ident * expr) list  * int            
   | Elen     of expr  
   | Evec_access of expr * expr
   | Evec_decl   of expr list

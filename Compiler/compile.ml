@@ -1,5 +1,4 @@
 (* Produção de código para a linguagem Rust *)
-      
 open Format
 open X86_64
 open Past

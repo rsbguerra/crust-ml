@@ -123,7 +123,7 @@ and type_expr ctxs = function
     (* 3 - Retorna a expressão tipada *)
     Tast.TEunop(Ast.Unot, te, Ast.Tbool), Ast.Tbool
 
-  | Eaccess(id, el, line) ->
+  | Estrc_access(id, el, line) ->
     (* p.x *)
     (* 1 - ir buscar a estrutura com nome id *)
     let tid = match find_var_id id ctxs with
@@ -143,10 +143,10 @@ and type_expr ctxs = function
     (* 3 - verificar se a estrutura tem o elemento el *)
     begin match find_struct_element el strct with
        | None   -> error ("Trying to access element "^ el ^" of struct "^ Printer.string_of_crust_types tid ^" but this structure does not contain it.") line;
-       | Some tel -> TEaccess(id, el, tid, tel), tel
+       | Some tel -> TEstrc_access(id, el, tid, tel), tel
     end 
 
-  | Edeclstruct(id, el, line) ->
+  | Estrc_decl(id, el, line) ->
     (* 1 - Verificar se a estrutura id existe *)
     begin match find_struct_id id ctxs with
     | None     -> error ("The structure with the identifier " ^ id ^ " was not defined.") line
@@ -166,7 +166,7 @@ and type_expr ctxs = function
         typed_el := (!typed_el)@[(id2,te2)]
       ) elements el;
       
-      TEdeclstruct(id, !typed_el, (Tstruct id)), (Tstruct id)
+      TEstrc_decl(id, !typed_el, (Tstruct id)), (Tstruct id)
 
     end
   | Ecall(id, args, line) ->

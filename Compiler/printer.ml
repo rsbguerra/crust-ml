@@ -47,8 +47,8 @@ and string_of_expr = function
   | Eident (id, _)           -> "Eident("^id^")"
   | Ebinop (binop, e1, e2, _)-> "Ebinop("^(string_of_binop binop)^", "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
   | Eunop (unop , e1, _)     -> "Eunop("^(string_of_unop unop)^", "^(string_of_expr e1)^")"
-  | Eaccess (id, el, _)      -> "Eaccess("^ id^", "^el^")"
-  | Edeclstruct (id, el, _)  -> "Edeclstruct("^ id^", "^(string_of_struct_pair_list "" el)^")"
+  | Estrc_access (id, el, _) -> "Estrc_access("^ id^", "^el^")"
+  | Estrc_decl (id, el, _)   -> "Estrc_decl("^ id^", "^(string_of_struct_pair_list "" el)^")"
   | Ecall (f, el, _)         -> "Ecall("^f^", "^(string_of_expr_list "" el)^")"  
   | Elen (e)                 -> "Elen"^(string_of_expr e)
   | Evec_access(e1, e2)      -> "Evec_access("^(string_of_expr e1)^", "^(string_of_expr e2)^")"
