@@ -29,6 +29,7 @@
 %token COMMA ","
 %token EOF
 %token ARROW "->"
+%token UNIT
 
 (* === TODO === *)
 %token KW_FALSE

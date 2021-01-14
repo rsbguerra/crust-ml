@@ -16,7 +16,7 @@ fn main() -> i32
 }
 */
 
-fn addOne(x:i32) ->i32
+fn addOne(x:i32) -> ()
 {
   if x > 10 {
     return x;
@@ -27,9 +27,9 @@ fn addOne(x:i32) ->i32
   return addOne(x+1);
 }
 
-fn main() -> i32
+fn main( ) -> i32
 {
-  println!(addOne(5));
+  println!(5);
  
-  return 0;
+  return;
 } 

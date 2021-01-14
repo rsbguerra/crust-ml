@@ -50,7 +50,7 @@ stmt:
 ;
 
 simple_stmt:
-| KW_RETURN e = expr ";"                              { Sreturn(e, !Lexer.line_num) }
+| KW_RETURN e = option(expr) ";"                      { let e1 = match e with |None -> Ecst(Cunit, !Lexer.line_num) | Some e -> e in  Sreturn(e1, !Lexer.line_num) }
 | KW_BREAK ";"                                        { Sbreak !Lexer.line_num }
 | KW_CONTINUE ";"                                     { Scontinue !Lexer.line_num }
 | KW_LET id = ident ":" t = crust_types "=" e = expr ";" { Sdeclare (id, t, e, !Lexer.line_num) }
@@ -81,6 +81,7 @@ expr:
 %inline crust_types:
 | I32    { Ti32  }
 | BOOL   { Tbool }
+| UNIT   { Tunit }
 | id = ident { Tstruct id}
 ;
 

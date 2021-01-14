@@ -25,6 +25,9 @@ exception Error of string * int
 
 let error s line = raise (Error (s, line))
 
+let function_types = ref []
+
+
 (* table_ctx representa um scope, contexto *)
 type tbl_variables_ctx = (string, crust_types) Hashtbl.t
 type tbl_functions_ctx = (string, Ast.pairs list * crust_types) Hashtbl.t
@@ -269,9 +272,18 @@ and type_stmt ctxs = function
 
   | Scontinue _ -> Tast.TScontinue Ast.Tunit, Ast.Tunit
   | Sbreak _    -> Tast.TSbreak Ast.Tunit, Ast.Tunit
-  | Sreturn (e1, _)     -> 
-    (* 1 - Verificar o tipo de e1 *)
-    let te1, t = type_expr ctxs e1 in
+  | Sreturn (e, line)     -> 
+    (* 1 - Verificar se estamos dentro de uma função *)
+    if List.length !function_types <= 0 then error ("Using the return statement outside of a function") line;
+    let function_type = List.hd !function_types in
+    
+    (* 2 - Verificar o tipo de e *)
+    let te1, t = type_expr ctxs e in
+
+    (* 3 - Verificar o tipo do retorno e da função *)
+    if not (compare_crust_types (function_type, t)) then error ("Incompatible return type, function has type "^Printer.string_of_crust_types function_type^" but the return has type "^Printer.string_of_crust_types t^".") line;
+
+    
     Tast.TSreturn(te1, t), t
 
   | Snothing _  -> Tast.TSnothing Ast.Tunit, Ast.Tunit
@@ -299,9 +311,13 @@ and type_global_stmt ctxs = function
     Hashtbl.add f id (args, r);
 
     (* 3 - Tipar corpo *)
+    function_types := r::(!function_types);
+
     let typed_body, tb = type_stmt args_ctxs body in
-    if not (compare_crust_types (tb,r)) then error ("The function "^id^" has return type "^Printer.string_of_crust_types r^" but is body has return type"^Printer.string_of_crust_types tb^".") line;
-      
+    if not (compare_crust_types (tb,r)) then error ("The function "^id^" has return type "^Printer.string_of_crust_types r^" but is body has return type "^Printer.string_of_crust_types tb^".") line;
+    
+    function_types := List.tl !function_types;
+
     Tast.TGSfunction(id, args, r, typed_body)
 
   | Ast.GSstruct(id, el, line) ->

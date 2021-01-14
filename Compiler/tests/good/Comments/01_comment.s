@@ -56,9 +56,6 @@ main:
 	subq $16, %rsp
 	movq $5, %rax
 	pushq %rax
-	call addOne
-	addq $8, %rsp
-	pushq %rax
 	popq %rdi
 	call printn_int
 	movq $0, %rax

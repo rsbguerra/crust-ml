@@ -23,7 +23,7 @@ let function_labels = ref []
 let get_value = function
   | Ast.Ci32 v  -> v
   | Ast.Cbool v -> if v then Int32.one else Int32.zero
-  | _ -> assert false
+  | Ast.Cunit -> Int32.zero 
 
 let get_str_type = function
   | Ast.Ti32 -> "int"
