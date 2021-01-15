@@ -32,7 +32,6 @@ let rec string_of_precomp_expr = function
 and string_of_precomp_expr_list exprs = 
   List.map (fun e -> string_of_precomp_expr e) exprs |> 
   List.fold_left (fun a b -> a ^ b) ""
-    
 
 and string_of_precomp_stmt = function
   | PSif (e, s1, elifs) ->
@@ -43,33 +42,21 @@ and string_of_precomp_stmt = function
     "PSwhile(" ^ 
     string_of_precomp_expr e ^ "\n" ^ 
     string_of_precomp_stmt bl ^ ")"
-  | PSdeclare (id, t, e, fp) ->
+  | PSdeclare (id, t, e, pos_list) ->
     "PSdeclare(" ^ id ^ ", " ^
     Printer.string_of_crust_types t ^ ", " ^ 
-    string_of_precomp_expr e ^ ", " ^
-    (string_of_int fp) ^ ")"
-  | PSassign (id, e, pos) -> 
-    "PSassign(" ^ id ^ ", " ^ 
-    string_of_precomp_expr e ^  ", " ^
-    (string_of_int pos) ^ ")"
-  | PSprintn (e, t) -> 
-    "PSprintln(" ^ 
-    string_of_precomp_expr e ^ ","^
-    (Printer.string_of_crust_types t)^")"
-  | PSprint (e, t) -> 
-    "PSprint(" ^ 
-    string_of_precomp_expr e  ^ ","^
-    (Printer.string_of_crust_types t)^")"
-  | PSblock bl -> string_of_block_precomp_stmt bl
-  | PScontinue-> "PScontinue"
-  | PSbreak-> "PSbreak"
-  | PSreturn e -> 
-    "PSreturn(" ^ 
-    string_of_precomp_expr e ^ ")"
-  | PSnothing -> "PSnothing"
-  | PSexpr e -> 
-    "PSexpr(" ^ 
-    string_of_precomp_expr e ^ ")"
+    string_of_precomp_expr e ^ ", [" ^
+    List.fold_left (fun a b -> a ^", " ^(string_of_int b)) "" pos_list ^ "])"
+  | PSassign (id, e, pos) -> "PSassign(" ^ id ^ ", " ^ string_of_precomp_expr e ^  ", " ^ (string_of_int pos) ^ ")"
+  | PSprintn (e, t) -> "PSprintln(" ^ string_of_precomp_expr e ^ ","^(Printer.string_of_crust_types t)^")"
+  | PSprint (e, t)  -> "PSprint(" ^ string_of_precomp_expr e  ^ ","^ (Printer.string_of_crust_types t)^")"
+  | PSblock bl      -> string_of_block_precomp_stmt bl
+  | PScontinue      -> "PScontinue"
+  | PSbreak         -> "PSbreak"
+  | PSreturn (e, pos_list) -> "PSreturn(" ^ string_of_precomp_expr e ^ ", [" ^
+    List.fold_left (fun a b -> a ^", " ^(string_of_int b)) "" pos_list ^ "])"
+  | PSnothing       -> "PSnothing"
+  | PSexpr e        -> "PSexpr(" ^ string_of_precomp_expr e ^ ")"
 
 
 and string_of_elif l =

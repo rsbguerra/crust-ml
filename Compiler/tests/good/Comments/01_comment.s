@@ -1,54 +1,56 @@
 	.text
 	.globl	main
-add:
+make_point2D:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $8, %rsp
-	movq 16(%rbp), %rax
-	pushq %rax
-	movq 24(%rbp), %rax
+	subq $24, %rsp
+	movq $5, %rax
 	pushq %rax
 	popq %rax
-	popq %rbx
-	addq %rax, %rbx
-	pushq %rbx
+	movq %rax, -8(%rbp)
+	pushq %rax
+	movq $9, %rax
+	pushq %rax
 	popq %rax
-	jmp add_fim
-add_fim:
-	addq $8, %rsp
+	movq %rax, -16(%rbp)
+	pushq %rax
+	popq %rax
+	popq %rax
+	movq -8(%rbp), %rax
+	pushq %rax
+	popq %rdi
+	call printn_int
+	movq -16(%rbp), %rax
+	pushq %rax
+	popq %rdi
+	call printn_int
+	movq -16(%rbp), %rax
+	pushq %rax
+	movq -8(%rbp), %rax
+	pushq %rax
+	popq %r9
+	popq %rax
+	jmp make_point2D_fim
+make_point2D_fim:
+	addq $24, %rsp
 	popq %rbp
 	ret
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $32, %rsp
-	movq $2, %rax
+	subq $8, %rsp
+	call make_point2D
+	addq $0, %rsp
 	pushq %rax
 	popq %rax
-	movq %rax, -8(%rbp)
-	movq $6, %rax
-	pushq %rax
 	popq %rax
-	movq %rax, -16(%rbp)
-	movq -16(%rbp), %rax
-	pushq %rax
-	popq %rax
-	movq %rax, -24(%rbp)
-	movq -8(%rbp), %rax
-	pushq %rax
-	movq -16(%rbp), %rax
-	pushq %rax
-	call add
-	addq $16, %rsp
-	pushq %rax
-	popq %rdi
-	call printn_int
 	movq $0, %rax
 	pushq %rax
+	popq %r9
 	popq %rax
 	jmp main_fim
 main_fim:
-	addq $32, %rsp
+	addq $8, %rsp
 	popq %rbp
 	ret
 printn_int:

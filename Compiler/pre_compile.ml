@@ -62,7 +62,6 @@ let get_type_start ctxs = function
   | Ti32 | Tbool | Tunit -> 0
   | Tstruct s -> -snd(Hashtbl.find (find_struct_id s ctxs) s) 
 
-
 let get_type_size ctxs = function
   | Ti32 | Tbool -> 8
   | Tunit -> 0
@@ -100,6 +99,16 @@ let rec pcompile_expr ctxs next = function
         (e::l, sz+(get_type_size ctxs te), max fp fpmax)
       ) ([], 0, next) args
       in
+
+        (*(* 2 - Get Type of the expression *)
+     let pos_list =  match t with
+      | Ti32 | Tbool | Tunit -> [pos] 
+      | Tstruct s -> 
+        (* 2.1 - Get struct elements *)
+        let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
+        (* 2.1.2 - Calculate pos of each element *)
+        List.map(fun (id, t, r_pos) -> pos + r_pos)struct_els
+    in*)
     PEcall(id, exprs, size), fpmax
 
   | TEstrc_decl (id, pairs, t) -> 
@@ -146,10 +155,24 @@ and pcompile_stmt ctxs next = function
       PSwhile (pe, ps), next
 
   | TSdeclare (id, t, e, _) -> 
-      let ep, next = (pcompile_expr ctxs next e) in
-      Hashtbl.replace (var_ctx_hd ctxs) id (-(next + (get_type_start ctxs t)));
-      let new_fp = (get_type_start ctxs t) + (get_type_size ctxs t) in
-      PSdeclare (id, t, ep, -(next + (get_type_start ctxs t))), (new_fp+next)
+    (* 1 -  Pré compilar expressão*)
+    let ep, next = (pcompile_expr ctxs next e) in
+    let star_pos = next + (get_type_start ctxs t) in
+    (* 2 - Adicionar inicio ao frame *)
+    Hashtbl.add (var_ctx_hd ctxs) id (-star_pos);
+    let new_next = (get_type_start ctxs t) + (get_type_size ctxs t) in
+
+    (* 3 - Adicionar todos os elementos *)
+    let pos_list =  match t with
+      | Ti32 | Tbool | Tunit -> [-star_pos]
+      | Tstruct s ->
+        (* 3.1 - Get struct elements *)
+        let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
+        (* 3.1.2 - Calculate pos of each element *)
+        List.map(fun (id, t, r_pos) -> -(star_pos + r_pos))struct_els
+    in
+
+    PSdeclare (id, t, ep, pos_list), (new_next+next)
 
   | TSassign (id, e, _) ->
     let ep, next = (pcompile_expr ctxs next e) in
@@ -169,7 +192,18 @@ and pcompile_stmt ctxs next = function
   | TSreturn (e, t) ->
     (* 1 - How many values are there to return? *)
     let ep, next = (pcompile_expr ctxs next e) in
-    PSreturn ep, next
+    let star_pos = next + (get_type_start ctxs t) in
+
+    (* 2 - Adicionar todos os elementos *)
+    let pos_list =  match t with
+      | Ti32 | Tbool | Tunit -> [-star_pos]
+      | Tstruct s ->
+        (* 3.1 - Get struct elements *)
+        let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
+        (* 3.1.2 - Calculate pos of each element *)
+        List.filter_map(fun (id, t, r_pos) -> if r_pos <> 0 then Some (-(abs(star_pos) + abs(r_pos))) else None)struct_els
+    in
+    PSreturn (ep, pos_list), next
   | TSexpr (e, _) -> 
       let ep, next = (pcompile_expr ctxs next e) in
       PSexpr ep, next
@@ -186,7 +220,6 @@ and pcompile_block_stmt ctxs next block_stmt =
 and pcompile_block_global_stmt ctxs acc = function
   | [] -> acc
   | s :: sl -> (pcompile_block_global_stmt ctxs (acc@[pcompile_global_stmt ctxs s]) sl)
-
 
 and pcompile_global_stmt ctxs = function
   | TGSblock stmts -> 

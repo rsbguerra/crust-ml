@@ -38,9 +38,9 @@ let rec compile_expr = function
     
   | PEident (id, pos_list) ->
     List.fold_left( fun code p ->  
-      code ++
       movq (ind ~ofs:p rbp) (reg rax) ++
-      pushq (reg rax)
+      pushq (reg rax) ++ 
+      code
     ) nop pos_list
   | PEbinop (Ast.Bmod | Ast.Bdiv as op, e1, e2) ->    
     (* 1 - Dependendo da operacao queremos um registo diferente *)
@@ -215,16 +215,15 @@ let rec compile_expr = function
     movq (ind ~ofs:pos rbp) (reg rax) ++
     pushq (reg rax)
   | PEstrc_decl (id, pairs, start) -> 
-    let code = List.fold_left(fun code (id, e, pos) -> 
+    List.fold_left(fun code (id, e, pos) -> 
       code ++
       (* 1 - Calcular o valor da expressao  *)
       compile_expr e ++
       popq rax ++
       (* 2 - Guardar o valor da expressao na posicao ofs *)
-      movq (reg rax) (ind ~ofs:pos rbp)
-      ) nop pairs in
-      code
-
+      movq (reg rax) (ind ~ofs:pos rbp) ++
+      pushq (reg rax)
+      ) nop pairs
   | _ -> assert false
 
 let rec compile_stmt = function
@@ -310,15 +309,15 @@ let rec compile_stmt = function
     loop_labels := List.tl !loop_labels;
     code
 
-  | PSdeclare(id, t, e, pos) -> begin
+  | PSdeclare(id, t, e, pos_list) -> begin
     match t with 
     | Ti32 | Tbool -> 
       (* 1 - Calcular o valor da expressao  *)
       compile_expr e ++
       popq rax ++
       (* 2 - Guardar o valor da expressao na posicao ofs *)
-      movq (reg rax) (ind ~ofs:pos rbp)
-    | _ -> compile_expr e
+      movq (reg rax) (ind ~ofs:(List.hd pos_list) rbp)
+    | _ -> compile_expr e ++ List.fold_left (fun code p -> code ++ popq rax) nop pos_list
     end
 
   | PSassign (id, e, pos) -> 
@@ -361,11 +360,12 @@ let rec compile_stmt = function
      
     jmp (current_loop ^  "_fim")
     
-  | PSreturn e -> 
+  | PSreturn (e, pos_list) -> 
     if List.length !function_labels <= 0 then error "Using the break statement outside of a loop";
     let current_function = List.hd !function_labels in
     
     compile_expr e ++
+    (List.fold_left(fun code _ -> code ++ (popq r9)) nop pos_list) ++
     popq rax ++
     jmp (current_function ^ "_fim")
     
