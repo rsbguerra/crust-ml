@@ -1,9 +1,10 @@
-// Single Line Comment
-
-fn somar(x : i8, y : i8) -> i8
-{
-    loop {
-        let a : i8 = 3;
+fn main(){  
+    let x : i32 = 0;
+    
+    while(x < 5){
+        let x : i32 = x+1;
+        println!(x);
     }
+    
+    return;
 }
-

@@ -1,15 +1,14 @@
-struct user{
-    name: String,
-    age: i8
+struct Point2D {
+    x : i32,
+    y : i32
+  }
+  
+fn add(p:Point2D) -> i32{
+return p.x + p.y;
 }
 
-
 fn main(){
-    let u1 = user{
-        name: String::from("oooo"),
-        age: 12
-    };
+    let p:Point2D{x:12, y:14}
 
-    println!("{}", test.0);
-    println!("{}", u1.name);
+    println!(add(p))
 }

@@ -1,4 +1,4 @@
 fn main(){
-    let mut x:i8 = 21;
+    let mut x:i32 = 21;
     x = x + x;
 }
