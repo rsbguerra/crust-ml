@@ -186,7 +186,7 @@ and type_expr ctxs = function
       let te, t = type_expr ctxs e in
       let ta = snd (List.nth params i) in
       if not (compare_crust_types (t,ta)) then error ("Invalid number of arguments given.") line;
-      typed_args := !typed_args@[te]
+      typed_args := !typed_args@[(te, t)]
     )args;
 
     TEcall(id, !typed_args, r), r

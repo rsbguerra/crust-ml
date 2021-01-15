@@ -37,18 +37,18 @@ let find_id id =
       match Hashtbl.find_opt s id with | Some x -> x | None -> None)
 
 let rec find_var_id id = function
-  | []     -> None
-  | (ct,_,_)::tl -> if Hashtbl.mem ct id then (Some ct) else (find_var_id id tl) 
+  | []     -> assert false
+  | (ct,_,_)::tl -> if Hashtbl.mem ct id then ct else (find_var_id id tl) 
 
 let rec find_fun_id id = function
-  | []     -> None
-  | (_,ct,_)::tl -> if Hashtbl.mem ct id then (Some ct) else (find_fun_id id tl) 
+  | []     -> assert false
+  | (_,ct,_)::tl -> if Hashtbl.mem ct id then ct else (find_fun_id id tl) 
 
 
 let rec find_struct_id id = function
-  | []     -> None
+  | []     -> assert false
   | (_,_,ct)::tl -> 
-    if Hashtbl.mem ct id then (Some ct) else (find_struct_id id tl) 
+    if Hashtbl.mem ct id then ct else (find_struct_id id tl) 
 
 let rec find_struct_element el = function
   | []         -> assert false
@@ -60,30 +60,31 @@ let string_of_tstruct = function
 
 let get_type_start ctxs = function
   | Ti32 | Tbool | Tunit -> 0
-  | Tstruct s -> begin
-    match find_struct_id s ctxs with
-    | None -> error s
-    | Some ct -> -snd(Hashtbl.find ct s) 
-    end
+  | Tstruct s -> -snd(Hashtbl.find (find_struct_id s ctxs) s) 
+
 
 let get_type_size ctxs = function
   | Ti32 | Tbool -> 8
   | Tunit -> 0
-  | Tstruct s -> begin
-    match find_struct_id s ctxs with
-    | None -> error s
-    | Some ct -> snd(Hashtbl.find ct s) 
-    end
+  | Tstruct s -> snd(Hashtbl.find (find_struct_id s ctxs) s)
 
 let rec pcompile_expr ctxs next = function
   | TEcst (c, t) -> 
       PEcst c, next
-  | TEident (id, t) -> begin
-    match find_var_id id ctxs with
-    | None -> assert false
-    | Some ct -> let fp = Hashtbl.find ct id in
-      PEident(id, fp), next
-    end
+  | TEident (id, t) ->
+    (* 1 - Posição da variável *)
+    let pos = Hashtbl.find (find_var_id id ctxs) id in
+    (* 2 - *)
+    let pos_list =  match t with
+      | Ti32 | Tbool | Tunit -> [pos] 
+      | Tstruct s -> 
+        (* 2.1 - Get struct elements *)
+        let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
+        (* 2.1.2 - Calculate pos of each element *)
+        List.map(fun (id, t, r_pos) -> pos + r_pos)struct_els
+    in
+    PEident(id, pos_list), next
+    
   | TEbinop (op, e1, e2, t) -> 
       let e1, fp1 = pcompile_expr ctxs next e1 in
       let e2, fp2 = pcompile_expr ctxs next e2 in
@@ -93,14 +94,13 @@ let rec pcompile_expr ctxs next = function
       let pe, _ = pcompile_expr ctxs next e in
       PEunop(op, pe), next
   | TEcall (id, args, t) ->
-    let exprs, fpmax = 
-      List.fold_left (
-        fun (l, fpmax) el -> 
-          let e, fp = pcompile_expr ctxs fpmax el in
-          (e::l, max fp fpmax))
-        ([], next) args in
-    PEcall(id, exprs), fpmax
-
+    let exprs, size, fpmax = 
+      List.fold_left (fun (l, sz, fpmax) (el, te) ->
+        let e, fp = pcompile_expr ctxs fpmax el in
+        (e::l, sz+(get_type_size ctxs te), max fp fpmax)
+      ) ([], 0, next) args
+      in
+    PEcall(id, exprs, size), fpmax
 
   | TEstrc_decl (id, pairs, t) -> 
     (* 1. Precompilação de pares *)
@@ -110,21 +110,20 @@ let rec pcompile_expr ctxs next = function
         let p_el, next = pcompile_expr ctxs next t_el in
         (next+(get_type_size ctxs t_e)), (el, p_el, (-next))
     ) next pairs in
-
-    PEstrc_decl (id, p_els), next
+    
+    PEstrc_decl (id, p_els, -(next + (get_type_start ctxs t))), next
 
   | TEstrc_access (id, el, tid, tel) ->
+    let struct_id = string_of_tstruct tid in
     (* 1. Buscar posição de id na pilha *)
-    let id_pos = match find_var_id id ctxs with
-      | None -> assert false
-      | Some ct -> Hashtbl.find ct id in
-    (* 2. Buscar a positiva do el relativo ao primeiro elemento*)
-    let struct_els = match find_struct_id (string_of_tstruct tid) ctxs with
-      | None -> assert false
-      | Some ct -> fst(Hashtbl.find ct (string_of_tstruct tid)) in
-    (* 3. *)
+    let id_pos = Hashtbl.find (find_var_id id ctxs) id in
+    (* 2. Buscar a posição do el relativo ao primeiro elemento*)
+    let struct_els = fst(Hashtbl.find (find_struct_id struct_id ctxs) struct_id) in
     let el_pos = find_struct_element el struct_els in
-    PEstrc_access(id, el, id_pos+el_pos), next
+
+    (* if id_pos > 0 then is an arg*)
+    let final_pos = if id_pos > 0 then (id_pos+abs(el_pos)) else (id_pos+el_pos) in
+    PEstrc_access(id, el, final_pos), next
 
 and pcompile_stmt ctxs next = function
   | TSif (e, s, elif, _) ->
@@ -153,12 +152,11 @@ and pcompile_stmt ctxs next = function
       PSdeclare (id, t, ep, -(next + (get_type_start ctxs t))), (new_fp+next)
 
   | TSassign (id, e, _) ->
-      let ep, next = (pcompile_expr ctxs next e) in
-      let pos = match find_var_id id ctxs with
-        | None -> assert false
-        | Some ct -> Hashtbl.find ct id in
+    let ep, next = (pcompile_expr ctxs next e) in
+    let pos = Hashtbl.find (find_var_id id ctxs) id in
 
-      PSassign (id, ep, pos), next
+    PSassign (id, ep, pos), next
+
   | TSprintn (e, t, _) -> 
       let ep, next = (pcompile_expr ctxs next e) in
       PSprintn (ep, t), next
@@ -168,7 +166,8 @@ and pcompile_stmt ctxs next = function
   | TSblock (stmts, _) -> 
     let pblock, next = pcompile_block_stmt ctxs next stmts in
     PSblock pblock, next
-  | TSreturn (e, _) ->
+  | TSreturn (e, t) ->
+    (* 1 - How many values are there to return? *)
     let ep, next = (pcompile_expr ctxs next e) in
     PSreturn ep, next
   | TSexpr (e, _) -> 
@@ -201,7 +200,7 @@ and pcompile_global_stmt ctxs = function
       let p_next, p_args = List.fold_left_map(
         fun next (arg, t_arg) -> 
           Hashtbl.add (var_ctx_hd new_ctxs) arg next;
-          (next+8), (arg, t_arg, next)
+          (next+(get_type_size ctxs t_arg)), (arg, t_arg, next)
       ) 16 args in
 
       (* 2 - Pre compilar corpo *)
@@ -214,8 +213,10 @@ and pcompile_global_stmt ctxs = function
     (* 2 - Calcular espaço na memória*)
     let next, pcompiled_fields = 
       List.fold_left_map(fun next (id, t) -> 
-        (next+8), (id, t, (-next))) 0 args in
+        (next+(get_type_size ctxs t)), (id, t, (-next))) 0 args in
     Hashtbl.add (struct_ctx_hd ctxs) id (pcompiled_fields, next);
+
+    
     PGSstruct(id, pcompiled_fields, next)
 
 

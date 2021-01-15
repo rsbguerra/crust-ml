@@ -7,9 +7,9 @@ let rec string_of_precomp_expr = function
   | PEcst n ->
     "PEcst(" ^ 
     string_of_crust_consts n ^ ")"
-  | PEident (id, fp) -> "PEident(" ^
-    id ^ ", " ^ 
-    string_of_int fp ^ ")"
+  | PEident (id, fps) -> "PEident(" ^
+    id ^ ", [" ^ 
+    (List.fold_left (fun a e -> a ^ ", " ^ (string_of_int e)) "" fps) ^ "] )"
   | PEbinop (binop, e1, e2) ->
     "PEbinop(" ^ 
     Printer.string_of_binop binop ^ ", " ^ 
@@ -18,12 +18,13 @@ let rec string_of_precomp_expr = function
     "PEunop(" ^ 
     Printer.string_of_unop unop ^  ", " ^ 
     string_of_precomp_expr e ^ ")"
-  | PEcall (f, el) ->
+  | PEcall (f, el, size) ->
     "PEcall(" ^ f ^ ", " ^ 
-    string_of_precomp_expr_list el ^ ", (" ^ ") " ^")"
-  | PEstrc_decl(id, pairs) -> 
+    string_of_precomp_expr_list el ^ ", " ^ string_of_int size ^ ")"
+  | PEstrc_decl(id, pairs, pos) -> 
     "PEstrc_decl(" ^ id ^ ", " ^ 
-    string_of_struct_pairs "" pairs ^ ")"
+    string_of_struct_pairs "" pairs ^
+    string_of_int pos ^ ")"
   | PEstrc_access(id, el, el_pos) ->
     "PEstrc_access(" ^ id ^ ", " ^ el ^ ", " ^
     string_of_int el_pos ^ ")"

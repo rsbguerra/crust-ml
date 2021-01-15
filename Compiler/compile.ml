@@ -35,10 +35,13 @@ let rec compile_expr = function
     (* 1 - Colocar a constante no topo da pilha *)
     movq (imm32 (get_value i)) (reg rax) ++
     pushq (reg rax)
-
-  | PEident (id, pos) -> 
-    movq (ind ~ofs:pos rbp) (reg rax) ++
-    pushq (reg rax)
+    
+  | PEident (id, pos_list) ->
+    List.fold_left( fun code p ->  
+      code ++
+      movq (ind ~ofs:p rbp) (reg rax) ++
+      pushq (reg rax)
+    ) nop pos_list
   | PEbinop (Ast.Bmod | Ast.Bdiv as op, e1, e2) ->    
     (* 1 - Dependendo da operacao queremos um registo diferente *)
     let rg = 
@@ -201,25 +204,28 @@ let rec compile_expr = function
     negq (reg rax) ++
     pushq (reg rax)
   
-  | PEcall(id, args) ->
+  | PEcall (id, args, size) ->
     List.fold_left (fun code e -> code ++ compile_expr e) nop args ++
     
     call id ++
-    popn (8 * List.length args) ++
+    popn size ++
     pushq (reg rax)
 
   | PEstrc_access (id, el, pos) ->
     movq (ind ~ofs:pos rbp) (reg rax) ++
     pushq (reg rax)
-  | PEstrc_decl (id, pairs) -> 
-    List.fold_left(fun code (id, e, pos) -> 
+  | PEstrc_decl (id, pairs, start) -> 
+    let code = List.fold_left(fun code (id, e, pos) -> 
       code ++
       (* 1 - Calcular o valor da expressao  *)
       compile_expr e ++
       popq rax ++
       (* 2 - Guardar o valor da expressao na posicao ofs *)
-      movq (reg rax) (ind ~ofs:pos rbp) 
-      ) nop pairs
+      movq (reg rax) (ind ~ofs:pos rbp)
+      ) nop pairs in
+      code
+
+  | _ -> assert false
 
 let rec compile_stmt = function
   | PSif (e, s1, elifs)-> 

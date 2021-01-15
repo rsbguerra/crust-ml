@@ -6,18 +6,13 @@ type ident = string
 
 and expr =
   | PEcst of Ast.crust_const
-  | PEident of ident * int
+  | PEident of ident * int list
   | PEbinop of Ast.binop * expr * expr
   | PEunop of Ast.unop * expr
-  | PEcall of ident * expr list
+  | PEcall of ident * expr list * int
   | PEstrc_access of ident * ident * int
-  | PEstrc_decl of ident * (ident * expr * int) list
+  | PEstrc_decl of ident * (ident * expr * int) list * int
  
-  (*| PEaccess of expr * ident (* S.x (S-> struct, x -> element of struct)*)
-  | PElen of expr
-  | PEvec_access of expr * expr
-  | PEvec_decl of expr list*)
-
 and stmt =
   | PSif of expr * stmt * elif list
   | PSwhile of expr * stmt

@@ -1,54 +1,45 @@
 	.text
 	.globl	main
+add:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $8, %rsp
+	movq 16(%rbp), %rax
+	pushq %rax
+	movq 24(%rbp), %rax
+	pushq %rax
+	popq %rax
+	popq %rbx
+	addq %rax, %rbx
+	pushq %rbx
+	popq %rax
+	jmp add_fim
+add_fim:
+	addq $8, %rsp
+	popq %rbp
+	ret
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $88, %rsp
-	movq $1, %rax
-	pushq %rax
-	popq %rax
-	movq %rax, -8(%rbp)
+	subq $32, %rsp
 	movq $2, %rax
 	pushq %rax
 	popq %rax
-	movq %rax, -16(%rbp)
-	movq $3, %rax
-	pushq %rax
-	popq %rax
-	movq %rax, -24(%rbp)
-	movq $4, %rax
-	pushq %rax
-	popq %rax
-	movq %rax, -32(%rbp)
-	movq $12, %rax
-	pushq %rax
-	popq %rax
-	movq %rax, -40(%rbp)
-	movq $5, %rax
-	pushq %rax
-	popq %rax
-	movq %rax, -48(%rbp)
+	movq %rax, -8(%rbp)
 	movq $6, %rax
 	pushq %rax
 	popq %rax
-	movq %rax, -56(%rbp)
-	movq $42, %rax
+	movq %rax, -16(%rbp)
+	movq -16(%rbp), %rax
 	pushq %rax
 	popq %rax
-	movq %rax, -64(%rbp)
-	movq $68, %rax
+	movq %rax, -24(%rbp)
+	movq -8(%rbp), %rax
 	pushq %rax
-	popq %rax
-	movq %rax, -72(%rbp)
-	movq $69, %rax
+	movq -16(%rbp), %rax
 	pushq %rax
-	popq %rax
-	movq %rax, -80(%rbp)
-	movq -40(%rbp), %rax
-	pushq %rax
-	popq %rdi
-	call printn_int
-	movq -48(%rbp), %rax
+	call add
+	addq $16, %rsp
 	pushq %rax
 	popq %rdi
 	call printn_int
@@ -57,7 +48,7 @@ main:
 	popq %rax
 	jmp main_fim
 main_fim:
-	addq $88, %rsp
+	addq $32, %rsp
 	popq %rbp
 	ret
 printn_int:

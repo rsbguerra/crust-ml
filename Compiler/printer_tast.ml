@@ -8,6 +8,11 @@ and string_of_struct_pair_list acc = function
   | []      -> acc
   | (id, e)::tl -> string_of_struct_pair_list (acc^id^" : "^(string_of_typed_expr e)^", ") tl
 
+and string_of_call_pair_list acc = function
+  | []      -> acc
+  | (e, t)::tl -> string_of_call_pair_list ((string_of_typed_expr e)^": "^(Printer.string_of_crust_types t)^", ") tl
+
+
 and string_of_struct_decl_pair_list acc = function
   | []      -> acc
   | (id, e, t)::tl -> string_of_struct_decl_pair_list (acc^id^" : "^(string_of_typed_expr e)^": "^(Printer.string_of_crust_types t)^", ") tl
@@ -20,7 +25,7 @@ and string_of_typed_expr = function
   | TEunop (unop, e1, t)      -> "TEunop("^(Printer.string_of_unop unop)^", "^(string_of_typed_expr e1)^","^(Printer.string_of_crust_types t)^")"
   | TEstrc_access (id, el, ts, tel)-> "TEstrc_access("^ id^", "^el^", "^(Printer.string_of_crust_types ts)^", "^(Printer.string_of_crust_types tel)^")"
   | TEstrc_decl(id, el, t)   -> "TEstrc_decl("^ id^", "^(string_of_struct_decl_pair_list "" el)^", "^(Printer.string_of_crust_types t)^")"
-  | TEcall (f, el, t)         -> "TEcall("^f^", "^(string_of_typed_expr_list "" el)^","^(Printer.string_of_crust_types t)^")"
+  | TEcall (f, el, t)         -> "TEcall("^f^", "^(string_of_call_pair_list "" el)^","^(Printer.string_of_crust_types t)^")"
 
 and string_of_typed_stmt = function
   | TSif (e, s1, elifs, t)-> "TSif("^(string_of_typed_expr e)^", "^(string_of_typed_stmt s1)^", "^(string_of_elif elifs)^","^(Printer.string_of_crust_types t)^")"

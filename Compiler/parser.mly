@@ -78,9 +78,9 @@ expr:
 | u  = unop e1 = expr               { Eunop (u, e1, !Lexer.line_num) }
 | e1 = expr o = binop e2 = expr     { Ebinop (o, e1, e2, !Lexer.line_num) }
 | id = ident                        { Eident (id, !Lexer.line_num) }
-| id = ident "(" l = separated_list("," , expr) ")" {Ecall(id, l, !Lexer.line_num)}
-| id = ident "{" l = separated_list("," , expr_pair) "}" {Estrc_decl(id, l, !Lexer.line_num)}
-| id1 = ident "." id2 = ident       { Estrc_access(id1, id2, !Lexer.line_num)}
+| id = ident "(" l = separated_list("," , expr) ")"      { Ecall(id, l, !Lexer.line_num)}
+| id = ident "{" l = separated_list("," , expr_pair) "}" { Estrc_decl(id, l, !Lexer.line_num)}
+| id1 = ident"." id2 = ident             { Estrc_access(id1, id2, !Lexer.line_num)}
 | "(" e = expr ")"                  { e }
 ;
 

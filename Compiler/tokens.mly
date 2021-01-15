@@ -54,4 +54,5 @@
 %left PLUS MINUS
 %left TIMES DIV MOD
 %left NOT BITNOT
+%nonassoc DOT
 %%

@@ -12,7 +12,7 @@ and typed_expr =
   | TEunop    of Ast.unop * typed_expr * Ast.crust_types
   | TEstrc_access  of ident * ident * Ast.crust_types * Ast.crust_types
   | TEstrc_decl  of ident * (ident * typed_expr * Ast.crust_types) list  * Ast.crust_types
-  | TEcall    of ident * typed_expr list * Ast.crust_types
+  | TEcall    of ident * (typed_expr * Ast.crust_types) list * Ast.crust_types
   
 and typed_stmt =
   | TSif       of typed_expr * typed_stmt * typed_elif list  * Ast.crust_types
