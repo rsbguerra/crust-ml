@@ -226,16 +226,15 @@ and type_stmt ctxs = function
     Tast.TSwhile(te1, typed_body, tb), tb
 
   | Sdeclare(id, t, e, line) ->
-    (* 1 - Verificar se id já existe no contexto local *)
-    if not (is_id_unique id ctxs) then error ("The identifier " ^ id ^ " was already defined.") line;
-    (* 2 - Tipar e verificar a expressão e*)
+
+    (* 1 - Tipar e verificar a expressão e*)
     let te, t1 = type_expr ctxs e in
     if not (compare_crust_types (t, t1)) then error ("Wrong type in the declaration of variable "^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
-    (* 3 - Adicionar variável ao contexto *)
+    (* 2 - Adicionar variável ao contexto *)
     let v_ctx,_,_ = (List.hd ctxs) in 
     Hashtbl.add v_ctx id t;
-    (* 4 - Retornar declaração tipada *)
-    Tast. TSdeclare(id, t, te, Ast.Tunit), Ast.Tunit
+    (* 3 - Retornar declaração tipada *)
+    Tast.TSdeclare(id, t, te, Ast.Tunit), Ast.Tunit
 
   | Sassign(id, e, line)   ->
     (* 1 - Verificar id *)

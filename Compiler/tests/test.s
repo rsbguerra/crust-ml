@@ -1,52 +1,11 @@
 	.text
 	.globl	main
-make_point2D:
-	pushq %rbp
-	movq %rsp, %rbp
-	subq $24, %rsp
-	movq $5, %rax
-	pushq %rax
-	popq %rax
-	movq %rax, -8(%rbp)
-	pushq %rax
-	movq $9, %rax
-	pushq %rax
-	popq %rax
-	movq %rax, -16(%rbp)
-	pushq %rax
-	popq %rax
-	popq %rax
-	movq -8(%rbp), %rax
-	pushq %rax
-	popq %rdi
-	call printn_int
-	movq -16(%rbp), %rax
-	pushq %rax
-	popq %rdi
-	call printn_int
-	movq -16(%rbp), %rax
-	pushq %rax
-	movq -8(%rbp), %rax
-	pushq %rax
-	popq %r9
-	popq %rax
-	jmp make_point2D_fim
-make_point2D_fim:
-	addq $24, %rsp
-	popq %rbp
-	ret
 main:
 	pushq %rbp
 	movq %rsp, %rbp
 	subq $8, %rsp
-	call make_point2D
-	addq $0, %rsp
-	pushq %rax
-	popq %rax
-	popq %rax
 	movq $0, %rax
 	pushq %rax
-	popq %r9
 	popq %rax
 	jmp main_fim
 main_fim:

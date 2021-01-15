@@ -209,6 +209,7 @@ let rec compile_expr = function
     
     call id ++
     popn size ++
+
     pushq (reg rax)
 
   | PEstrc_access (id, el, pos) ->
@@ -363,10 +364,9 @@ let rec compile_stmt = function
   | PSreturn (e, pos_list) -> 
     if List.length !function_labels <= 0 then error "Using the break statement outside of a loop";
     let current_function = List.hd !function_labels in
-    
-    compile_expr e ++
-    (List.fold_left(fun code _ -> code ++ (popq r9)) nop pos_list) ++
-    popq rax ++
+    let code = ref (compile_expr e) in
+    (List.iteri(fun i _ -> if i <> 0 then code := (!code) ++ (popq r9)) pos_list);
+    (!code) ++ popq rax ++
     jmp (current_function ^ "_fim")
     
   | PSnothing  -> nop
