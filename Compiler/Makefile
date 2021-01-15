@@ -1,23 +1,24 @@
 release=--profile release
+test=./tests/test
 
 all:
 	dune build $(release) ./crust.exe
 
 print:
-	dune exec  $(release) -- ./crust.exe -print-ast ./tests/good/Comments/01_comment.rs
+	dune exec  $(release) -- ./crust.exe -print-ast $(test)
 
 print-tast:
-	dune exec  $(release) -- ./crust.exe -print-tast ./tests/good/Comments/01_comment.rs
+	dune exec  $(release) -- ./crust.exe -print-tast $(test)
 
 print-past:
-	dune exec  $(release) -- ./crust.exe -print-past ./tests/good/Comments/01_comment.rs
+	dune exec  $(release) -- ./crust.exe -print-past $(test)
 
 test:
 	bash ./tests/run-tests
 
 test-s:
-	dune exec $(release) -- ./crust.exe ./tests/good/Comments/01_comment.rs
-	gcc -g -no-pie ./tests/good/Comments/01_comment.s
+	dune exec $(release) -- ./crust.exe $(test).rs
+	gcc -g -no-pie $(test).s
 	./a.out
 
 clean:
