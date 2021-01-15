@@ -1,10 +1,11 @@
 open Ast
 
-let string_of_crust_types = function 
+let rec string_of_crust_types = function 
   | Tunit -> "Tunit"
   | Ti32  -> "Ti32"
   | Tbool -> "Tbool"
-  | Tstruct s -> "Tstruct (" ^ s ^ ")"
+  | Tstruct s -> "Tstruct( " ^ s ^ " )"
+  | Tvec s -> "Tvec( " ^ string_of_crust_types s ^ " )"
 
 let string_of_unop = function
   | Uneg -> "-"
@@ -50,9 +51,9 @@ and string_of_expr = function
   | Estrc_access (id, el, _) -> "Estrc_access("^ id^", "^el^")"
   | Estrc_decl (id, el, _)   -> "Estrc_decl("^ id^", "^(string_of_struct_pair_list "" el)^")"
   | Ecall (f, el, _)         -> "Ecall("^f^", "^(string_of_expr_list "" el)^")"  
-  | Elen (e)                 -> "Elen"^(string_of_expr e)
-  | Evec_access(e1, e2)      -> "Evec_access("^(string_of_expr e1)^", "^(string_of_expr e2)^")"
-  | Evec_decl(el)            -> "Evec_decl("^(string_of_expr_list "" el)^")" 
+  | Elen (id, _)                 -> "Elen("^id^")"
+  | Evec_access(id, e, _)   -> "Evec_access("^id^", "^(string_of_expr e)^")"
+  | Evec_decl(el, _)         -> "Evec_decl("^(string_of_expr_list "" el)^")" 
 
 and string_of_stmt = function
   | Sif (e, s1, elifs, _)-> "Sif("^(string_of_expr e)^", "^(string_of_stmt s1)^", "^(string_of_elif elifs)^")"

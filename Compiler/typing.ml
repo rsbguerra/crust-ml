@@ -64,12 +64,17 @@ let crust_types_of_crust_const = function
   | Ast.Cbool _ -> Ast.Tbool
   | Ast.Cunit   -> Ast.Tunit
 
-let compare_crust_types = function 
+let rec compare_crust_types = function 
   | Ast.Ti32 , Ast.Ti32  -> true
   | Ast.Tbool, Ast.Tbool -> true
   | Ast.Tunit, Ast.Tunit -> true
   | Ast.Tstruct(t1), Ast.Tstruct(t2) -> t1 = t2
+  | Ast.Tvec (t1), Ast.Tvec (t2) -> compare_crust_types (t1,t2)  
   | _, _                 -> false
+
+let is_vec = function 
+  | Ast.Tvec _ -> true  
+  | _          -> false
 
 let string_of_tstruct = function 
   | Ast.Tstruct(t1) -> Some t1
@@ -190,7 +195,34 @@ and type_expr ctxs = function
     )args;
 
     TEcall(id, !typed_args, r), r
+  
+  | Evec_decl(els, line) ->
+    (* 1 - O tipo da primeira expressão manda *)
+    let te1, t1 = type_expr ctxs (List.hd els) in
 
+    (* 1 - Tipar todas as expressões *)
+    let l = te1::(List.map(fun e ->  
+       let te2, t2 = type_expr ctxs e in
+       if not (compare_crust_types (t1,t2)) then error ("Invalid type in vec declaration was expecting "^ Printer.string_of_crust_types t1^" but was given "^Printer.string_of_crust_types t2 ^".") line;
+       te2
+    ) (List.tl els)) in
+
+   TEvec_decl(l, (Ast.Tvec t1)), (Ast.Tvec t1)
+  | Evec_access(id, e, line) ->
+    (* 1 - Verificar se o id existe *) 
+    let ctx = (match find_var_id id ctxs with
+    | Some ctx -> ctx
+    | None     -> error ("The identifier " ^ id ^ " was not defined.") line) in
+   
+    (* 2 - Verificar se o id é do tipo Tvec *)
+    let t = Hashtbl.find ctx id in
+    if not (is_vec t) then error ("Trying to use "^id^" as a vector when is a "^Printer.string_of_crust_types t^".") line;
+    (* 3 - Tipar e *)
+    let te, t1 = type_expr ctxs e in
+    (* 4 - Verificar se e é um i32 *)
+    if not (compare_crust_types (t1,Ast.Ti32)) then error ("Trying to access an element of a vector with a "^Printer.string_of_crust_types t1 ^" when is expected a Ti32.") line;
+
+    TEvec_access(id, te, t1, t), t1
   | _ -> assert false
   
 (* Verificacao de uma instrucao - Instruções nao devolvem um valor *)
@@ -226,7 +258,6 @@ and type_stmt ctxs = function
     Tast.TSwhile(te1, typed_body, tb), tb
 
   | Sdeclare(id, t, e, line) ->
-
     (* 1 - Tipar e verificar a expressão e*)
     let te, t1 = type_expr ctxs e in
     if not (compare_crust_types (t, t1)) then error ("Wrong type in the declaration of variable "^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;

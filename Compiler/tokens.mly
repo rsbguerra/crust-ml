@@ -4,6 +4,7 @@
 
 %token <Ast.crust_const>     CST
 %token <Ast.ident> IDENT
+%token KW_TVEC
 
 %token I32 BOOL 
 %token KW_IF KW_ELSE
@@ -19,6 +20,8 @@
 %token RPR ")"
 %token LBC "{"
 %token RBC "}"
+%token LBK "["
+%token RBK "]"
 %token AND "&&"
 %token OR "||"
 %token NOT "!"
@@ -31,16 +34,17 @@
 %token ARROW "->"
 %token UNIT
 
-(* === TODO === *)
 %token KW_FALSE
 %token KW_LET
-%token KW_MUT
 %token KW_STRUCT
 %token KW_TRUE
 %token KW_PRINTLN
 %token KW_PRINT
+%token KW_VEC
+%token KW_LEN
 
-
+(* === TODO === *)
+%token KW_MUT
 
 /* Definição das prioridades e associatividades dos tokens */
 
@@ -54,5 +58,6 @@
 %left PLUS MINUS
 %left TIMES DIV MOD
 %left NOT BITNOT
+%left "[" "]"
 %nonassoc DOT
 %%

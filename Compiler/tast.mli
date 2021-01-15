@@ -1,5 +1,5 @@
 (*
-  Última alteração: 17-12-2020
+  Última alteração: 15-01-2021
   Descricao: Typed Abstract Syntax Tree
 *)
 
@@ -12,6 +12,8 @@ and typed_expr =
   | TEunop    of Ast.unop * typed_expr * Ast.crust_types
   | TEstrc_access  of ident * ident * Ast.crust_types * Ast.crust_types
   | TEstrc_decl  of ident * (ident * typed_expr * Ast.crust_types) list  * Ast.crust_types
+  | TEvec_decl   of typed_expr list * Ast.crust_types
+  | TEvec_access of ident * typed_expr * Ast.crust_types * Ast.crust_types
   | TEcall    of ident * (typed_expr * Ast.crust_types) list * Ast.crust_types
   
 and typed_stmt =

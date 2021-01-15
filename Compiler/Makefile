@@ -5,13 +5,13 @@ all:
 	dune build $(release) ./crust.exe
 
 print:
-	dune exec  $(release) -- ./crust.exe -print-ast $(test)
+	dune exec  $(release) -- ./crust.exe -print-ast $(test).rs
 
 print-tast:
-	dune exec  $(release) -- ./crust.exe -print-tast $(test)
+	dune exec  $(release) -- ./crust.exe -print-tast $(test).rs
 
 print-past:
-	dune exec  $(release) -- ./crust.exe -print-past $(test)
+	dune exec  $(release) -- ./crust.exe -print-past $(test).rs
 
 test:
 	bash ./tests/run-tests

@@ -78,17 +78,21 @@ expr:
 | u  = unop e1 = expr               { Eunop (u, e1, !Lexer.line_num) }
 | e1 = expr o = binop e2 = expr     { Ebinop (o, e1, e2, !Lexer.line_num) }
 | id = ident                        { Eident (id, !Lexer.line_num) }
-| id = ident "(" l = separated_list("," , expr) ")"      { Ecall(id, l, !Lexer.line_num)}
-| id = ident "{" l = separated_list("," , expr_pair) "}" { Estrc_decl(id, l, !Lexer.line_num)}
-| id1 = ident"." id2 = ident             { Estrc_access(id1, id2, !Lexer.line_num)}
-| "(" e = expr ")"                  { e }
+| id = ident "(" l = separated_list("," , expr) ")"      { Ecall(id, l, !Lexer.line_num) }
+| id = ident "{" l = separated_list("," , expr_pair) "}" { Estrc_decl(id, l, !Lexer.line_num) }
+| id1 = ident"." id2 = ident                             { Estrc_access(id1, id2, !Lexer.line_num) }
+| KW_VEC "[" l = separated_list("," , expr) "]"          { Evec_decl(l, !Lexer.line_num) }
+| id = ident "[" e = expr "]"                                { Evec_access(id, e, !Lexer.line_num) }
+
+| "(" e = expr ")"                                       { e }
 ;
 
-%inline crust_types:
+crust_types:
 | I32    { Ti32  }
 | BOOL   { Tbool }
 | UNIT   { Tunit }
-| id = ident { Tstruct id}
+| id = ident { Tstruct id }
+| KW_TVEC LT t = crust_types GT { Tvec t }
 ;
 
 %inline unop:

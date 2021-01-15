@@ -27,12 +27,14 @@
       "if",       KW_IF;
       "let",      KW_LET;
       "mut",      KW_MUT;
+      "print!",   KW_PRINT;
+      "println!", KW_PRINTLN;
       "return",   KW_RETURN;
       "struct",   KW_STRUCT;
       "true",     KW_TRUE;
+      "vec!",     KW_VEC;
+      "Vec",      KW_TVEC;
       "while",    KW_WHILE;
-      "println!", KW_PRINTLN;
-      "print!",   KW_PRINT;
     ]
 
   let line_num = ref 1
@@ -78,6 +80,8 @@ rule analisador = parse
   | ')'             { [RPR] }
   | '{'             { [LBC] }
   | '}'             { [RBC] }
+  | '['             { [LBK] }
+  | ']'             { [RBK] }
   | '+'             { [PLUS] }
   | '-'             { [MINUS] }
   | '*'             { [TIMES] }
