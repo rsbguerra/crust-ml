@@ -69,7 +69,7 @@ let rec compare_crust_types = function
   | Ast.Tbool, Ast.Tbool -> true
   | Ast.Tunit, Ast.Tunit -> true
   | Ast.Tstruct(t1), Ast.Tstruct(t2) -> t1 = t2
-  | Ast.Tvec (t1), Ast.Tvec (t2) -> compare_crust_types (t1,t2)  
+  | Ast.Tvec (t1, _), Ast.Tvec (t2, _) -> compare_crust_types (t1,t2)  
   | _, _                 -> false
 
 let is_vec = function 
@@ -207,7 +207,7 @@ and type_expr ctxs = function
        te2
     ) (List.tl els)) in
 
-   TEvec_decl(l, (Ast.Tvec t1)), (Ast.Tvec t1)
+   TEvec_decl(l, (Ast.Tvec (t1, List.length l))), (Ast.Tvec (t1, List.length l))
   | Evec_access(id, e, line) ->
     (* 1 - Verificar se o id existe *) 
     let ctx = (match find_var_id id ctxs with
@@ -263,9 +263,9 @@ and type_stmt ctxs = function
     if not (compare_crust_types (t, t1)) then error ("Wrong type in the declaration of variable "^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
     (* 2 - Adicionar variável ao contexto *)
     let v_ctx,_,_ = (List.hd ctxs) in 
-    Hashtbl.add v_ctx id t;
+    Hashtbl.add v_ctx id t1;
     (* 3 - Retornar declaração tipada *)
-    Tast.TSdeclare(id, t, te, Ast.Tunit), Ast.Tunit
+    Tast.TSdeclare(id, t1, te, Ast.Tunit), Ast.Tunit
 
   | Sassign(id, e, line)   ->
     (* 1 - Verificar id *)

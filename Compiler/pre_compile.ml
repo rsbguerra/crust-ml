@@ -7,7 +7,7 @@ exception Error of string
 let error s  = raise (Error s)
 
 (* table_ctx representa um scope, contexto *)
-type tbl_variables_ctx = (string, int) Hashtbl.t
+type tbl_variables_ctx = (string, int * int) Hashtbl.t
 type tbl_functions_ctx = (string, int) Hashtbl.t
 type tbl_structs_ctx = (string, ((string * Ast.crust_types * int) list * int)) Hashtbl.t
 
@@ -61,29 +61,37 @@ let string_of_tstruct = function
 let rec get_type_start ctxs = function
   | Ti32 | Tbool | Tunit -> 0
   | Tstruct s -> -snd(Hashtbl.find (find_struct_id s ctxs) s) 
-  | Tvec t -> get_type_start ctxs t
+  | Tvec (t, _) -> get_type_start ctxs t
 
 
 let rec get_type_size ctxs = function
   | Ti32 | Tbool -> 8
   | Tunit -> 0
   | Tstruct s -> snd(Hashtbl.find (find_struct_id s ctxs) s)
-  | Tvec t -> get_type_size ctxs t
+  | Tvec (t, sz) -> (get_type_size ctxs t) * sz
 
 let rec pcompile_expr ctxs next = function
   | TEcst (c, t) -> 
       PEcst c, next
   | TEident (id, t) ->
     (* 1 - Posição da variável *)
-    let pos = Hashtbl.find (find_var_id id ctxs) id in
+    let pos, sz = Hashtbl.find (find_var_id id ctxs) id in
     (* 2 - *)
     let pos_list =  match t with
-      | Ti32 | Tbool | Tunit -> [pos] 
+      | Ti32 | Tbool | Tunit -> [pos]
       | Tstruct s -> 
         (* 2.1 - Get struct elements *)
         let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
         (* 2.1.2 - Calculate pos of each element *)
         List.map(fun (id, t, r_pos) -> pos + r_pos)struct_els
+      | Tvec(t, _) ->
+        let curr_pos = ref pos in
+        let out = ref [] in 
+        for i=0 to (sz-1) do
+          out := (!out)@[(!curr_pos)]; 
+          curr_pos := !curr_pos + (get_type_size ctxs t)
+        done;
+        !out
     in
     PEident(id, pos_list), next
     
@@ -102,16 +110,6 @@ let rec pcompile_expr ctxs next = function
         (e::l, sz+(get_type_size ctxs te), max fp fpmax)
       ) ([], 0, next) args
       in
-
-        (*(* 2 - Get Type of the expression *)
-     let pos_list =  match t with
-      | Ti32 | Tbool | Tunit -> [pos] 
-      | Tstruct s -> 
-        (* 2.1 - Get struct elements *)
-        let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
-        (* 2.1.2 - Calculate pos of each element *)
-        List.map(fun (id, t, r_pos) -> pos + r_pos)struct_els
-    in*)
     PEcall(id, exprs, size), fpmax
 
   | TEstrc_decl (id, pairs, t) -> 
@@ -128,7 +126,7 @@ let rec pcompile_expr ctxs next = function
   | TEstrc_access (id, el, tid, tel) ->
     let struct_id = string_of_tstruct tid in
     (* 1. Buscar posição de id na pilha *)
-    let id_pos = Hashtbl.find (find_var_id id ctxs) id in
+    let id_pos,_ = Hashtbl.find (find_var_id id ctxs) id in
     (* 2. Buscar a posição do el relativo ao primeiro elemento*)
     let struct_els = fst(Hashtbl.find (find_struct_id struct_id ctxs) struct_id) in
     let el_pos = find_struct_element el struct_els in
@@ -136,17 +134,24 @@ let rec pcompile_expr ctxs next = function
     (* if id_pos > 0 then is an arg*)
     let final_pos = if id_pos > 0 then (id_pos+abs(el_pos)) else (id_pos+el_pos) in
     PEstrc_access(id, el, final_pos), next
-  | TEvec_decl (els, t) -> 
+  | TEvec_decl (els, t) ->
     (* 1. Precompilar lista de expressões *)
-      let type_size = get_type_size ctxs t in
-      let next, p_els = List.fold_left_map(
-      fun next e -> 
-        (* 3. Precompilar expressão e *)
-        let p_e, next = pcompile_expr ctxs next e in
-        (next+type_size), (p_e, (-next))
-    ) next els in
+    let type_size = (get_type_size ctxs t) / (List.length els)  in
+    
+    let next, p_els = List.fold_right(fun e (next, l) -> 
+      let p_e, next = pcompile_expr ctxs next e in
+      (next+type_size), (p_e, (-next))::l 
+    )els (next, []) in
+    
     PEvec_decl(p_els, snd(List.hd p_els)), next
-  | TEvec_access _ -> assert false
+
+  | TEvec_access(id, e, te, tid) ->
+    (* 1 - Ir buscar a posição inicial de id *)
+    let id_pos, sz = Hashtbl.find (find_var_id id ctxs) id in
+    (* 2 - Précompilar el *)
+    let pe, next = pcompile_expr ctxs next e in
+    (* 3 - Ir buscar a posição: a[5] = pos(a) + (5 * size(a)) *)
+    PEvec_access(id, pe, (get_type_size ctxs te), id_pos, sz), next
 
 and pcompile_stmt ctxs next = function
   | TSif (e, s, elif, _) ->
@@ -168,30 +173,43 @@ and pcompile_stmt ctxs next = function
       let ps, next = pcompile_stmt ((make_ctx())::ctxs) next s in
       PSwhile (pe, ps), next
 
-  | TSdeclare (id, t, e, _) -> 
+  | TSdeclare (id, t, e, _) ->
+    (* Size of vector: (previus_next + next) / size(t) *) 
+    let previus_next = next in
     (* 1 -  Pré compilar expressão*)
     let ep, next = (pcompile_expr ctxs next e) in
-    let star_pos = next + (get_type_start ctxs t) in
-    (* 2 - Adicionar inicio ao frame *)
-    Hashtbl.add (var_ctx_hd ctxs) id (-star_pos);
+    let start_pos = next + (get_type_start ctxs t) in
+    
     let new_next = (get_type_start ctxs t) + (get_type_size ctxs t) in
 
-    (* 3 - Adicionar todos os elementos *)
-    let pos_list =  match t with
-      | Ti32 | Tbool | Tunit -> [-star_pos]
+    (* 2 - Adicionar todos os elementos *)
+    let pos_list, sz =  match t with
+      | Ti32 | Tbool | Tunit -> [-start_pos], 1
       | Tstruct s ->
-        (* 3.1 - Get struct elements *)
+        (* 2.1 - Get struct elements *)
         let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
-        (* 3.1.2 - Calculate pos of each element *)
-        List.map(fun (id, t, r_pos) -> -(star_pos + r_pos))struct_els
-      | Tvec t -> [-star_pos]
+        (* 2.1.2 - Calculate pos of each element *)
+        let a, l  =List.fold_left_map(fun a (id, t, r_pos) -> (a+1), -(start_pos + r_pos)) 0 struct_els in
+        l, a
+      | Tvec (t, _) ->
+        let size = (next - previus_next) / (get_type_size ctxs t) in
+        let curr_pos = ref previus_next in
+        let out = ref [] in 
+        for i=0 to (size-1) do
+          out := (!out)@[-(!curr_pos)]; 
+          curr_pos := !curr_pos + (get_type_size ctxs t)
+        done;
+        (List.rev !out), size
     in
+
+    (* 2 - Adicionar inicio ao frame *)
+    Hashtbl.add (var_ctx_hd ctxs) id ((List.hd pos_list), sz);
 
     PSdeclare (id, t, ep, pos_list), (new_next+next)
 
   | TSassign (id, e, _) ->
     let ep, next = (pcompile_expr ctxs next e) in
-    let pos = Hashtbl.find (find_var_id id ctxs) id in
+    let pos, _ = Hashtbl.find (find_var_id id ctxs) id in
 
     PSassign (id, ep, pos), next
 
@@ -217,7 +235,7 @@ and pcompile_stmt ctxs next = function
         let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
         (* 3.1.2 - Calculate pos of each element *)
         List.filter_map(fun (id, t, r_pos) -> if r_pos <> 0 then Some (-(abs(star_pos) + abs(r_pos))) else None)struct_els
-      | Tvec t -> [-star_pos]
+      | Tvec (t, _) -> [-star_pos]
     in
     PSreturn (ep, pos_list), next
   | TSexpr (e, _) -> 
@@ -248,7 +266,7 @@ and pcompile_global_stmt ctxs = function
       (* 1- Precompilar argumentos *)
       let p_next, p_args = List.fold_left_map(
         fun next (arg, t_arg) -> 
-          Hashtbl.add (var_ctx_hd new_ctxs) arg next;
+          Hashtbl.add (var_ctx_hd new_ctxs) arg (next, 1);
           (next+(get_type_size ctxs t_arg)), (arg, t_arg, next)
       ) 16 args in
 

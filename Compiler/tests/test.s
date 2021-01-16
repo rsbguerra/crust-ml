@@ -1,15 +1,71 @@
 	.text
 	.globl	main
+add:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $16, %rsp
+	movq $0, %rax
+	pushq %rax
+	popq %rax
+	movq 16(%rbp,%rax,8), %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -8(%rbp)
+	movq $1, %rax
+	pushq %rax
+	popq %rax
+	movq 16(%rbp,%rax,8), %rax
+	pushq %rax
+	movq $1, %rax
+	pushq %rax
+	popq %rax
+	movq 16(%rbp,%rax,8), %rax
+	pushq %rax
+	popq %rax
+	popq %rbx
+	addq %rax, %rbx
+	pushq %rbx
+	popq %rax
+	jmp add_fim
+add_fim:
+	addq $16, %rsp
+	popq %rbp
+	ret
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $8, %rsp
+	subq $56, %rsp
+	movq $5, %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -24(%rbp)
+	pushq %rax
+	movq $6, %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -16(%rbp)
+	pushq %rax
+	movq $10, %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -8(%rbp)
+	pushq %rax
+	popq %rax
+	popq %rax
+	popq %rax
+	movq $2, %rax
+	pushq %rax
+	popq %rax
+	movq -24(%rbp,%rax,8), %rax
+	pushq %rax
+	popq %rdi
+	call printn_int
 	movq $0, %rax
 	pushq %rax
 	popq %rax
 	jmp main_fim
 main_fim:
-	addq $8, %rsp
+	addq $56, %rsp
 	popq %rbp
 	ret
 printn_int:
@@ -88,4 +144,6 @@ print_error_f:
 is_in_function:
 	.quad 0
 number_of_loop:
+	.quad 0
+vec_access:
 	.quad 0

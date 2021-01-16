@@ -225,8 +225,24 @@ let rec compile_expr = function
       movq (reg rax) (ind ~ofs:pos rbp) ++
       pushq (reg rax)
       ) nop pairs
-  | _ -> assert false
+  | PEvec_decl (els, start) ->
+      List.fold_left(fun code (e, pos) -> 
+      code ++
+      (* 1 - Calcular o valor da expressão  *)
+      compile_expr e ++
+      popq rax ++
+      (* 2 - Guardar o valor da expressao na posicao pos *)
+      movq (reg rax) (ind ~ofs:pos rbp) ++
+      pushq (reg rax)
+      ) nop els
+  | PEvec_access (id, e, el_size, pos, sz) ->
+    compile_expr e ++
+    popq rax ++
 
+    movq (ind ~ofs:(pos) ~index:(rax) ~scale:(el_size) rbp) (reg rax) ++
+    
+    pushq (reg rax)
+  | _ -> assert false
 let rec compile_stmt = function
   | PSif (e, s1, elifs)-> 
      (*1 - Incrementa o numero de ifs realizados ate ao momento *)
@@ -485,7 +501,8 @@ let compile_program p ofile =
         label ".Sprint_error_z" ++ string "\nError: Division by zero.\n\n" ++
         label ".Sprint_error_f" ++ string "\nFunction without return.\n\n" ++
         label "is_in_function" ++ dquad [0] ++
-        label "number_of_loop" ++ dquad [0]
+        label "number_of_loop" ++ dquad [0] ++
+        label "vec_access" ++ dquad [0]
     }
   in
   let f = open_out ofile in

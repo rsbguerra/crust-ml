@@ -53,7 +53,7 @@ and crust_const =
 and crust_types =
   | Tunit | Ti32 | Tbool 
   | Tstruct of ident
-  | Tvec of crust_types
+  | Tvec of crust_types * int
 
 and global_stmt = 
   | GSblock    of global_stmt list * int

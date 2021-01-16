@@ -92,7 +92,7 @@ crust_types:
 | BOOL   { Tbool }
 | UNIT   { Tunit }
 | id = ident { Tstruct id }
-| KW_TVEC LT t = crust_types GT { Tvec t }
+| KW_TVEC LT t = crust_types GT { Tvec (t,-1) }
 ;
 
 %inline unop:

@@ -5,7 +5,7 @@ let rec string_of_crust_types = function
   | Ti32  -> "Ti32"
   | Tbool -> "Tbool"
   | Tstruct s -> "Tstruct( " ^ s ^ " )"
-  | Tvec s -> "Tvec( " ^ string_of_crust_types s ^ " )"
+  | Tvec (s, sz) -> "Tvec( " ^ string_of_crust_types s ^ ", "^string_of_int sz^" )"
 
 let string_of_unop = function
   | Uneg -> "-"

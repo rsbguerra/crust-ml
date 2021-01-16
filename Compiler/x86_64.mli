@@ -1,5 +1,5 @@
 
-(** {0 Biblioteca para produzir código Assembly X86-64}
+(** {Biblioteca para produzir código Assembly X86-64}
 
     Trata-se aqui somente dum fragmente relativamente modesto do assembly X86-64.
 
