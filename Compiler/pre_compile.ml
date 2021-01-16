@@ -58,14 +58,17 @@ let string_of_tstruct = function
   | Ast.Tstruct(t1) -> t1
   | _               -> assert false
 
-let get_type_start ctxs = function
+let rec get_type_start ctxs = function
   | Ti32 | Tbool | Tunit -> 0
   | Tstruct s -> -snd(Hashtbl.find (find_struct_id s ctxs) s) 
+  | Tvec t -> get_type_start ctxs t
 
-let get_type_size ctxs = function
+
+let rec get_type_size ctxs = function
   | Ti32 | Tbool -> 8
   | Tunit -> 0
   | Tstruct s -> snd(Hashtbl.find (find_struct_id s ctxs) s)
+  | Tvec t -> get_type_size ctxs t
 
 let rec pcompile_expr ctxs next = function
   | TEcst (c, t) -> 
@@ -133,6 +136,17 @@ let rec pcompile_expr ctxs next = function
     (* if id_pos > 0 then is an arg*)
     let final_pos = if id_pos > 0 then (id_pos+abs(el_pos)) else (id_pos+el_pos) in
     PEstrc_access(id, el, final_pos), next
+  | TEvec_decl (els, t) -> 
+    (* 1. Precompilar lista de expressões *)
+      let type_size = get_type_size ctxs t in
+      let next, p_els = List.fold_left_map(
+      fun next e -> 
+        (* 3. Precompilar expressão e *)
+        let p_e, next = pcompile_expr ctxs next e in
+        (next+type_size), (p_e, (-next))
+    ) next els in
+    PEvec_decl(p_els, snd(List.hd p_els)), next
+  | TEvec_access _ -> assert false
 
 and pcompile_stmt ctxs next = function
   | TSif (e, s, elif, _) ->
@@ -170,6 +184,7 @@ and pcompile_stmt ctxs next = function
         let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
         (* 3.1.2 - Calculate pos of each element *)
         List.map(fun (id, t, r_pos) -> -(star_pos + r_pos))struct_els
+      | Tvec t -> [-star_pos]
     in
 
     PSdeclare (id, t, ep, pos_list), (new_next+next)
@@ -202,6 +217,7 @@ and pcompile_stmt ctxs next = function
         let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
         (* 3.1.2 - Calculate pos of each element *)
         List.filter_map(fun (id, t, r_pos) -> if r_pos <> 0 then Some (-(abs(star_pos) + abs(r_pos))) else None)struct_els
+      | Tvec t -> [-star_pos]
     in
     PSreturn (ep, pos_list), next
   | TSexpr (e, _) -> 

@@ -12,6 +12,8 @@ and expr =
   | PEcall of ident * expr list * int
   | PEstrc_access of ident * ident * int
   | PEstrc_decl of ident * (ident * expr * int) list * int
+  | PEvec_decl of (expr * int) list * int
+  | PEvec_access of ident * expr
  
 and stmt =
   | PSif of expr * stmt * elif list

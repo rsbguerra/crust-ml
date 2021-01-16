@@ -28,6 +28,17 @@ let rec string_of_precomp_expr = function
   | PEstrc_access(id, el, el_pos) ->
     "PEstrc_access(" ^ id ^ ", " ^ el ^ ", " ^
     string_of_int el_pos ^ ")"
+  | PEvec_decl(el, pos) -> 
+    "PEvec_decl(" ^ 
+    string_of_precomp_vec_el_list el ^ ", " ^
+    string_of_int pos ^ 
+    ")"
+  | _ -> assert false
+
+and string_of_precomp_vec_el_list exprs = 
+  List.map (fun (e, pos) -> "( " ^ string_of_precomp_expr e ^ ", " ^string_of_int pos ^ " )") exprs |> 
+  List.fold_left (fun a b -> a ^ ", " ^ b) ""
+
 
 and string_of_precomp_expr_list exprs = 
   List.map (fun e -> string_of_precomp_expr e) exprs |> 
