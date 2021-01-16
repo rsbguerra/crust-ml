@@ -224,7 +224,7 @@ and type_expr ctxs = function
     List.iteri(fun i e ->
       let te, t = type_expr ctxs e in
       let ta = snd (List.nth params i) in
-      if not (compare_crust_types (t,ta)) then error ("Invalid number of arguments given.") line;
+      if not (compare_crust_types (t,ta)) then error ("Invalid argument type was given "^Printer.string_of_crust_types t^" but was expected a "^Printer.string_of_crust_types ta^".") line;
       typed_args := !typed_args@[(te, t)]
     )args;
 
