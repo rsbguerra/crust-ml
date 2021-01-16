@@ -43,7 +43,6 @@
 %token KW_VEC
 %token KW_LEN
 
-(* === TODO === *)
 %token KW_MUT
 
 /* Definição das prioridades e associatividades dos tokens */

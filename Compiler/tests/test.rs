@@ -1,10 +1,18 @@
-fn main()
-{
-  let b : i32 = 42;
-  let a : &i32 = &b;
+struct Point{
+  x:i32,
+  y:i32
+}
 
-  b = 5;
-  println!(a);
+fn main(){
+  let mut b : i32 = 42;
+  let mut p : Point = Point{x:4, y:12};
+  let mut p : Vec<i32> = Point{x:4, y:12};
+
+  
+  //let a : &i32 = &b;
+
+  println!(p.y);
+  //println!(*a);
 
   return;
 }

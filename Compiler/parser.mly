@@ -60,6 +60,7 @@ simple_stmt:
 | KW_BREAK ";"                                        { Sbreak !Lexer.line_num }
 | KW_CONTINUE ";"                                     { Scontinue !Lexer.line_num }
 | KW_LET id = ident ":" t = crust_types "=" e = expr ";" { Sdeclare (id, t, e, !Lexer.line_num) }
+| KW_LET KW_MUT id = ident ":" t = crust_types "=" e = expr ";" { Sdeclare (id, (Ast.Tmut t), e, !Lexer.line_num) }
 | id = ident "=" e = expr ";"                         { Sassign (id, e, !Lexer.line_num) }
 | KW_PRINT "(" e = expr ")" ";"                       { Sprint(e, !Lexer.line_num) }
 | KW_PRINTLN "(" e = expr ")" ";"                     { Sprintn(e, !Lexer.line_num) }

@@ -69,9 +69,10 @@ let rec compare_crust_types = function
   | Ast.Tbool, Ast.Tbool -> true
   | Ast.Tunit, Ast.Tunit -> true
   | Ast.Tstruct(t1), Ast.Tstruct(t2) -> t1 = t2
-  | Ast.Tvec (t1, _), Ast.Tvec (t2, _) -> compare_crust_types (t1,t2)  
-  | t1, Ast.Tref (t2, _) -> compare_crust_types (get_ref_type t1, get_ref_type t2)
-  | Ast.Tref (t1, _), t2 -> compare_crust_types (get_ref_type t1, get_ref_type t2)
+  | Ast.Tvec (t1, _), Ast.Tvec (t2, _) -> compare_crust_types (t1,t2)
+  | Ast.Tmut t1, t2 -> compare_crust_types (t1, t2)
+  | t1, Ast.Tmut t2 -> compare_crust_types (t1, t2)
+  | Ast.Tref (t1, _), Ast.Tref(t2, _) -> compare_crust_types (get_ref_type t1, get_ref_type t2)
   | _, _                 -> false
 
 and get_ref_type = function
@@ -82,9 +83,16 @@ let is_vec = function
   | Ast.Tvec _ -> true  
   | _          -> false
 
-let string_of_tstruct = function 
-  | Ast.Tstruct(t1) -> Some t1
-  | _               -> None
+let is_mut = function 
+  | Ast.Tmut _ -> true
+  | _          -> false
+
+
+let rec string_of_tstruct = function 
+  | Ast.Tstruct(t) -> Some t
+  | Ast.Tref(t, _) -> string_of_tstruct t
+  | Ast.Tmut(t)    -> string_of_tstruct t
+  | _              -> None
   
 
 let rec type_binop_expr op te1 t1 te2 t2 line = match op with
@@ -289,6 +297,7 @@ and type_stmt ctxs = function
     if not (compare_crust_types (t, t1)) then error ("Wrong type in the declaration of variable "^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
     (* 2 - Adicionar variável ao contexto *)
     let v_ctx,_,_ = (List.hd ctxs) in 
+    let t1 = if is_vec t then t1 else t in
     Hashtbl.add v_ctx id t1;
     (* 3 - Retornar declaração tipada *)
     Tast.TSdeclare(id, t1, te, Ast.Tunit), Ast.Tunit
@@ -302,7 +311,9 @@ and type_stmt ctxs = function
     let t = Hashtbl.find ctx id in
     (* 3 - Tipar expressão *)
     let te, t1 = type_expr ctxs e in
-    if not (compare_crust_types (t, t1)) then error ("Wrong type in the assign of variable"^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
+    if not (compare_crust_types (t, t1)) then error ("Wrong type in the assign of variable "^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
+    (* 4 - Verificar se variavel id é mutavel *)
+    if not (is_mut t) then error ("Variable " ^ id ^ " is not mutable.") line;
     Tast.TSassign(id, te, Ast.Tunit), Ast.Tunit
 
   | Sprintn (e, line) ->

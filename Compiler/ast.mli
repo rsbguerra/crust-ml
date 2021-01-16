@@ -51,8 +51,9 @@ and crust_const =
   | Cunit
   
 and crust_types =
-  | Tunit | Ti32 | Tbool 
+  | Tunit | Ti32 | Tbool
   | Tstruct of ident
+  | Tmut of crust_types
   | Tvec of crust_types * int
   | Tref of crust_types * ident
 
