@@ -7,6 +7,7 @@ type ident = string
 and expr =
   | PEcst of Ast.crust_const
   | PEident of ident * int list
+  | PEref of int
   | PEbinop of Ast.binop * expr * expr
   | PEunop of Ast.unop * expr
   | PElen of int

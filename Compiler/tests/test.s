@@ -3,27 +3,25 @@
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $16, %rsp
-	movq $0, %rax
+	subq $24, %rsp
+	movq $42, %rax
 	pushq %rax
-	popq %rax
-	cmpq $0, %rax
-	je bool_true_1
-	movq $0, %rax
-	pushq %rax
-	jmp bool_end_1
-bool_true_1:
-	movq $1, %rax
-	pushq %rax
-bool_end_1:
 	popq %rax
 	movq %rax, -8(%rbp)
+	movq $5, %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -8(%rbp)
+	movq -8(%rbp), %rax
+	pushq %rax
+	popq %rdi
+	call printn_int
 	movq $0, %rax
 	pushq %rax
 	popq %rax
 	jmp main_fim
 main_fim:
-	addq $16, %rsp
+	addq $24, %rsp
 	popq %rbp
 	ret
 printn_int:

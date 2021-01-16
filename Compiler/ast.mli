@@ -8,7 +8,6 @@ type ident = string
 type unop = 
   | Uneg      (* - *)
   | Unot      (* ! *)
-  | Uref      (* & *)
   | Uptr      (* * *)
   | Umut      (* & mt*)
 
@@ -20,6 +19,7 @@ and binop =
 and expr =
   | Ecst     of crust_const * int
   | Eident   of ident * int
+  | Eref     of ident * int (* & *)
   | Ebinop   of binop * expr * expr * int
   | Eunop    of unop * expr * int
   | Estrc_access of ident * ident * int            (* S.x (S-> struct, x -> element of struct)*)
@@ -54,7 +54,7 @@ and crust_types =
   | Tunit | Ti32 | Tbool 
   | Tstruct of ident
   | Tvec of crust_types * int
-  | Tref of crust_types
+  | Tref of crust_types * ident
 
 and global_stmt = 
   | GSblock    of global_stmt list * int

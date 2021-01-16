@@ -77,6 +77,7 @@ expr:
 | u  = unop e1 = expr               { Eunop (u, e1, !Lexer.line_num) }
 | e1 = expr o = binop e2 = expr     { Ebinop (o, e1, e2, !Lexer.line_num) }
 | id = ident                        { Eident (id, !Lexer.line_num) }
+| BITAND id = ident                 { Eref (id, !Lexer.line_num) }
 | id = ident "(" l = separated_list("," , expr) ")"      { Ecall(id, l, !Lexer.line_num) }
 | id = ident "{" l = separated_list("," , expr_pair) "}" { Estrc_decl(id, l, !Lexer.line_num) }
 | id1 = ident "." id2 = ident                            { Estrc_access(id1, id2, !Lexer.line_num) }
@@ -92,11 +93,10 @@ crust_types:
 | UNIT   { Tunit }
 | id = ident { Tstruct id }
 | KW_TVEC LT t = crust_types GT { Tvec (t,-1) }
-| BITAND t = crust_types {Tref t}
+| BITAND t = crust_types { Tref (t,"") }
 ;
 
 %inline unop:
-| BITAND { Uref }
 | TIMES  { Uptr }
 | MINUS  { Uneg }
 | NOT    { Unot }

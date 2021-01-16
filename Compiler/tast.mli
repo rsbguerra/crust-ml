@@ -9,6 +9,7 @@ and typed_expr =
   | TEcst     of Ast.crust_const * Ast.crust_types
   | TEident   of ident * Ast.crust_types
   | TEbinop   of Ast.binop * typed_expr * typed_expr * Ast.crust_types
+  | TEref     of ident * Ast.crust_types
   | TEunop    of Ast.unop * typed_expr * Ast.crust_types
   | TEstrc_access  of ident * ident * Ast.crust_types * Ast.crust_types
   | TEstrc_decl  of ident * (ident * typed_expr * Ast.crust_types) list  * Ast.crust_types

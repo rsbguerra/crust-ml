@@ -1,8 +1,11 @@
 fn main()
 {
-  let a : &i32 = &0;
+  let b : i32 = 42;
+  let a : &i32 = &b;
 
-  //println!(a.len());
+  b = 5;
+  println!(a);
+
   return;
 }
 

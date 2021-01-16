@@ -70,7 +70,13 @@ let rec compare_crust_types = function
   | Ast.Tunit, Ast.Tunit -> true
   | Ast.Tstruct(t1), Ast.Tstruct(t2) -> t1 = t2
   | Ast.Tvec (t1, _), Ast.Tvec (t2, _) -> compare_crust_types (t1,t2)  
+  | t1, Ast.Tref (t2, _) -> compare_crust_types (get_ref_type t1, get_ref_type t2)
+  | Ast.Tref (t1, _), t2 -> compare_crust_types (get_ref_type t1, get_ref_type t2)
   | _, _                 -> false
+
+and get_ref_type = function
+  | Ast.Tref (t1, _) -> get_ref_type t1
+  | _  as t -> t
 
 let is_vec = function 
   | Ast.Tvec _ -> true  
@@ -110,6 +116,15 @@ and type_expr ctxs = function
     begin match find_var_id id ctxs with
     | None     -> error ("The identifier " ^ id ^ " was not defined.") line
     | Some ctx -> TEident(id, Hashtbl.find ctx id), Hashtbl.find ctx id end
+  | Eref (id, line) ->
+   (* 1 - Verificar id *)
+    let ctx = (match find_var_id id ctxs with
+    | Some ctx -> ctx
+    | None     -> error ("The identifier " ^ id ^ " was not defined.") line) in
+    (* 2 - Extrair tipo do id *)
+    let t = Hashtbl.find ctx id in
+    TEref(id, Ast.Tref (t, id)), (Ast.Tref (t, id))
+  
   | Ebinop (op, e1, e2, line) ->
     (* 1 - Tipar e1 e2*) 
     let te1, t1 = type_expr ctxs e1 in
@@ -130,12 +145,6 @@ and type_expr ctxs = function
     if not (compare_crust_types (Ast.Tbool, t)) then error ("Wrong type given to operand Ast.Unot, was given"^Printer.string_of_crust_types t^" but a "^Printer.string_of_crust_types Ast.Tbool^" was expected.") line;
     (* 3 - Retorna a expressão tipada *)
     Tast.TEunop(Ast.Unot, te, Ast.Tbool), Ast.Tbool
-  | Eunop (Ast.Uref, e, line) -> 
-    (* 1. Tipar expressão e *)
-    let te, t = type_expr ctxs e in
-    Tast.TEunop(Ast.Uref, te, Ast.Tref t), (Ast.Tref t)
-  
-
 
   | Estrc_access(id, el, line) ->
     (* p.x *)

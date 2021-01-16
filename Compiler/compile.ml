@@ -25,9 +25,10 @@ let get_value = function
   | Ast.Cbool v -> if v then Int32.one else Int32.zero
   | Ast.Cunit -> Int32.zero 
 
-let get_str_type = function
+let rec get_str_type = function
   | Ast.Ti32 -> "int"
   | Ast.Tbool -> "bool"
+  | Ast.Tref (t, _) -> get_str_type t
   | _ -> assert false
 
 let rec compile_expr = function
@@ -42,6 +43,9 @@ let rec compile_expr = function
       pushq (reg rax) ++ 
       code
     ) nop pos_list
+  | PEref (pos) -> 
+    movq (imm pos) (reg rax) ++
+    pushq (reg rax)
   | PEbinop (Ast.Bmod | Ast.Bdiv as op, e1, e2) ->    
     (* 1 - Dependendo da operacao queremos um registo diferente *)
     let rg = 
@@ -336,6 +340,12 @@ let rec compile_stmt = function
       popq rax ++
       (* 2 - Guardar o valor da expressao na posicao ofs *)
       movq (reg rax) (ind ~ofs:(List.hd pos_list) rbp)
+    | Tref (t, id) -> 
+      (* compile_expr e ++
+      popq rax ++
+      leaq rax 
+       *)
+      nop
     | _ -> compile_expr e ++ List.fold_left (fun code p -> code ++ popq rax) nop pos_list
     end
 

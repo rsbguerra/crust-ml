@@ -6,12 +6,11 @@ let rec string_of_crust_types = function
   | Tbool -> "Tbool"
   | Tstruct s -> "Tstruct( " ^ s ^ " )"
   | Tvec (s, sz) -> "Tvec( " ^ string_of_crust_types s ^ ", "^string_of_int sz^" )"
-  | Tref t -> "Tref( " ^ string_of_crust_types t ^ " )"
+  | Tref (t, id) -> "Tref( " ^ string_of_crust_types t ^  ", " ^ id ^ " )"
 
 let string_of_unop = function
   | Uneg -> "-"
   | Unot -> "!"
-  | Uref -> "&"
   | Uptr -> "*"
   | Umut -> "&mut"
 
@@ -47,6 +46,7 @@ and string_of_struct_pair_list acc = function
 and string_of_expr = function
   | Ecst (n, _)              -> "Ecst("^(string_of_crust_consts n)^")"
   | Eident (id, _)           -> "Eident("^id^")"
+  | Eref (id, _)             -> "Eref("^id^")"
   | Ebinop (binop, e1, e2, _)-> "Ebinop("^(string_of_binop binop)^", "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
   | Eunop (unop , e1, _)     -> "Eunop("^(string_of_unop unop)^", "^(string_of_expr e1)^")"
   | Estrc_access (id, el, _) -> "Estrc_access("^ id^", "^el^")"
