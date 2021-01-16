@@ -33,6 +33,8 @@
 %token EOF
 %token ARROW "->"
 %token UNIT
+%token REF "&"
+%token PTR "*"
 
 %token KW_FALSE
 %token KW_LET
@@ -57,7 +59,7 @@
 %left EQ NEQ GT LT GET LET 
 %left PLUS MINUS
 %left TIMES DIV MOD
-%left NOT BITNOT
+%left NOT PTR BITNOT REF
 %left "[" "]"
 %nonassoc DOT
 %%

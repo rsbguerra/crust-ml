@@ -9,7 +9,7 @@ type unop =
   | Uneg      (* - *)
   | Unot      (* ! *)
   | Uref      (* & *)
-  | Udef      (* * *)
+  | Uptr      (* * *)
   | Umut      (* & mt*)
 
 and binop =
@@ -54,6 +54,7 @@ and crust_types =
   | Tunit | Ti32 | Tbool 
   | Tstruct of ident
   | Tvec of crust_types * int
+  | Tref of crust_types
 
 and global_stmt = 
   | GSblock    of global_stmt list * int

@@ -130,6 +130,12 @@ and type_expr ctxs = function
     if not (compare_crust_types (Ast.Tbool, t)) then error ("Wrong type given to operand Ast.Unot, was given"^Printer.string_of_crust_types t^" but a "^Printer.string_of_crust_types Ast.Tbool^" was expected.") line;
     (* 3 - Retorna a expressão tipada *)
     Tast.TEunop(Ast.Unot, te, Ast.Tbool), Ast.Tbool
+  | Eunop (Ast.Uref, e, line) -> 
+    (* 1. Tipar expressão e *)
+    let te, t = type_expr ctxs e in
+    Tast.TEunop(Ast.Uref, te, Ast.Tref t), (Ast.Tref t)
+  
+
 
   | Estrc_access(id, el, line) ->
     (* p.x *)

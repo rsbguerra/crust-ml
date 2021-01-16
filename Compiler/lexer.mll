@@ -107,6 +107,8 @@ rule analisador = parse
   | "->"            { [ARROW] }
   | ';'             { [DELIMITER] }
   | ','             { [COMMA] }
+  | '&'             { [REF] }
+  | '*'             { [PTR] }
   | "i32"           { [I32] }
   | "bool"          { [BOOL] }
   | "()"            { [UNIT]}

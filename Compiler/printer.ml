@@ -6,12 +6,13 @@ let rec string_of_crust_types = function
   | Tbool -> "Tbool"
   | Tstruct s -> "Tstruct( " ^ s ^ " )"
   | Tvec (s, sz) -> "Tvec( " ^ string_of_crust_types s ^ ", "^string_of_int sz^" )"
+  | Tref t -> "Tref( " ^ string_of_crust_types t ^ " )"
 
 let string_of_unop = function
   | Uneg -> "-"
   | Unot -> "!"
   | Uref -> "&"
-  | Udef -> "*"
+  | Uptr -> "*"
   | Umut -> "&mut"
 
 let string_of_binop = function
@@ -54,6 +55,8 @@ and string_of_expr = function
   | Elen (id, _)                 -> "Elen("^id^")"
   | Evec_access(id, e, _)   -> "Evec_access("^id^", "^(string_of_expr e)^")"
   | Evec_decl(el, _)         -> "Evec_decl("^(string_of_expr_list "" el)^")" 
+
+
 
 and string_of_stmt = function
   | Sif (e, s1, elifs, _)-> "Sif("^(string_of_expr e)^", "^(string_of_stmt s1)^", "^(string_of_elif elifs)^")"

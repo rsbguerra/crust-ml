@@ -93,9 +93,12 @@ crust_types:
 | UNIT   { Tunit }
 | id = ident { Tstruct id }
 | KW_TVEC LT t = crust_types GT { Tvec (t,-1) }
+| REF t = crust_types {Tref t}
 ;
 
 %inline unop:
+| REF    { Uref }
+| PTR    { Uptr }
 | MINUS  { Uneg }
 | NOT    { Unot }
 ;
