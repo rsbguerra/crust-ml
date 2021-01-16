@@ -107,11 +107,9 @@ rule analisador = parse
   | "->"            { [ARROW] }
   | ';'             { [DELIMITER] }
   | ','             { [COMMA] }
-  | '&'             { [REF] }
-  | '*'             { [PTR] }
   | "i32"           { [I32] }
   | "bool"          { [BOOL] }
-  | "()"            { [UNIT]}
+  | "()"            { [UNIT] }
   | INTEGER_LITERAL as snum 
     { (*Todo decide wich type this integer is *)
       try

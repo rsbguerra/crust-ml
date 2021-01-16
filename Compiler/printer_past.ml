@@ -18,6 +18,7 @@ let rec string_of_precomp_expr = function
     "PEunop(" ^ 
     Printer.string_of_unop unop ^  ", " ^ 
     string_of_precomp_expr e ^ ")"
+  | PElen id -> "PEcall( " ^ string_of_int id ^ " )"
   | PEcall (f, el, size) ->
     "PEcall(" ^ f ^ ", " ^ 
     string_of_precomp_expr_list el ^ ", " ^ string_of_int size ^ ")"

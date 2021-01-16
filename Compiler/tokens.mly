@@ -33,8 +33,6 @@
 %token EOF
 %token ARROW "->"
 %token UNIT
-%token REF "&"
-%token PTR "*"
 
 %token KW_FALSE
 %token KW_LET
