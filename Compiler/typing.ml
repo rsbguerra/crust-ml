@@ -177,6 +177,17 @@ and type_expr ctxs = function
       TEstrc_decl(id, !typed_el, (Tstruct id)), (Tstruct id)
 
     end
+  | Elen (id,line) ->
+    (* 1 - Verificar se o id existe *) 
+    let ctx = (match find_var_id id ctxs with
+    | Some ctx -> ctx
+    | None     -> error ("The identifier " ^ id ^ " was not defined.") line) in
+   
+    (* 2 - Verificar se o id é do tipo Tvec *)
+    let t = Hashtbl.find ctx id in
+    if not (is_vec t) then error ("Invoking function len with type "^Printer.string_of_crust_types t^" when a vector is expected.") line;
+    TElen id, Ast.Ti32
+
   | Ecall(id, args, line) ->
     (* 1 - Verificar se a função existe *)
     let params, r = match find_fun_id id ctxs with

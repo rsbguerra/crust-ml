@@ -25,6 +25,7 @@
       "false",    KW_FALSE;
       "fn",       KW_FN;
       "if",       KW_IF;
+      "len",      KW_LEN;
       "let",      KW_LET;
       "mut",      KW_MUT;
       "print!",   KW_PRINT;

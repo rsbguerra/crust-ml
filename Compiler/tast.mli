@@ -14,6 +14,7 @@ and typed_expr =
   | TEstrc_decl  of ident * (ident * typed_expr * Ast.crust_types) list  * Ast.crust_types
   | TEvec_decl   of typed_expr list * Ast.crust_types
   | TEvec_access of ident * typed_expr * Ast.crust_types * Ast.crust_types
+  | TElen     of ident
   | TEcall    of ident * (typed_expr * Ast.crust_types) list * Ast.crust_types
   
 and typed_stmt =

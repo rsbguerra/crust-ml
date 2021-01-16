@@ -80,10 +80,10 @@ expr:
 | id = ident                        { Eident (id, !Lexer.line_num) }
 | id = ident "(" l = separated_list("," , expr) ")"      { Ecall(id, l, !Lexer.line_num) }
 | id = ident "{" l = separated_list("," , expr_pair) "}" { Estrc_decl(id, l, !Lexer.line_num) }
-| id1 = ident"." id2 = ident                             { Estrc_access(id1, id2, !Lexer.line_num) }
+| id1 = ident "." id2 = ident                            { Estrc_access(id1, id2, !Lexer.line_num) }
 | KW_VEC "[" l = separated_list("," , expr) "]"          { Evec_decl(l, !Lexer.line_num) }
-| id = ident "[" e = expr "]"                                { Evec_access(id, e, !Lexer.line_num) }
-
+| id = ident "[" e = expr "]"                            { Evec_access(id, e, !Lexer.line_num) }
+| id = ident "." KW_LEN UNIT                             { Elen(id, !Lexer.line_num) }
 | "(" e = expr ")"                                       { e }
 ;
 

@@ -103,6 +103,11 @@ let rec pcompile_expr ctxs next = function
   | TEunop (op, e, t) -> 
       let pe, _ = pcompile_expr ctxs next e in
       PEunop(op, pe), next
+  | TElen id ->
+    (* 1 - get id size *)
+    let _, sz = Hashtbl.find (find_var_id id ctxs) id in
+    PElen(sz), next
+
   | TEcall (id, args, t) ->
     let exprs, size, fpmax = 
       List.fold_left (fun (l, sz, fpmax) (el, te) ->

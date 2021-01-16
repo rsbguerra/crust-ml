@@ -203,7 +203,9 @@ let rec compile_expr = function
     (* 2 - nega o valor de e *)
     negq (reg rax) ++
     pushq (reg rax)
-  
+  | PElen sz ->
+    movq (imm sz) (reg rax) ++
+    pushq (reg rax)
   | PEcall (id, args, size) ->
     List.fold_left (fun code e -> code ++ compile_expr e) nop args ++
     
@@ -501,8 +503,7 @@ let compile_program p ofile =
         label ".Sprint_error_z" ++ string "\nError: Division by zero.\n\n" ++
         label ".Sprint_error_f" ++ string "\nFunction without return.\n\n" ++
         label "is_in_function" ++ dquad [0] ++
-        label "number_of_loop" ++ dquad [0] ++
-        label "vec_access" ++ dquad [0]
+        label "number_of_loop" ++ dquad [0]
     }
   in
   let f = open_out ofile in

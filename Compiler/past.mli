@@ -9,6 +9,7 @@ and expr =
   | PEident of ident * int list
   | PEbinop of Ast.binop * expr * expr
   | PEunop of Ast.unop * expr
+  | PElen of int
   | PEcall of ident * expr list * int
   | PEstrc_access of ident * ident * int
   | PEstrc_decl of ident * (ident * expr * int) list * int
