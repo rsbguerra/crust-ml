@@ -28,7 +28,7 @@ let get_value = function
 let rec get_str_type = function
   | Ast.Ti32 -> "int"
   | Ast.Tbool -> "bool"
-  | Ast.Tref (t, _) -> get_str_type t
+  | Ast.Tref (t, _) | Ast.Tmut t -> get_str_type t
   | _ -> assert false
 
 let rec compile_expr = function

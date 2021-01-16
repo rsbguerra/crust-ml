@@ -53,14 +53,17 @@ let rec find_struct_element el = function
   | []         -> assert false
   | (id, t, pos)::tl -> if id = el then pos else (find_struct_element el tl)
 
-let string_of_tstruct = function 
-  | Ast.Tstruct(t1) -> t1
+let rec string_of_tstruct = function 
+  | Ast.Tstruct(t) -> t
+  | Ast.Tref(t, _) -> string_of_tstruct t
+  | Ast.Tmut(t)    -> string_of_tstruct t
   | _               -> assert false
 
 let rec get_type_start ctxs = function
   | Ti32 | Tbool | Tunit -> 0
   | Tstruct s -> -snd(Hashtbl.find (find_struct_id s ctxs) s) 
-  | Tvec (t, _) | Tref (t, _) -> get_type_start ctxs t
+  | Tvec (t, _) | Tref (t, _) | Tmut t -> get_type_start ctxs t
+  
 
 let rec get_type_size ctxs = function
   | Ti32 | Tbool -> 8
@@ -68,12 +71,10 @@ let rec get_type_size ctxs = function
   | Tstruct s -> snd(Hashtbl.find (find_struct_id s ctxs) s)
   | Tvec (t, sz) -> (get_type_size ctxs t) * sz
   | Tref (t, id) -> get_type_size ctxs t
+  | Tmut t -> get_type_size ctxs t
 
 let rec get_type_elements ctxs start_pos previus_next next = function
   | Ti32 | Tbool | Tunit -> [-start_pos], 1
-  | Tref (t, id) -> 
-    let pos, sz = Hashtbl.find (find_var_id id ctxs) id in
-    get_type_elements ctxs (abs pos)  previus_next next t
   | Tstruct s ->
     (* 2.1 - Get struct elements *)
     let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
@@ -89,6 +90,28 @@ let rec get_type_elements ctxs start_pos previus_next next = function
       curr_pos := !curr_pos + (get_type_size ctxs t)
     done;
     (List.rev !out), size
+  | Tref (t, id) -> 
+    let pos, sz = Hashtbl.find (find_var_id id ctxs) id in
+    get_type_elements ctxs (abs pos)  previus_next next t
+  | Tmut t -> 
+    get_type_elements ctxs start_pos previus_next next t
+
+let rec get_ident_type_elements ctxs pos sz = function
+  | Ti32 | Tbool | Tunit | Tref _ -> [pos]
+  | Tstruct s -> 
+    (* 2.1 - Get struct elements *)
+    let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
+    (* 2.1.2 - Calculate pos of each element *)
+    List.map(fun (id, t, r_pos) -> pos + r_pos) struct_els
+  | Tvec(t, _) ->
+    let curr_pos = ref pos in
+    let out = ref [] in 
+    for i=0 to (sz-1) do
+      out := (!out)@[(!curr_pos)]; 
+      curr_pos := !curr_pos + (get_type_size ctxs t)
+    done;
+    !out
+  | Tmut t -> get_ident_type_elements ctxs pos sz t
 
 
 let rec pcompile_expr ctxs next = function
@@ -98,22 +121,7 @@ let rec pcompile_expr ctxs next = function
     (* 1 - Posição da variável *)
     let pos, sz = Hashtbl.find (find_var_id id ctxs) id in
     (* 2 - Obter lista de posições de variável *)
-    let pos_list =  match t with
-      | Ti32 | Tbool | Tunit | Tref _ -> [pos]
-      | Tstruct s -> 
-        (* 2.1 - Get struct elements *)
-        let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
-        (* 2.1.2 - Calculate pos of each element *)
-        List.map(fun (id, t, r_pos) -> pos + r_pos)struct_els
-      | Tvec(t, _) ->
-        let curr_pos = ref pos in
-        let out = ref [] in 
-        for i=0 to (sz-1) do
-          out := (!out)@[(!curr_pos)]; 
-          curr_pos := !curr_pos + (get_type_size ctxs t)
-        done;
-        !out
-    in
+    let pos_list = get_ident_type_elements ctxs pos sz t in
     PEident(id, pos_list), next
   | TEref(id, _) -> 
     (* 1 - Posição da variável *)
@@ -250,6 +258,7 @@ and pcompile_stmt ctxs next = function
         List.filter_map(fun (id, t, r_pos) -> if r_pos <> 0 then Some (-(abs(start_pos) + abs(r_pos))) else None)struct_els
       | Tvec (t, _) -> [-start_pos]
       | Tref (t, _) -> [-start_pos]
+      | Tmut t ->      [-start_pos]
     in
     PSreturn (ep, pos_list), next
   | TSexpr (e, _) -> 

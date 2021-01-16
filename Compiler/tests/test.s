@@ -3,16 +3,27 @@
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $24, %rsp
+	subq $32, %rsp
 	movq $42, %rax
 	pushq %rax
 	popq %rax
-	movq %rax, -8(%rbp)
+	movq $4, %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -16(%rbp)
+	pushq %rax
+	movq $12, %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -24(%rbp)
+	pushq %rax
+	popq %rax
+	popq %rax
 	movq $5, %rax
 	pushq %rax
 	popq %rax
 	movq %rax, -8(%rbp)
-	movq -8(%rbp), %rax
+	movq -24(%rbp), %rax
 	pushq %rax
 	popq %rdi
 	call printn_int
@@ -21,7 +32,7 @@ main:
 	popq %rax
 	jmp main_fim
 main_fim:
-	addq $24, %rsp
+	addq $32, %rsp
 	popq %rbp
 	ret
 printn_int:
