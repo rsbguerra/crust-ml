@@ -77,30 +77,36 @@ let () =
        resultante desta transformação deve ficar escrito no ficheiro alvo ofile. *)
     let typed_p = Typing.type_file p in
     if !print_tast then Printer_tast.print_typed_ast typed_p;
+    Ownership.verify_ownership typed_p;
+    
     let precomp_p = Pre_compile.precompile typed_p in
     if !print_past then Printer_past.print_precomp_past precomp_p;
-    
+
     Compile.compile_program precomp_p !ofile
 
   with
   | Lexer.Lexing_error c ->
-  (* Erro léxico. Recupera-se a posição absoluta e converte-se para número de linha *)
-      localisation (Lexing.lexeme_start_p buf);
-	    eprintf "\nerror:\n\n  Lexical error: invalid symbol: %s.\n\n@." c;
-      exit 1
+    (* Erro léxico. Recupera-se a posição absoluta e converte-se para número de linha *)
+    localisation (Lexing.lexeme_start_p buf);
+	  eprintf "\nerror:\n\n  Lexical error: invalid symbol: %s.\n\n@." c;
+    exit 1
   | Lexer.Lexing_error_comment c ->
-      localisation (Lexing.lexeme_start_p buf);
-	    eprintf "\nerror:\n\n  Lexical error:\n  %s.\n\n@." c;
-      exit 1
+    localisation (Lexing.lexeme_start_p buf);
+	  eprintf "\nerror:\n\n  Lexical error:\n  %s.\n\n@." c;
+    exit 1
   | Parser.Error ->
-	    (* Erro sintáctio. Recupera-se a posição e converte-se para número de linha *)
-	    localisation (Lexing.lexeme_start_p buf);
-	    eprintf "\nerror:\n\n  Syntatic error: invalid derivation.\n\n@.";
-      exit 1
+	  (* Erro sintáctio. Recupera-se a posição e converte-se para número de linha *)
+	  localisation (Lexing.lexeme_start_p buf);
+	  eprintf "\nerror:\n\n  Syntatic error: invalid derivation.\n\n@.";
+    exit 1
   | Typing.Error (s, line)-> 
-      eprintf "\n\nFile \"%s\", line %d:\n" !ifile line;
-      eprintf "\nerror:\n\n  Semmantic Analysis:\n  %s\n@." s;
-      exit 1
+    eprintf "\n\nFile \"%s\", line %d:\n" !ifile line;
+    eprintf "\nerror:\n\n  Semmantic analysis:\n  %s\n@." s;
+    exit 1
+  | Ownership.Error s -> 
+    eprintf "\n\nFile \"%s\\n" !ifile;
+    eprintf "\nerror:\n\n  Ownership error:\n  %s\n@." s;
+    exit 1
   | Compile.Error s->
 	  (* Erro de utilização de variáveis durante a compilação *)
 	  eprintf "\nerror:\n\n  Compilation error:\n  %s\n@." s;
