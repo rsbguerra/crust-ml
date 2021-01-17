@@ -10,9 +10,10 @@ fn main(){
   let b : i32 = 20;
   let c : i32 = 30;
   let d : &mut i32 = &mut b;
-
   
-  println!(a);
+  *d = 4;
+  
+  println!( *d );
 
   return;
 }

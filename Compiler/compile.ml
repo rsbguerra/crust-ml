@@ -54,12 +54,17 @@ and compile_expr = function
       pushq (reg rax) ++ 
       code
     ) nop pos_list
+    
   | PEref (pos) ->
-    movq (imm pos) (reg rax) ++
+    movq (ind ~ofs:pos rbp) (reg rax) ++
     pushq (reg rax)
 
   | PErefmut (pos) -> 
     leaq (imm pos) rax ++
+    pushq (reg rax)
+  
+  | PEptr (pos) -> 
+    movq (ind ~ofs:pos rbp) (reg rax) ++
     pushq (reg rax)
 
   | PEbinop (Ast.Bmod | Ast.Bdiv as op, e1, e2) ->    
@@ -264,7 +269,7 @@ and compile_expr = function
     movq (ind ~ofs:(pos) ~index:(rax) ~scale:(el_size) rbp) (reg rax) ++
     
     pushq (reg rax)
-  | _ -> assert false
+
 let rec compile_stmt = function
   | PSif (e, s1, elifs)-> 
      (*1 - Incrementa o numero de ifs realizados ate ao momento *)
@@ -350,6 +355,12 @@ let rec compile_stmt = function
 
   | PSdeclare(id, t, e, pos_list) -> get_elements e pos_list t
   | PSassign (id, e, pos) -> 
+    (* 1 - Atualiza o valor que esta no endereço ofs*)
+    compile_expr e ++
+    popq rax ++
+    movq (reg rax) (ind ~ofs:pos rbp)
+  
+  | PSptr_assign (id, e, pos) -> 
     (* 1 - Atualiza o valor que esta no endereço ofs*)
     compile_expr e ++
     popq rax ++

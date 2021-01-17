@@ -36,14 +36,9 @@ let find_id id =
       match Hashtbl.find_opt f id with | Some x -> x | None ->
       match Hashtbl.find_opt s id with | Some x -> x | None -> None)
 
-let s = ref ""
-
 let rec find_var_id id = function
-  | []     -> Printf.eprintf "id: %s - [%s]\n" id (!s); assert false
-  | (ct,_,_)::tl ->
-    Hashtbl.iter(fun k v -> s := !s ^ k)ct;
-
-    if Hashtbl.mem ct id then ct else (find_var_id id tl) 
+  | []     -> assert false
+  | (ct,_,_)::tl -> if Hashtbl.mem ct id then ct else (find_var_id id tl) 
 
 let rec find_fun_id id = function
   | []     -> assert false
@@ -136,6 +131,10 @@ let rec pcompile_expr ctxs next = function
     (* 1 - Posição da variável *)
     let pos, sz = Hashtbl.find (find_var_id id ctxs) id in
     PErefmut(pos), next
+  | TEptr(id, _) ->
+    (* 1 - Posição da variável *)
+    let pos, sz = Hashtbl.find (find_var_id id ctxs) id in
+    PEptr(pos), next
 
   | TEbinop (op, e1, e2, t) -> 
     let e1, fp1 = pcompile_expr ctxs next e1 in
@@ -246,6 +245,12 @@ and pcompile_stmt ctxs next = function
     let pos, _ = Hashtbl.find (find_var_id id ctxs) id in
 
     PSassign (id, ep, pos), next
+
+  | TSptr_assign (id, e, _) ->
+    let ep, next = (pcompile_expr ctxs next e) in
+    let pos, _ = Hashtbl.find (find_var_id id ctxs) id in
+
+    PSptr_assign (id, ep, pos), next
 
   | TSprintn (e, t, _) -> 
       let ep, next = (pcompile_expr ctxs next e) in

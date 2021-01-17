@@ -50,6 +50,15 @@ let rec ownership_expr ctxs = function
     Hashtbl.replace ct id false;
     true
 
+  | TEptr(id, _) ->
+    let ct = find_var_id id ctxs in
+
+    (* 1 - Verificar se id é o dono *)
+    if not (Hashtbl.find ct id) then error ("Invalid use of the variable "^id^", it's not the current owner.");
+    
+    Hashtbl.replace ct id false;
+    false
+
   | TEbinop (op, e1, e2, t) ->
     (* 1 - Verificar a expressão e1 e e2*)
     let s1 = ownership_expr ctxs e1 in
@@ -120,6 +129,14 @@ and ownership_stmt ctxs = function
     Hashtbl.add v_ctx id true
 
   | TSassign (id, e, _) ->
+    (* 1 - Verificar se id é o dono *)
+    let ct = find_var_id id ctxs in
+    if(not (Hashtbl.find ct id)) then error ("Invalid use of the variable "^id^", it's not the current owner.");
+
+    (* 2 - Verificar a expressão e se passou a ser dono *)
+    if (ownership_expr ctxs e) then Hashtbl.replace ct id true
+  
+  | TSptr_assign (id, e, _) ->
     (* 1 - Verificar se id é o dono *)
     let ct = find_var_id id ctxs in
     if(not (Hashtbl.find ct id)) then error ("Invalid use of the variable "^id^", it's not the current owner.");

@@ -64,6 +64,7 @@ simple_stmt:
 | KW_LET id = ident ":" t = crust_types "=" e = expr ";" { Sdeclare (id, t, e, !Lexer.line_num) }
 | KW_LET KW_MUT id = ident ":" t = crust_types "=" e = expr ";" { Sdeclare (id, (Ast.Tmut t), e, !Lexer.line_num) }
 | id = ident "=" e = expr ";"                         { Sassign (id, e, !Lexer.line_num) }
+| TIMES id = ident "=" e = expr ";"                   { Sptr_assign (id, e, !Lexer.line_num) }
 | KW_PRINT "(" e = expr ")" ";"                       { Sprint(e, !Lexer.line_num) }
 | KW_PRINTLN "(" e = expr ")" ";"                     { Sprintn(e, !Lexer.line_num) }
 | ";"                                                 { Snothing(!Lexer.line_num) }
@@ -87,6 +88,7 @@ expr:
 | id = ident                        { Eident (id, !Lexer.line_num) }
 | BITAND id = ident                 { Eref (id, !Lexer.line_num) }
 | BITAND  KW_MUT id = ident         { Erefmut (id, !Lexer.line_num) }
+| TIMES id = ident                  { Eptr (id, !Lexer.line_num) }
 | id = ident l = call_argument      { Ecall(id, l, !Lexer.line_num) }
 | id = ident "{" l = separated_list("," , expr_pair) "}" { Estrc_decl(id, l, !Lexer.line_num) }
 | id1 = ident "." id2 = ident                            { Estrc_access(id1, id2, !Lexer.line_num) }
@@ -107,7 +109,6 @@ crust_types:
 ;
 
 %inline unop:
-| TIMES  { Uptr }
 | MINUS  { Uneg }
 | NOT    { Unot }
 ;

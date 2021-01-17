@@ -12,6 +12,7 @@ let rec string_of_precomp_expr = function
     (List.fold_left (fun a e -> a ^ ", " ^ (string_of_int e)) "" fps) ^ "] )"
   | PEref (pos) -> "PEref(" ^ string_of_int pos ^ ")"
   | PErefmut (pos) -> "PErefmut(" ^ string_of_int pos ^ ")"
+  | PEptr (pos) -> "PEptr(" ^ string_of_int pos ^ ")"
   | PEbinop (binop, e1, e2) ->
     "PEbinop(" ^ 
     Printer.string_of_binop binop ^ ", " ^ 
@@ -62,6 +63,7 @@ and string_of_precomp_stmt = function
     string_of_precomp_expr e ^ ", [" ^
     List.fold_left (fun a b -> a ^", " ^(string_of_int b)) "" pos_list ^ "])"
   | PSassign (id, e, pos) -> "PSassign(" ^ id ^ ", " ^ string_of_precomp_expr e ^  ", " ^ (string_of_int pos) ^ ")"
+  | PSptr_assign (id, e, pos) -> "PSptr_assign(" ^ id ^ ", " ^ string_of_precomp_expr e ^  ", " ^ (string_of_int pos) ^ ")"
   | PSprintn (e, t) -> "PSprintln(" ^ string_of_precomp_expr e ^ ","^(Printer.string_of_crust_types t)^")"
   | PSprint (e, t)  -> "PSprint(" ^ string_of_precomp_expr e  ^ ","^ (Printer.string_of_crust_types t)^")"
   | PSblock bl      -> string_of_block_precomp_stmt bl

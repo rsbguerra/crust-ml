@@ -23,6 +23,7 @@ and string_of_typed_expr = function
   | TEident (id, t)           -> "TEident("^id^","^(Printer.string_of_crust_types t)^")"
   | TEref (id, t)             -> "TEref("^id^","^(Printer.string_of_crust_types t)^")"
   | TErefmut (id, t)          -> "TErefmut("^id^","^(Printer.string_of_crust_types t)^")"
+  | TEptr (id, t)             -> "TEptr("^id^","^(Printer.string_of_crust_types t)^")"
   | TEbinop (binop, e1, e2, t)-> "TEbinop("^(Printer.string_of_binop binop)^", "^(string_of_typed_expr e1)^", "^(string_of_typed_expr e2)^","^(Printer.string_of_crust_types t)^")"
   | TEunop (unop, e1, t)      -> "TEunop("^(Printer.string_of_unop unop)^", "^(string_of_typed_expr e1)^","^(Printer.string_of_crust_types t)^")"
   | TEstrc_access (id, el, ts, tel)-> "TEstrc_access("^ id^", "^el^", "^(Printer.string_of_crust_types ts)^", "^(Printer.string_of_crust_types tel)^")"
@@ -37,6 +38,7 @@ and string_of_typed_stmt = function
   | TSwhile(e, bl,t)    -> "TSwhile("^(string_of_typed_expr e)^"\n"^(string_of_typed_stmt bl)^","^(Printer.string_of_crust_types t)^")"
   | TSdeclare(id,t,e,ts)-> "TSdeclare("^id^", "^(Printer.string_of_crust_types t)^", "^(string_of_typed_expr e)^","^(Printer.string_of_crust_types ts)^")"
   | TSassign(id, e, t)  -> "TSassign("^id^", "^(string_of_typed_expr e)^","^(Printer.string_of_crust_types t)^")"
+  | TSptr_assign(id, e, t)  -> "TSptr_assign("^id^", "^(string_of_typed_expr e)^","^(Printer.string_of_crust_types t)^")"
   | TSprintn (e, te, t) -> "TSprintln("^(string_of_typed_expr e)^","^(Printer.string_of_crust_types te)^","^(Printer.string_of_crust_types t)^")"
   | TSprint (e, te, t)  -> "TSprint("^(string_of_typed_expr e)^","^(Printer.string_of_crust_types te)^","^(Printer.string_of_crust_types t)^")"
   | TSblock (bl, t)    -> string_of_block_typed_stmt "" bl

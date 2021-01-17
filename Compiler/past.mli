@@ -9,6 +9,7 @@ and expr =
   | PEident of ident * int list
   | PEref   of int
   | PErefmut of int
+  | PEptr   of int
   | PEbinop  of Ast.binop * expr * expr
   | PEunop   of Ast.unop * expr
   | PElen    of int
@@ -23,6 +24,7 @@ and stmt =
   | PSwhile of expr * stmt
   | PSdeclare of ident * Ast.crust_types * expr * int list
   | PSassign of ident * expr * int
+  | PSptr_assign of ident * expr * int
   | PSprintn of expr * Ast.crust_types
   | PSprint  of expr * Ast.crust_types
   | PSblock  of stmt list

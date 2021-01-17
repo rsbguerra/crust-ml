@@ -16,11 +16,15 @@ main:
 	pushq %rax
 	popq %rax
 	movq %rax, -24(%rbp)
-	movq $-16, %rax
+	movq -16(%rbp), %rax
 	pushq %rax
 	popq %rax
 	movq %rax, -32(%rbp)
-	movq -8(%rbp), %rax
+	movq $4, %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -32(%rbp)
+	movq -32(%rbp), %rax
 	pushq %rax
 	popq %rdi
 	call printn_int

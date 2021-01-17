@@ -11,6 +11,7 @@ and typed_expr =
   | TEbinop   of Ast.binop * typed_expr * typed_expr * Ast.crust_types
   | TEref     of ident * Ast.crust_types
   | TErefmut  of ident * Ast.crust_types
+  | TEptr     of ident * Ast.crust_types
   | TEunop    of Ast.unop * typed_expr * Ast.crust_types
   | TEstrc_access of ident * ident * Ast.crust_types * Ast.crust_types
   | TEstrc_decl  of ident * (ident * typed_expr * Ast.crust_types) list  * Ast.crust_types
@@ -24,6 +25,7 @@ and typed_stmt =
   | TSwhile    of typed_expr * typed_stmt * Ast.crust_types
   | TSdeclare  of ident * Ast.crust_types * typed_expr * Ast.crust_types
   | TSassign   of ident * typed_expr * Ast.crust_types
+  | TSptr_assign of ident * typed_expr * Ast.crust_types
   | TSprintn   of typed_expr * Ast.crust_types * Ast.crust_types
   | TSprint    of typed_expr * Ast.crust_types * Ast.crust_types
   | TSblock    of typed_stmt list * Ast.crust_types

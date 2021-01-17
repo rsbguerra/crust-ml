@@ -87,6 +87,9 @@ let is_mut = function
   | Ast.Tmut _ -> true
   | _          -> false
 
+let is_ref = function 
+  | Ast.Tref _ -> true
+  | _          -> false
 
 let rec string_of_tstruct = function 
   | Ast.Tstruct(t) -> Some t
@@ -143,6 +146,19 @@ and type_expr ctxs = function
     let t = Hashtbl.find ctx id in
     
     TEref(id, (Ast.Tref (Ast.Tmut t, id))), (Ast.Tref (Ast.Tmut t, id))
+
+  | Eptr (id, line) ->
+    (* 1 - Verificar id *)
+    let ctx = (match find_var_id id ctxs with
+    | Some ctx -> ctx
+    | None     -> error ("The identifier " ^ id ^ " was not defined.") line) in
+    (* 2 - Extrair tipo do id *)
+    let t = Hashtbl.find ctx id in
+
+    (* 3 - Verificar tipo do id. Necessita de ser uma referencia *)
+    if not (is_ref t) then error ("Trying to use desferencing in a non reference type. The id "^id^" has type "^Printer.string_of_crust_types t^".") line;
+    let t = get_ref_type t in
+    TEptr(id, t), t
   
   | Ebinop (op, e1, e2, line) ->
     (* 1 - Tipar e1 e2*) 
@@ -326,6 +342,23 @@ and type_stmt ctxs = function
     (* 4 - Verificar se variavel id é mutavel *)
     if not (is_mut t) then error ("Variable " ^ id ^ " is not mutable.") line;
     Tast.TSassign(id, te, Ast.Tunit), Ast.Tunit
+
+  | Sptr_assign(id, e, line) ->
+    (* 1 - Verificar id *)
+    let ctx = (match find_var_id id ctxs with
+    | Some ctx -> ctx
+    | None     -> error ("The identifier " ^ id ^ " was not defined.") line) in
+    (* 2 - Extrair tipo do id *)
+    let t = Hashtbl.find ctx id in
+    (* 3 - Verificar tipo do id. Necessita de ser uma referencia *)
+    if not (is_ref t) then error ("Trying to use desferencing in a non reference type. The id "^id^" has type "^Printer.string_of_crust_types t^".") line;
+    let t = get_ref_type t in
+    (* 3 - Tipar expressão *)
+    let te, t1 = type_expr ctxs e in
+    if not (compare_crust_types (t, t1)) then error ("Wrong type in the assign of variable "^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
+    (* 4 - Verificar se variavel id é mutavel *)
+    if not (is_mut t) then error ("Variable " ^ id ^ " is not mutable.") line;
+    Tast.TSptr_assign(id, te, Ast.Tunit), Ast.Tunit
 
   | Sprintn (e, line) ->
     (* 1 - Tipar expressão *)

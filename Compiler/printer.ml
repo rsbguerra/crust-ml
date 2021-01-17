@@ -12,8 +12,6 @@ let rec string_of_crust_types = function
 let string_of_unop = function
   | Uneg -> "-"
   | Unot -> "!"
-  | Uptr -> "*"
-  | Umut -> "&mut"
 
 let string_of_binop = function
   | Badd -> "+"
@@ -49,13 +47,14 @@ and string_of_expr = function
   | Eident (id, _)           -> "Eident("^id^")"
   | Eref (id, _)             -> "Eref("^id^")"  
   | Erefmut (id, _)          -> "Erefmut("^id^")"
+  | Eptr (id, _)             -> "Eptr("^id^")"
   | Ebinop (binop, e1, e2, _)-> "Ebinop("^(string_of_binop binop)^", "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
   | Eunop (unop , e1, _)     -> "Eunop("^(string_of_unop unop)^", "^(string_of_expr e1)^")"
   | Estrc_access (id, el, _) -> "Estrc_access("^ id^", "^el^")"
   | Estrc_decl (id, el, _)   -> "Estrc_decl("^ id^", "^(string_of_struct_pair_list "" el)^")"
   | Ecall (f, el, _)         -> "Ecall("^f^", "^(string_of_expr_list "" el)^")"  
-  | Elen (id, _)                 -> "Elen("^id^")"
-  | Evec_access(id, e, _)   -> "Evec_access("^id^", "^(string_of_expr e)^")"
+  | Elen (id, _)             -> "Elen("^id^")"
+  | Evec_access(id, e, _)    -> "Evec_access("^id^", "^(string_of_expr e)^")"
   | Evec_decl(el, _)         -> "Evec_decl("^(string_of_expr_list "" el)^")" 
 
 
@@ -65,6 +64,7 @@ and string_of_stmt = function
   | Swhile(e, bl, _)     -> "Swhile("^(string_of_expr e)^"\n"^(string_of_stmt bl)^")"
   | Sdeclare (id,t,e1,_) -> "Sdeclare("^id^", "^(string_of_crust_types t)^", "^(string_of_expr e1)^")"
   | Sassign (id, e1, _)  -> "Sassign("^id^", "^(string_of_expr e1)^")"
+  | Sptr_assign (id, e, _) -> "Sptr_assign("^id^", "^(string_of_expr e)^")"
   | Sprintn (e, _)       -> "Sprintln("^(string_of_expr e)^")"
   | Sprint (e, _)        -> "Sprint("^(string_of_expr e)^", "^")"
   | Sblock (bl, _)       -> string_of_block_stmt "" bl

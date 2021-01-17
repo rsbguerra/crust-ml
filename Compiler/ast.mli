@@ -8,8 +8,6 @@ type ident = string
 type unop = 
   | Uneg      (* - *)
   | Unot      (* ! *)
-  | Uptr      (* * *)
-  | Umut      (* & mt*)
 
 and binop =
   | Badd | Bsub | Bmul | Bdiv | Bmod
@@ -21,6 +19,7 @@ and expr =
   | Eident   of ident * int
   | Eref     of ident * int (* & *)
   | Erefmut  of ident * int (* &mut *)
+  | Eptr     of ident * int
   | Ebinop   of binop * expr * expr * int
   | Eunop    of unop * expr * int
   | Estrc_access of ident * ident * int            (* S.x (S-> struct, x -> element of struct)*)
@@ -35,6 +34,7 @@ and stmt =
   | Swhile    of expr * stmt * int
   | Sdeclare  of ident * crust_types * expr * int
   | Sassign   of ident * expr * int
+  | Sptr_assign of ident * expr * int
   | Sprintn   of expr * int
   | Sprint    of expr * int
   | Sblock    of stmt list * int
