@@ -74,6 +74,10 @@ expr_pair:
 | id = ident ":" e = expr {(id, e)}
 ;
 
+call_argument:
+| "(" l = separated_list("," , expr) ")" { l }
+| UNIT                                   { [] }
+
 expr:
 | c = CST                           { Ecst (c, !Lexer.line_num) }
 | KW_TRUE                           { Ecst ((Cbool true), !Lexer.line_num) }
@@ -82,7 +86,7 @@ expr:
 | e1 = expr o = binop e2 = expr     { Ebinop (o, e1, e2, !Lexer.line_num) }
 | id = ident                        { Eident (id, !Lexer.line_num) }
 | BITAND id = ident                 { Eref (id, !Lexer.line_num) }
-| id = ident "(" l = separated_list("," , expr) ")"      { Ecall(id, l, !Lexer.line_num) }
+| id = ident l = call_argument      { Ecall(id, l, !Lexer.line_num) }
 | id = ident "{" l = separated_list("," , expr_pair) "}" { Estrc_decl(id, l, !Lexer.line_num) }
 | id1 = ident "." id2 = ident                            { Estrc_access(id1, id2, !Lexer.line_num) }
 | KW_VEC "[" l = separated_list("," , expr) "]"          { Evec_decl(l, !Lexer.line_num) }

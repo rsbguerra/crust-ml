@@ -19,15 +19,18 @@ main:
 	movq $666, %rax
 	pushq %rax
 	popq %rax
+	movq %rax, -8(%rbp)
 	movq $42, %rax
-	pushq %rax
-	popq %rax
-	movq -16(%rbp), %rax
 	pushq %rax
 	movq -8(%rbp), %rax
 	pushq %rax
-	call test
-	addq $16, %rsp
+	popq %rax
+	popq %rbx
+	addq %rax, %rbx
+	pushq %rbx
+	popq %rax
+	movq %rax, -16(%rbp)
+	movq -16(%rbp), %rax
 	pushq %rax
 	popq %rdi
 	call printn_int

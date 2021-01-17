@@ -31,7 +31,18 @@ let rec get_str_type = function
   | Ast.Tref (t, _) | Ast.Tmut t -> get_str_type t
   | _ -> assert false
 
-let rec compile_expr = function
+let rec get_elements e pos_list= function
+  | Ast.Ti32 | Ast.Tbool -> 
+    (* 1 - Calcular o valor da expressao  *)
+    compile_expr e ++
+    popq rax ++
+    (* 2 - Guardar o valor da expressao na posicao ofs *)
+    movq (reg rax) (ind ~ofs:(List.hd pos_list) rbp)
+  | Ast.Tref (t, _) -> get_elements e pos_list t
+  | Ast.Tmut t      -> get_elements e pos_list t
+  | _ -> compile_expr e ++ List.fold_left (fun code p -> code ++ popq rax) nop pos_list
+
+and compile_expr = function
   | PEcst i ->
     (* 1 - Colocar a constante no topo da pilha *)
     movq (imm32 (get_value i)) (reg rax) ++
@@ -332,23 +343,7 @@ let rec compile_stmt = function
     loop_labels := List.tl !loop_labels;
     code
 
-  | PSdeclare(id, t, e, pos_list) -> begin
-    match t with 
-    | Ti32 | Tbool -> 
-      (* 1 - Calcular o valor da expressao  *)
-      compile_expr e ++
-      popq rax ++
-      (* 2 - Guardar o valor da expressao na posicao ofs *)
-      movq (reg rax) (ind ~ofs:(List.hd pos_list) rbp)
-    | Tref (t, id) -> 
-      (* compile_expr e ++
-      popq rax ++
-      leaq rax 
-       *)
-      nop
-    | _ -> compile_expr e ++ List.fold_left (fun code p -> code ++ popq rax) nop pos_list
-    end
-
+  | PSdeclare(id, t, e, pos_list) -> get_elements e pos_list t
   | PSassign (id, e, pos) -> 
     (* 1 - Atualiza o valor que esta no endereço ofs*)
     compile_expr e ++
