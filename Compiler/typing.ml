@@ -73,6 +73,8 @@ let rec compare_crust_types = function
   | Ast.Tmut t1, t2 -> compare_crust_types (t1, t2)
   | t1, Ast.Tmut t2 -> compare_crust_types (t1, t2)
   | Ast.Tref (t1, _), Ast.Tref(t2, _) -> compare_crust_types (get_ref_type t1, get_ref_type t2)
+  | t1, Ast.Tref(t2, _) -> compare_crust_types (get_ref_type t1, get_ref_type t2)
+  | Ast.Tref(t1, _), t2 -> compare_crust_types (get_ref_type t1, get_ref_type t2)
   | _, _                 -> false
 
 and get_ref_type = function
@@ -144,7 +146,10 @@ and type_expr ctxs = function
     | None     -> error ("The identifier " ^ id ^ " was not defined.") line) in
     (* 2 - Extrair tipo do id *)
     let t = Hashtbl.find ctx id in
-    
+
+    (* 3 - Verificar se id é mutáveil*)
+    if not (is_mut t) then error ("Trying to use "^id^" has mutable when it's not.") line;
+
     TEref(id, (Ast.Tref (Ast.Tmut t, id))), (Ast.Tref (Ast.Tmut t, id))
 
   | Eptr (id, line) ->
@@ -284,7 +289,6 @@ and type_expr ctxs = function
     if not (compare_crust_types (t1,Ast.Ti32)) then error ("Trying to access an element of a vector with a "^Printer.string_of_crust_types t1 ^" when is expected a Ti32.") line;
 
     TEvec_access(id, te, t1, t), t1
-  | _ -> assert false
   
 (* Verificacao de uma instrucao - Instruções nao devolvem um valor *)
 and type_stmt ctxs = function

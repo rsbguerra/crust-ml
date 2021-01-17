@@ -1,4 +1,4 @@
 fn main(){
-    let x = 23;
+    let x : i32 = 23;
     x = x + 32;
 }

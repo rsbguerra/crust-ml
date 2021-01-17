@@ -2,15 +2,35 @@
 
 # Sets tests directory
 cd ./tests
-
+echo ""
+echo "===================================="
+echo "==          Good Tests            =="
+echo "===================================="
+echo ""
 # --- Tests
 bash ./run-test Comments
+bash ./run-test Output
 bash ./run-test Variables
 bash ./run-test Ifs
 bash ./run-test Functions
 bash ./run-test Loops
-bash ./run-test Output
 bash ./run-test Structs
+bash ./run-test Ownership
+bash ./run-test Referencias
+
+echo "number of tests: $(ls -l good/*/*.rs | grep -v ^l | wc -l)"
+echo ""
+echo "===================================="
+echo "==           Bad Tests            =="
+echo "===================================="
+echo ""
+
+bash ./run-bad-test Comments
+bash ./run-bad-test Output
+bash ./run-bad-test Variables
+
+echo "number of tests: $(ls -l bad/*/*.rs | grep -v ^l | wc -l)"
+
 
 # To run a new category (the name folder in good/bad directory) add:
 # bash ./run-test <category>
