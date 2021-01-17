@@ -70,11 +70,11 @@ let rec compare_crust_types = function
   | Ast.Tunit, Ast.Tunit -> true
   | Ast.Tstruct(t1), Ast.Tstruct(t2) -> t1 = t2
   | Ast.Tvec (t1, _), Ast.Tvec (t2, _) -> compare_crust_types (t1,t2)
+  | Ast.Tmut t1, Ast.Tmut t2 -> compare_crust_types (t1, t2)
   | Ast.Tmut t1, t2 -> compare_crust_types (t1, t2)
   | t1, Ast.Tmut t2 -> compare_crust_types (t1, t2)
   | Ast.Tref (t1, _), Ast.Tref(t2, _) -> compare_crust_types (get_ref_type t1, get_ref_type t2)
-  | t1, Ast.Tref(t2, _) -> compare_crust_types (get_ref_type t1, get_ref_type t2)
-  | Ast.Tref(t1, _), t2 -> compare_crust_types (get_ref_type t1, get_ref_type t2)
+  | t1, Ast.Tref(t2, _)  -> compare_crust_types (t1, get_ref_type t2)
   | _, _                 -> false
 
 and get_ref_type = function
@@ -368,7 +368,7 @@ and type_stmt ctxs = function
     (* 1 - Tipar expressão *)
     let te, t = type_expr ctxs e in
     (* 2 - Só conseguimos imprimir Tbool e Ti32 *)
-    if not ((compare_crust_types (t, Ti32)) || (compare_crust_types (t, Tbool)))then error ("Wrong type in the print statement, was given "^Printer.string_of_crust_types t^" but a Ti32 or Tbool was expected.") line;
+    if not ((compare_crust_types (Ti32, t)) || (compare_crust_types (Tbool, t)))then error ("Wrong type in the print statement, was given "^Printer.string_of_crust_types t^" but a Ti32 or Tbool was expected.") line;
 
     Tast.TSprintn(te, t, Ast.Tunit), Ast.Tunit
 
@@ -376,7 +376,7 @@ and type_stmt ctxs = function
     (* 1 - Tipar expressão *)
     let te, t = type_expr ctxs e in
     (* 2 - Só conseguimos imprimir Tbool e Ti32 *)
-    if not ((compare_crust_types (t, Ti32)) || (compare_crust_types (t, Tbool)))then error ("Wrong type in the print statement, was given "^Printer.string_of_crust_types t^" but a Ti32 or Tbool was expected.") line;
+    if not ((compare_crust_types (Ti32, t)) || (compare_crust_types (Tbool, t)))then error ("Wrong type in the print statement, was given "^Printer.string_of_crust_types t^" but a Ti32 or Tbool was expected.") line;
 
     Tast.TSprint(te, t, Ast.Tunit), Ast.Tunit
 

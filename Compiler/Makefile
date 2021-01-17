@@ -14,6 +14,7 @@ print-past:
 	dune exec  $(release) -- ./crust.exe -print-past $(test).rs
 
 test:
+	dune build $(release) ./crust.exe
 	bash ./tests/run-tests
 
 test-s:
