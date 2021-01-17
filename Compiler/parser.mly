@@ -25,12 +25,12 @@ global_stmt:
 
 pair:
 |  id = ident ":" t = crust_types {(id, t)}
-|  KW_MUT id = ident ":" t = crust_types {(id, t)}
+|  KW_MUT id = ident ":" t = crust_types {(id, Ast.Tmut(t) )}
 ;
 
 function_argument:
-| "(" x = separated_list(",", pair) ")" {x}
-| UNIT                                  {[]}
+| "(" x = separated_list(",", pair) ")" { x }
+| UNIT                                  { [] }
 ;
 
 function_suite:
@@ -77,6 +77,7 @@ expr_pair:
 call_argument:
 | "(" l = separated_list("," , expr) ")" { l }
 | UNIT                                   { [] }
+;
 
 expr:
 | c = CST                           { Ecst (c, !Lexer.line_num) }
@@ -102,6 +103,7 @@ crust_types:
 | id = ident { Tstruct id }
 | KW_TVEC LT t = crust_types GT { Tvec (t,-1) }
 | BITAND t = crust_types { Tref (t,"") }
+| KW_MUT t = crust_types { Tmut t }
 ;
 
 %inline unop:
