@@ -4,13 +4,14 @@
 cd ./tests
 
 # --- Tests
-bash ./run-test Comments
-bash ./run-test Variables
-bash ./run-test Ifs
-bash ./run-test Functions
-bash ./run-test Loops
-bash ./run-test Output
-bash ./run-test Structs
+# bash ./run-test Comments
+# bash ./run-test Variables
+# bash ./run-test Ifs
+bash ./run-test Functions -v
+bash ./run-test Vectors -v
+# bash ./run-test Loops
+# bash ./run-test Output
+bash ./run-test Structs -v
 
 # To run a new category (the name folder in good/bad directory) add:
 # bash ./run-test <category>
