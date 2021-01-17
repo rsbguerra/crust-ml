@@ -411,7 +411,8 @@ let rec compile_stmt = function
   | PSnothing  -> nop
   | PSexpr e   ->
     (* compile e *)
-    compile_expr e
+    compile_expr e ++
+    popq rax
         
 and compile_block_stmt = function
   | [] -> [nop]

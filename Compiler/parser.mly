@@ -68,6 +68,7 @@ simple_stmt:
 | KW_PRINT "(" e = expr ")" ";"                       { Sprint(e, !Lexer.line_num) }
 | KW_PRINTLN "(" e = expr ")" ";"                     { Sprintn(e, !Lexer.line_num) }
 | ";"                                                 { Snothing(!Lexer.line_num) }
+| e = expr ";"                                        { Sexpr(e, !Lexer.line_num) }
 ;
 
 expr_pair:

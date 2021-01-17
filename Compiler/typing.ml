@@ -413,7 +413,7 @@ and type_stmt ctxs = function
   | Snothing _  -> Tast.TSnothing Ast.Tunit, Ast.Tunit
   | Sexpr(e, line) ->
     let te, t = type_expr ctxs e in
-    Tast.TSexpr(te, t), t
+    Tast.TSexpr(te, Ast.Tunit), Ast.Tunit
   
 and type_global_stmt ctxs = function  
   | Ast.GSblock (bl, _) -> Tast.TGSblock(type_block_global_stmt ctxs [] bl)

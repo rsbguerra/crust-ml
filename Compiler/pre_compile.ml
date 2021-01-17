@@ -279,12 +279,12 @@ and pcompile_stmt ctxs next = function
       | Tmut t ->      [-start_pos]
     in
     PSreturn (ep, pos_list), next
-  | TSexpr (e, _) -> 
-      let ep, next = (pcompile_expr ctxs next e) in
-      PSexpr ep, next
   | TScontinue _ -> PScontinue, next
   | TSbreak _    -> PSbreak, next
   | TSnothing _  -> PSnothing, next
+  | TSexpr (e, _) -> 
+    let ep, next = (pcompile_expr ctxs next e) in
+    PSexpr ep, next
 
 and pcompile_block_stmt ctxs next block_stmt = 
   let next, p_body = List.fold_left_map (fun next s -> 

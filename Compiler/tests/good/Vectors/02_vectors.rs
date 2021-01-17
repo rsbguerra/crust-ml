@@ -1,4 +1,5 @@
-fn print_vec(v:Vec<i32>){
+fn print_vec(v:Vec<i32>)
+{
     let size:i32 = v.len();
     let mut i:i32 = 0;
     
@@ -6,9 +7,14 @@ fn print_vec(v:Vec<i32>){
         println!(v[i]);
         i = i+1
     }
+    return;
+
 }
 
-fn main() {
+fn main() 
+{
  let p:Vec<i32> = vec![1,2,4];
  print_vec(p);
+ 
+ return;
 }
