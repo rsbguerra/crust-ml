@@ -103,6 +103,10 @@ let is_ref = function
   | Ast.Tref _ -> true
   | _          -> false
 
+let is_refmut = function 
+  | Ast.Tref( Ast.Tmut _, _) -> true
+  | _                        -> false
+
 let rec string_of_tstruct = function 
   | Ast.Tstruct(t) -> Some t
   | Ast.Tref(t, _) -> string_of_tstruct t
@@ -111,13 +115,13 @@ let rec string_of_tstruct = function
   
 
 let rec type_binop_expr op te1 t1 te2 t2 line = match op with
- | Ast.Badd | Ast.Bsub | Ast.Bmul | Ast.Bdiv | Ast.Bmod ->
+  | Ast.Badd | Ast.Bsub | Ast.Bmul | Ast.Bdiv | Ast.Bmod ->
     (* 1 - Verificar t1 e t2 *)
     if not (compare_crust_types (Ast.Ti32, t1)) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types Ast.Ti32^" was expected.") line;
     if not (compare_crust_types (Ast.Ti32, t2)) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^Printer.string_of_crust_types t2^" but a "^Printer.string_of_crust_types Ast.Ti32^" was expected.") line;
     (* 2 - Retornar operação tipada*)
     TEbinop(op, te1, te2, Ast.Ti32), Ast.Ti32
- | Ast.Beq | Ast.Bneq | Ast.Blt | Ast.Ble | Ast.Bgt | Ast.Bge ->
+  | Ast.Beq | Ast.Bneq | Ast.Blt | Ast.Ble | Ast.Bgt | Ast.Bge ->
     (* 1 - Verificar t1 e t2 *)
     if not (compare_crust_types (Ast.Ti32, t1)) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types Ast.Ti32^" was expected.") line;
     if not (compare_crust_types (Ast.Ti32, t2)) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^Printer.string_of_crust_types t2^" but a "^Printer.string_of_crust_types Ast.Ti32^" was expected.") line;
@@ -157,10 +161,10 @@ and type_expr ctxs = function
     (* 2 - Extrair tipo do id *)
     let t = Hashtbl.find ctx id in
 
-    (* 3 - Verificar se id é mutáveil*)
+    (* 3 - Verificar se id é mutável*)
     if not (is_mut t) then error ("Trying to use "^id^" has mutable when it's not.") line;
 
-    TEref(id, (Ast.Tref (Ast.Tmut t, id))), (Ast.Tref (Ast.Tmut t, id))
+    TErefmut(id, (Ast.Tref (Ast.Tmut t, id))), (Ast.Tref (Ast.Tmut t, id))
 
   | Eptr (id, line) ->
     (* 1 - Verificar id *)
@@ -338,7 +342,12 @@ and type_stmt ctxs = function
     if not (compare_crust_types (t, t1)) then error ("Wrong type in the declaration of variable "^id^", was given "^Printer.string_of_crust_types t1^" but a "^Printer.string_of_crust_types t^" was expected.") line;
     (* 2 - Adicionar variável ao contexto *)
     let v_ctx,_,_ = (List.hd ctxs) in 
-    let t1 = if is_vec t then t1 else t in
+    let t1 = if (is_vec t) || (is_refmut t) then t1 else if (is_mut t) then
+      begin match t with 
+      | Ast.Tmut t2 -> Ast.Tmut t1
+      | _ -> t
+      end
+      else t in
     Hashtbl.add v_ctx id t1;
     (* 3 - Retornar declaração tipada *)
     Tast.TSdeclare(id, t1, te, Ast.Tunit), Ast.Tunit

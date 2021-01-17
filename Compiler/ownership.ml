@@ -75,8 +75,16 @@ let rec ownership_expr ctxs = function
     false
   
   | TEcall (id, args, t) ->
+
+    let argument_ctxs = List.fold_right(fun (v,f) l -> 
+      let nv = Hashtbl.copy v in
+      let nf = Hashtbl.copy f in
+      (nv, nf)::l
+    ) ctxs [] in
+
+
     (* 1 - Verificar se as expressão são donas *)
-    List.iter(fun (e,_) -> ignore(ownership_expr ctxs e)) args;
+    List.iter(fun (e,_) -> ignore(ownership_expr argument_ctxs e)) args;
     false
 
   | TEstrc_decl (id, pairs, t) ->
@@ -153,18 +161,25 @@ and ownership_stmt ctxs = function
 
   | TSblock (bl, _) ->
     (* 1 - Tipar bloco *)
-    ownership_block_stmt ctxs bl
+    let ctxs = ((make_ctx ())::ctxs) in
+    let block_ctxs = List.fold_right(fun (v,f) l -> 
+      let nv = Hashtbl.copy v in
+      let nf = Hashtbl.copy f in
+      (nv, nf)::l
+    ) ((make_ctx ())::ctxs) [] in
+
+    ownership_block_stmt block_ctxs bl
 
   | TSreturn (e, t) ->
     (* 1 - Verificar o ownership na expressão *)
     ignore(ownership_expr ctxs e)
   
-  | TSexpr (e, _) ->
-    (* 1 - Verificar o ownership na expressão *)
-    ignore(ownership_expr ctxs e)
   | TScontinue _ -> ()
   | TSbreak _    -> ()
   | TSnothing _  -> ()
+  | TSexpr (e, _) ->
+    (* 1 - Verificar o ownership na expressão *)
+    ignore(ownership_expr ctxs e)
 
 and ownership_block_stmt ctxs = function
   | [] -> ()
@@ -173,17 +188,17 @@ and ownership_block_stmt ctxs = function
 
 and ownership_block_global_stmt ctxs = function
   | [] -> ()
-  | s :: sl -> (ownership_global_stmt ctxs s); (ownership_block_global_stmt ctxs sl)
+  | s :: sl -> (ownership_global_stmt ctxs s); (ownership_block_global_stmt ((make_ctx ())::ctxs) sl)
 
 and ownership_global_stmt ctxs = function
-  | TGSblock bl -> ownership_block_global_stmt ctxs bl
+  | TGSblock bl -> ownership_block_global_stmt ((make_ctx ())::ctxs) bl
   | TGSfunction (id, args, r, body) ->
     (* 1 - Verificar se o id já foi definido *)
     let f = snd(List.hd ctxs) in
     Hashtbl.add f id ();
     
     (* 2 - Adicionar os argumentos *)
-    let args_ctxs = (make_ctx ())::ctxs in
+    let args_ctxs = ((make_ctx ())::ctxs) in
     let v,_ = List.hd args_ctxs in
     List.iter(fun (arg, _) -> Hashtbl.add v arg true) args;
 

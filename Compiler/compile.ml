@@ -60,7 +60,7 @@ and compile_expr = function
     pushq (reg rax)
 
   | PErefmut (pos) -> 
-    leaq (imm pos) rax ++
+    movq (ind ~ofs:pos rbp) (reg rax) ++
     pushq (reg rax)
   
   | PEptr (pos) -> 

@@ -1,101 +1,45 @@
 	.text
 	.globl	main
-print_vec:
+test:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $24, %rsp
-	movq $1, %rax
+	subq $8, %rsp
+	movq $3, %rax
 	pushq %rax
 	popq %rax
-	movq %rax, -8(%rbp)
+	movq %rax, 16(%rbp)
 	movq $0, %rax
 	pushq %rax
 	popq %rax
-	movq %rax, -16(%rbp)
-while_1_inicio:
-	movq -16(%rbp), %rax
-	pushq %rax
-	movq -8(%rbp), %rax
-	pushq %rax
-	popq %rbx
-	popq %rax
-	cmpq %rbx, %rax
-	jl bool_true_1
-	movq $0, %rax
-	pushq %rax
-	jmp bool_end_1
-bool_true_1:
-	movq $1, %rax
-	pushq %rax
-bool_end_1:
-	popq %rax
-	cmpq $0, %rax
-	je while_1_fim
-	movq -16(%rbp), %rax
-	pushq %rax
-	popq %rax
-	movq 16(%rbp,%rax,8), %rax
-	pushq %rax
-	popq %rdi
-	call printn_int
-	movq -16(%rbp), %rax
-	pushq %rax
-	movq $1, %rax
-	pushq %rax
-	popq %rax
-	popq %rbx
-	addq %rax, %rbx
-	pushq %rbx
-	popq %rax
-	movq %rax, -16(%rbp)
-	jmp while_1_inicio
-while_1_fim:
-	movq $0, %rax
-	pushq %rax
-	popq %rax
-	jmp print_vec_fim
-print_vec_fim:
-	addq $24, %rsp
+	jmp test_fim
+test_fim:
+	addq $8, %rsp
 	popq %rbp
 	ret
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $56, %rsp
-	movq $1, %rax
-	pushq %rax
-	popq %rax
-	movq %rax, -24(%rbp)
-	pushq %rax
-	movq $2, %rax
-	pushq %rax
-	popq %rax
-	movq %rax, -16(%rbp)
-	pushq %rax
-	movq $4, %rax
+	subq $16, %rsp
+	movq $52, %rax
 	pushq %rax
 	popq %rax
 	movq %rax, -8(%rbp)
+	movq -8(%rbp), %rax
 	pushq %rax
-	popq %rax
-	popq %rax
+	call test
+	addq $8, %rsp
+	pushq %rax
 	popq %rax
 	movq -8(%rbp), %rax
 	pushq %rax
-	movq -16(%rbp), %rax
-	pushq %rax
-	movq -24(%rbp), %rax
-	pushq %rax
-	call print_vec
-	addq $24, %rsp
-	pushq %rax
-	popq %rax
+	popq %rdi
+	call printn_int
 	movq $0, %rax
 	pushq %rax
 	popq %rax
 	jmp main_fim
 main_fim:
-	addq $56, %rsp
+	addq $16, %rsp
 	popq %rbp
 	ret
 printn_int:
