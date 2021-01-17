@@ -20,11 +20,12 @@ global_stmt:
 | KW_STRUCT i = ident "{" l = separated_list(",", pair) "}" { GSstruct (i, l, !Lexer.line_num) }
 | KW_FN f = ident x = function_argument r = option(function_return) s = function_suite
   { let r = (match r with | None -> Tunit | Some t -> t) in 
-      GSfunction(f, x, r, s, !Lexer.line_num)} 
+    GSfunction(f, x, r, s, !Lexer.line_num) } 
 ;
 
 pair:
 |  id = ident ":" t = crust_types {(id, t)}
+|  KW_MUT id = ident ":" t = crust_types {(id, t)}
 ;
 
 function_argument:
@@ -53,6 +54,8 @@ stmt:
 | s = simple_stmt                           { s } 
 | KW_IF e = expr s1 = function_suite l = list(elif)  { Sif(e, s1, l, !Lexer.line_num)}
 | KW_WHILE e = expr s = function_suite               { Swhile(e, s, !Lexer.line_num) }
+| "{" l = list(stmt) "}"                             { Sblock(l, !Lexer.line_num) }
+
 ;
 
 simple_stmt:

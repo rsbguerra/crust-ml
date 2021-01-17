@@ -241,7 +241,7 @@ and pcompile_stmt ctxs next = function
        let ep, next = (pcompile_expr ctxs next e) in
       PSprint (ep, t), next
   | TSblock (stmts, _) -> 
-    let pblock, next = pcompile_block_stmt ctxs next stmts in
+    let pblock, next = pcompile_block_stmt ((make_ctx())::ctxs) next stmts in
     PSblock pblock, next
   | TSreturn (e, t) ->
     (* 1 - How many values are there to return? *)

@@ -9,12 +9,14 @@ fn test(a:i32, b:i32) ->i32{
 
 fn main(){
   let mut a : i32 = 666;
+  
   let mut b : i32 = 42;
-  
-  
+  {
+    println!(test(a, b));
+    
+  }
   //let a : &i32 = &b;
 
-  println!(test(a, b));
   //println!(*a);
 
   return;

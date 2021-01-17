@@ -334,7 +334,7 @@ and type_stmt ctxs = function
 
   | Sblock (bl, _) ->
     (* 1 - Tipar bloco*)
-    let l, t = type_block_stmt ctxs [] bl in
+    let l, t = type_block_stmt ((make_ctx())::ctxs) [] bl in
     Tast.TSblock(l, t), t
 
   | Scontinue _ -> Tast.TScontinue Ast.Tunit, Ast.Tunit
