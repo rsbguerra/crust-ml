@@ -90,6 +90,9 @@ let rec get_type_elements ctxs start_pos previus_next next = function
       curr_pos := !curr_pos + (get_type_size ctxs t)
     done;
     (List.rev !out), size
+  | Tref((Tmut _), id) -> 
+    let pos, sz = (Hashtbl.find (find_var_id id ctxs) id) in
+    [pos], sz 
   | Tref (t, id) ->
     let pos  = try fst(Hashtbl.find (find_var_id id ctxs) id) with _ -> start_pos in
     get_type_elements ctxs (abs pos)  previus_next next t
@@ -234,7 +237,7 @@ and pcompile_stmt ctxs next = function
 
     (* 2 - Adicionar todos os elementos *)
     let pos_list, sz = get_type_elements ctxs start_pos previus_next next t in
-    
+
     (* 3 - Adicionar inicio ao frame *)
     Hashtbl.add (var_ctx_hd ctxs) id ((List.hd pos_list), sz);
 
@@ -279,12 +282,12 @@ and pcompile_stmt ctxs next = function
       | Tmut t ->      [-start_pos]
     in
     PSreturn (ep, pos_list), next
-  | TSexpr (e, _) -> 
-      let ep, next = (pcompile_expr ctxs next e) in
-      PSexpr ep, next
   | TScontinue _ -> PScontinue, next
   | TSbreak _    -> PSbreak, next
   | TSnothing _  -> PSnothing, next
+  | TSexpr (e, _) -> 
+    let ep, next = (pcompile_expr ctxs next e) in
+    PSexpr ep, next
 
 and pcompile_block_stmt ctxs next block_stmt = 
   let next, p_body = List.fold_left_map (fun next s -> 

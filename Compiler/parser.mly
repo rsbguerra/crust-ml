@@ -42,12 +42,12 @@ function_return:
 ;
 
 suite:
-| "{" l = list(stmt) r = option(expr) "}"     {let r = (match r with | None -> [] | Some e -> [Sexpr(e, !Lexer.line_num)]) in Sblock (l@r, !Lexer.line_num) }
+| "{" l = list(stmt) r = option(expr) "}"     { let r = (match r with | None -> [] | Some e -> [Sexpr(e, !Lexer.line_num)]) in Sblock (l@r, !Lexer.line_num) }
 ;
 
 elif:
-| KW_ELSE KW_IF e = expr s = function_suite  {(e, s, !Lexer.line_num) }
-| KW_ELSE s = function_suite                { ( Ecst( Cbool true, !Lexer.line_num), s, !Lexer.line_num) }
+| KW_ELSE KW_IF e = expr s = function_suite  { (e, s, !Lexer.line_num) }
+| KW_ELSE s = function_suite                 { ( Ecst( Cbool true, !Lexer.line_num), s, !Lexer.line_num) }
 ;
 
 stmt:
@@ -68,6 +68,7 @@ simple_stmt:
 | KW_PRINT "(" e = expr ")" ";"                       { Sprint(e, !Lexer.line_num) }
 | KW_PRINTLN "(" e = expr ")" ";"                     { Sprintn(e, !Lexer.line_num) }
 | ";"                                                 { Snothing(!Lexer.line_num) }
+| e = expr ";"                                        { Sexpr(e, !Lexer.line_num) }
 ;
 
 expr_pair:

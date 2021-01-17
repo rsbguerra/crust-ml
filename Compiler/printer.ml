@@ -4,10 +4,10 @@ let rec string_of_crust_types = function
   | Tunit -> "Tunit"
   | Ti32  -> "Ti32"
   | Tbool -> "Tbool"
-  | Tstruct s -> "Tstruct( " ^ s ^ " )"
+  | Tstruct s    -> "Tstruct( " ^ s ^ " )"
   | Tvec (s, sz) -> "Tvec( " ^ string_of_crust_types s ^ ", "^string_of_int sz^" )"
   | Tref (t, id) -> "Tref( " ^ string_of_crust_types t ^  ", " ^ id ^ " )"
-  | Tmut t -> "Tmut( " ^ string_of_crust_types t ^ " )"
+  | Tmut t       -> "Tmut( " ^ string_of_crust_types t ^ " )"
 
 let string_of_unop = function
   | Uneg -> "-"
