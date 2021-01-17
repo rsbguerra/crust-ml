@@ -57,6 +57,8 @@ and crust_types =
   | Tmut of crust_types
   | Tvec of crust_types * int
   | Tref of crust_types * ident
+  | Trefmut of crust_types * ident
+  
 
 and global_stmt = 
   | GSblock    of global_stmt list * int

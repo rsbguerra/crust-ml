@@ -3,13 +3,21 @@
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $16, %rsp
-	movq $555, %rax
+	subq $24, %rsp
+	movq $4, %rax
 	pushq %rax
 	popq %rax
 	movq %rax, -8(%rbp)
+	movq -8(%rbp), %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -16(%rbp)
+	movq $0, %rax
+	pushq %rax
+	popq %rax
+	jmp main_fim
 main_fim:
-	addq $16, %rsp
+	addq $24, %rsp
 	popq %rbp
 	ret
 printn_int:
