@@ -1,8 +1,10 @@
-fn main(){  
-    let x : i32 = 0;
+fn main()
+{
+    let mut x : i32 = 0;
     
-    while(x < 5){
-        let x : i32 = x+1;
+    while(x < 5)
+    {
+        x = x+1;
         println!(x);
     }
     
