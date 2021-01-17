@@ -1,39 +1,83 @@
 	.text
 	.globl	main
+printa:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $8, %rsp
+	movq 16(%rbp), %rax
+	pushq %rax
+	movq $0, %rax
+	pushq %rax
+	popq %rbx
+	popq %rax
+	cmpq %rbx, %rax
+	je bool_true_1
+	movq $0, %rax
+	pushq %rax
+	jmp bool_end_1
+bool_true_1:
+	movq $1, %rax
+	pushq %rax
+bool_end_1:
+	popq %rax
+	cmpq $0, %rax
+	je if_else_11
+	movq $0, %rax
+	pushq %rax
+	popq %rax
+	jmp printa_fim
+	jmp if_end_1
+if_else_11:
+	movq $1, %rax
+	pushq %rax
+	popq %rax
+	jmp printa_fim
+if_end_1:
+printa_fim:
+	addq $8, %rsp
+	popq %rbp
+	ret
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $40, %rsp
-	movq $10, %rax
+	subq $8, %rsp
+	movq $0, %rax
+	pushq %rax
+	call printa
+	addq $8, %rsp
 	pushq %rax
 	popq %rax
-	movq %rax, -8(%rbp)
-	movq $20, %rax
+	cmpq $1, %rax
+	jne lazy_evaluation_1
+	movq $1, %rax
+	pushq %rax
+	call printa
+	addq $8, %rsp
 	pushq %rax
 	popq %rax
-	movq %rax, -16(%rbp)
-	movq $30, %rax
+	andq $1, %rax
+lazy_evaluation_1:
 	pushq %rax
 	popq %rax
-	movq %rax, -24(%rbp)
-	movq -16(%rbp), %rax
-	pushq %rax
-	popq %rax
-	movq %rax, -32(%rbp)
-	movq $4, %rax
-	pushq %rax
-	popq %rax
-	movq %rax, -32(%rbp)
-	movq -32(%rbp), %rax
+	cmpq $0, %rax
+	je if_else_12
+	movq $3, %rax
 	pushq %rax
 	popq %rdi
 	call printn_int
+	jmp if_end_2
+if_else_12:
+	movq $42, %rax
+	pushq %rax
+	popq %rdi
+	call printn_int
+if_end_2:
 	movq $0, %rax
 	pushq %rax
 	popq %rax
 	jmp main_fim
 main_fim:
-	addq $40, %rsp
+	addq $8, %rsp
 	popq %rbp
 	ret
 printn_int:

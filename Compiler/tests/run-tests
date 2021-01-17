@@ -4,9 +4,10 @@
 cd ./tests
 
 # --- Tests
-bash ./run-test Comments
-bash ./run-test Variables
-
+# bash ./run-test Comments
+# bash ./run-test Variables
+bash ./run-test Ifs -v
+# bash ./run-test Functions
 
 # To run a new category (the name folder in good/bad directory) add:
 # bash ./run-test <category>

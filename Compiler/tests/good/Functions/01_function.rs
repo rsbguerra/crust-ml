@@ -7,6 +7,6 @@ fn x() -> i32 {
 }
 
 fn main(){
-    printn(x());
+    println!(x());
     return
 }
