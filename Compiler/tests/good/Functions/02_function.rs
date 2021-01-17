@@ -4,5 +4,5 @@ fn x(a : i32) -> i32 {
 
 fn main(){
     println!(x(4));
-    return
+    return;
 }
