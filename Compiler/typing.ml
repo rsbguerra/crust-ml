@@ -70,9 +70,11 @@ let rec compare_crust_types = function
   | Ast.Tunit, Ast.Tunit -> true
   | Ast.Tstruct(t1), Ast.Tstruct(t2) -> t1 = t2
   | Ast.Tvec (t1, _), Ast.Tvec (t2, _) -> compare_crust_types (t1,t2)
+  | Ast.Tmut t1, Ast.Tmut t2 -> compare_crust_types (t1, t2)
   | Ast.Tmut t1, t2 -> compare_crust_types (t1, t2)
   | t1, Ast.Tmut t2 -> compare_crust_types (t1, t2)
   | Ast.Tref (t1, _), Ast.Tref(t2, _) -> compare_crust_types (get_ref_type t1, get_ref_type t2)
+  | t1, Ast.Tref(t2, _)  -> compare_crust_types (t1, get_ref_type t2)
   | _, _                 -> false
 
 and get_ref_type = function
@@ -144,7 +146,10 @@ and type_expr ctxs = function
     | None     -> error ("The identifier " ^ id ^ " was not defined.") line) in
     (* 2 - Extrair tipo do id *)
     let t = Hashtbl.find ctx id in
-    
+
+    (* 3 - Verificar se id é mutáveil*)
+    if not (is_mut t) then error ("Trying to use "^id^" has mutable when it's not.") line;
+
     TEref(id, (Ast.Tref (Ast.Tmut t, id))), (Ast.Tref (Ast.Tmut t, id))
 
   | Eptr (id, line) ->
@@ -284,7 +289,6 @@ and type_expr ctxs = function
     if not (compare_crust_types (t1,Ast.Ti32)) then error ("Trying to access an element of a vector with a "^Printer.string_of_crust_types t1 ^" when is expected a Ti32.") line;
 
     TEvec_access(id, te, t1, t), t1
-  | _ -> assert false
   
 (* Verificacao de uma instrucao - Instruções nao devolvem um valor *)
 and type_stmt ctxs = function
@@ -364,7 +368,7 @@ and type_stmt ctxs = function
     (* 1 - Tipar expressão *)
     let te, t = type_expr ctxs e in
     (* 2 - Só conseguimos imprimir Tbool e Ti32 *)
-    if not ((compare_crust_types (t, Ti32)) || (compare_crust_types (t, Tbool)))then error ("Wrong type in the print statement, was given "^Printer.string_of_crust_types t^" but a Ti32 or Tbool was expected.") line;
+    if not ((compare_crust_types (Ti32, t)) || (compare_crust_types (Tbool, t)))then error ("Wrong type in the print statement, was given "^Printer.string_of_crust_types t^" but a Ti32 or Tbool was expected.") line;
 
     Tast.TSprintn(te, t, Ast.Tunit), Ast.Tunit
 
@@ -372,7 +376,7 @@ and type_stmt ctxs = function
     (* 1 - Tipar expressão *)
     let te, t = type_expr ctxs e in
     (* 2 - Só conseguimos imprimir Tbool e Ti32 *)
-    if not ((compare_crust_types (t, Ti32)) || (compare_crust_types (t, Tbool)))then error ("Wrong type in the print statement, was given "^Printer.string_of_crust_types t^" but a Ti32 or Tbool was expected.") line;
+    if not ((compare_crust_types (Ti32, t)) || (compare_crust_types (Tbool, t)))then error ("Wrong type in the print statement, was given "^Printer.string_of_crust_types t^" but a Ti32 or Tbool was expected.") line;
 
     Tast.TSprint(te, t, Ast.Tunit), Ast.Tunit
 

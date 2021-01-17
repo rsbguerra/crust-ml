@@ -4,20 +4,10 @@ main:
 	pushq %rbp
 	movq %rsp, %rbp
 	subq $16, %rsp
-	movq $0, %rax
+	movq $555, %rax
 	pushq %rax
 	popq %rax
 	movq %rax, -8(%rbp)
-	pushq %rax
-	popq %rax
-	movq -8(%rbp), %rax
-	pushq %rax
-	popq %rdi
-	call printn_bool
-	movq $0, %rax
-	pushq %rax
-	popq %rax
-	jmp main_fim
 main_fim:
 	addq $16, %rsp
 	popq %rbp
