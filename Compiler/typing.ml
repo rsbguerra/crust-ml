@@ -125,13 +125,24 @@ and type_expr ctxs = function
     | None     -> error ("The identifier " ^ id ^ " was not defined.") line
     | Some ctx -> TEident(id, Hashtbl.find ctx id), Hashtbl.find ctx id end
   | Eref (id, line) ->
-   (* 1 - Verificar id *)
+    (* 1 - Verificar id *)
     let ctx = (match find_var_id id ctxs with
     | Some ctx -> ctx
     | None     -> error ("The identifier " ^ id ^ " was not defined.") line) in
     (* 2 - Extrair tipo do id *)
     let t = Hashtbl.find ctx id in
+    
     TEref(id, Ast.Tref (t, id)), (Ast.Tref (t, id))
+
+  | Erefmut (id, line) ->
+    (* 1 - Verificar id *)
+    let ctx = (match find_var_id id ctxs with
+    | Some ctx -> ctx
+    | None     -> error ("The identifier " ^ id ^ " was not defined.") line) in
+    (* 2 - Extrair tipo do id *)
+    let t = Hashtbl.find ctx id in
+    
+    TEref(id, (Ast.Tref (Ast.Tmut t, id))), (Ast.Tref (Ast.Tmut t, id))
   
   | Ebinop (op, e1, e2, line) ->
     (* 1 - Tipar e1 e2*) 

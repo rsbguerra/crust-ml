@@ -36,9 +36,14 @@ let find_id id =
       match Hashtbl.find_opt f id with | Some x -> x | None ->
       match Hashtbl.find_opt s id with | Some x -> x | None -> None)
 
+let s = ref ""
+
 let rec find_var_id id = function
-  | []     -> assert false
-  | (ct,_,_)::tl -> if Hashtbl.mem ct id then ct else (find_var_id id tl) 
+  | []     -> Printf.eprintf "id: %s - [%s]\n" id (!s); assert false
+  | (ct,_,_)::tl ->
+    Hashtbl.iter(fun k v -> s := !s ^ k)ct;
+
+    if Hashtbl.mem ct id then ct else (find_var_id id tl) 
 
 let rec find_fun_id id = function
   | []     -> assert false
@@ -90,11 +95,10 @@ let rec get_type_elements ctxs start_pos previus_next next = function
       curr_pos := !curr_pos + (get_type_size ctxs t)
     done;
     (List.rev !out), size
-  | Tref (t, id) -> 
-    let pos, sz = Hashtbl.find (find_var_id id ctxs) id in
+  | Tref (t, id) ->
+    let pos  = try fst(Hashtbl.find (find_var_id id ctxs) id) with _ -> start_pos in
     get_type_elements ctxs (abs pos)  previus_next next t
-  | Tmut t -> 
-    get_type_elements ctxs start_pos previus_next next t
+  | Tmut t -> get_type_elements ctxs start_pos previus_next next t
 
 let rec get_ident_type_elements ctxs pos sz = function
   | Ti32 | Tbool | Tunit | Tref _ -> [pos]
@@ -113,29 +117,36 @@ let rec get_ident_type_elements ctxs pos sz = function
     !out
   | Tmut t -> get_ident_type_elements ctxs pos sz t
 
-
 let rec pcompile_expr ctxs next = function
   | TEcst (c, t) -> 
-      PEcst c, next
+    PEcst c, next
   | TEident (id, t) ->
     (* 1 - Posição da variável *)
     let pos, sz = Hashtbl.find (find_var_id id ctxs) id in
     (* 2 - Obter lista de posições de variável *)
     let pos_list = get_ident_type_elements ctxs pos sz t in
     PEident(id, pos_list), next
+
   | TEref(id, _) -> 
     (* 1 - Posição da variável *)
     let pos, sz = Hashtbl.find (find_var_id id ctxs) id in
     PEref(pos), next
+
+  | TErefmut(id, _) ->
+    (* 1 - Posição da variável *)
+    let pos, sz = Hashtbl.find (find_var_id id ctxs) id in
+    PErefmut(pos), next
+
   | TEbinop (op, e1, e2, t) -> 
-      let e1, fp1 = pcompile_expr ctxs next e1 in
-      let e2, fp2 = pcompile_expr ctxs next e2 in
-      let fp = max fp1 fp2 in
-      PEbinop(op, e1, e2), fp
+    let e1, fp1 = pcompile_expr ctxs next e1 in
+    let e2, fp2 = pcompile_expr ctxs next e2 in
+    let fp = max fp1 fp2 in
+    PEbinop(op, e1, e2), fp
 
   | TEunop (op, e, t) -> 
-      let pe, next = pcompile_expr ctxs next e in
-      PEunop(op, pe), next
+    let pe, next = pcompile_expr ctxs next e in
+    PEunop(op, pe), next
+
   | TElen id ->
     (* 1 - get id size *)
     let _, sz = Hashtbl.find (find_var_id id ctxs) id in
@@ -193,23 +204,25 @@ let rec pcompile_expr ctxs next = function
 
 and pcompile_stmt ctxs next = function
   | TSif (e, s, elif, _) ->
-      let pe, next  = pcompile_expr ctxs next e in
-      let ps, next  = pcompile_stmt ((make_ctx())::ctxs) next s in
-      let next, if_list = List.fold_left_map(
-        fun next (if_expr, if_stmt) ->
-          (* 1. Pre-compilar condição *)
-          let p_elif, next = pcompile_expr ctxs next if_expr in
-          (* 2. Pre-compilar stmts do corpo *)
-          let p_body_elif, next = pcompile_stmt ((make_ctx())::ctxs) next if_stmt in
-          (* 3. Devolver corpo tipado e último next *)
-          (next, (p_elif, p_body_elif))
-      ) next elif in
-      PSif(pe, ps, if_list), next
+    let pe, next  = pcompile_expr ctxs next e in
+    let ps, next  = pcompile_stmt ((make_ctx())::ctxs) next s in
+    let next, if_list = List.fold_left_map(
+      fun next (if_expr, if_stmt) ->
+        (* 1. Pre-compilar condição *)
+        let p_elif, next = pcompile_expr ctxs next if_expr in
+        (* 2. Pre-compilar stmts do corpo *)
+        let p_body_elif, next = pcompile_stmt ((make_ctx())::ctxs) next if_stmt in
+        (* 3. Devolver corpo tipado e último next *)
+        (next, (p_elif, p_body_elif))
+    ) next elif in
+
+    PSif(pe, ps, if_list), next
 
   | TSwhile (e, s, _) -> 
-      let pe, next = pcompile_expr ctxs next e in
-      let ps, next = pcompile_stmt ((make_ctx())::ctxs) next s in
-      PSwhile (pe, ps), next
+    let pe, next = pcompile_expr ctxs next e in
+    let ps, next = pcompile_stmt ((make_ctx())::ctxs) next s in
+    
+    PSwhile (pe, ps), next
 
   | TSdeclare (id, t, e, _) ->
     (* Size of vector: (previus_next + next) / size(t) *) 
@@ -222,7 +235,7 @@ and pcompile_stmt ctxs next = function
 
     (* 2 - Adicionar todos os elementos *)
     let pos_list, sz = get_type_elements ctxs start_pos previus_next next t in
-
+    
     (* 3 - Adicionar inicio ao frame *)
     Hashtbl.add (var_ctx_hd ctxs) id ((List.hd pos_list), sz);
 
@@ -265,8 +278,8 @@ and pcompile_stmt ctxs next = function
       let ep, next = (pcompile_expr ctxs next e) in
       PSexpr ep, next
   | TScontinue _ -> PScontinue, next
-  | TSbreak _ -> PSbreak, next
-  | TSnothing _ -> PSnothing, next
+  | TSbreak _    -> PSbreak, next
+  | TSnothing _  -> PSnothing, next
 
 and pcompile_block_stmt ctxs next block_stmt = 
   let next, p_body = List.fold_left_map (fun next s -> 

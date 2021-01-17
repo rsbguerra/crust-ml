@@ -22,6 +22,7 @@ and string_of_typed_expr = function
   | TEcst (n, t)              -> "TEcst("^(Printer.string_of_crust_consts n)^","^(Printer.string_of_crust_types t)^")"
   | TEident (id, t)           -> "TEident("^id^","^(Printer.string_of_crust_types t)^")"
   | TEref (id, t)             -> "TEref("^id^","^(Printer.string_of_crust_types t)^")"
+  | TErefmut (id, t)          -> "TErefmut("^id^","^(Printer.string_of_crust_types t)^")"
   | TEbinop (binop, e1, e2, t)-> "TEbinop("^(Printer.string_of_binop binop)^", "^(string_of_typed_expr e1)^", "^(string_of_typed_expr e2)^","^(Printer.string_of_crust_types t)^")"
   | TEunop (unop, e1, t)      -> "TEunop("^(Printer.string_of_unop unop)^", "^(string_of_typed_expr e1)^","^(Printer.string_of_crust_types t)^")"
   | TEstrc_access (id, el, ts, tel)-> "TEstrc_access("^ id^", "^el^", "^(Printer.string_of_crust_types ts)^", "^(Printer.string_of_crust_types tel)^")"

@@ -10,8 +10,8 @@ let rec string_of_precomp_expr = function
   | PEident (id, fps) -> "PEident(" ^
     id ^ ", [" ^ 
     (List.fold_left (fun a e -> a ^ ", " ^ (string_of_int e)) "" fps) ^ "] )"
-  | PEref (pos) -> "PEref(" ^ 
-    string_of_int pos ^ ")" 
+  | PEref (pos) -> "PEref(" ^ string_of_int pos ^ ")"
+  | PErefmut (pos) -> "PErefmut(" ^ string_of_int pos ^ ")"
   | PEbinop (binop, e1, e2) ->
     "PEbinop(" ^ 
     Printer.string_of_binop binop ^ ", " ^ 
@@ -38,7 +38,6 @@ let rec string_of_precomp_expr = function
     ")"
   | PEvec_access(id, el,el_size, id_pos, sz) ->
     "PEvec_access(" ^ id ^ ", " ^ string_of_precomp_expr el ^ ", " ^ string_of_int el_size ^ ", " ^ string_of_int id_pos ^  ", " ^ string_of_int sz ^")"
-  | _ -> assert false
 and string_of_precomp_vec_el_list exprs = 
   List.map (fun (e, pos) -> "( " ^ string_of_precomp_expr e ^ ", " ^string_of_int pos ^ " )") exprs |> 
   List.fold_left (fun a b -> a ^ ", " ^ b) ""

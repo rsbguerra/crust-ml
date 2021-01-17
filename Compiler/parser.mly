@@ -55,7 +55,6 @@ stmt:
 | KW_IF e = expr s1 = function_suite l = list(elif)  { Sif(e, s1, l, !Lexer.line_num)}
 | KW_WHILE e = expr s = function_suite               { Swhile(e, s, !Lexer.line_num) }
 | "{" l = list(stmt) "}"                             { Sblock(l, !Lexer.line_num) }
-
 ;
 
 simple_stmt:
@@ -87,6 +86,7 @@ expr:
 | e1 = expr o = binop e2 = expr     { Ebinop (o, e1, e2, !Lexer.line_num) }
 | id = ident                        { Eident (id, !Lexer.line_num) }
 | BITAND id = ident                 { Eref (id, !Lexer.line_num) }
+| BITAND  KW_MUT id = ident         { Erefmut (id, !Lexer.line_num) }
 | id = ident l = call_argument      { Ecall(id, l, !Lexer.line_num) }
 | id = ident "{" l = separated_list("," , expr_pair) "}" { Estrc_decl(id, l, !Lexer.line_num) }
 | id1 = ident "." id2 = ident                            { Estrc_access(id1, id2, !Lexer.line_num) }

@@ -3,18 +3,16 @@ struct Point{
   y:i32
 }
 
-fn test() ->i32{
-  return 1;
-}
+
 
 fn main(){
-  let mut a : i32 = 666;
+  let a : i32 = 10;
+  let b : i32 = 20;
+  let c : i32 = 30;
+  let d : &mut i32 = &mut b;
+
   
-  let mut b : i32 = 42 + a;
-
-  //let a : &i32 = &b;
-
-  println!(b);
+  println!(a);
 
   return;
 }

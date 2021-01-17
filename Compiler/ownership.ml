@@ -41,6 +41,15 @@ let rec ownership_expr ctxs = function
     Hashtbl.replace ct id false;
     true
 
+  | TErefmut(id, _) ->
+    let ct = find_var_id id ctxs in
+
+    (* 1 - Verificar se id é o dono *)
+    if not (Hashtbl.find ct id) then error ("Invalid use of the variable "^id^", it's not the current owner.");
+    
+    Hashtbl.replace ct id false;
+    true
+
   | TEbinop (op, e1, e2, t) ->
     (* 1 - Verificar a expressão e1 e e2*)
     let s1 = ownership_expr ctxs e1 in

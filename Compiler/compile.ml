@@ -54,9 +54,14 @@ and compile_expr = function
       pushq (reg rax) ++ 
       code
     ) nop pos_list
-  | PEref (pos) -> 
+  | PEref (pos) ->
     movq (imm pos) (reg rax) ++
     pushq (reg rax)
+
+  | PErefmut (pos) -> 
+    leaq (imm pos) rax ++
+    pushq (reg rax)
+
   | PEbinop (Ast.Bmod | Ast.Bdiv as op, e1, e2) ->    
     (* 1 - Dependendo da operacao queremos um registo diferente *)
     let rg = 

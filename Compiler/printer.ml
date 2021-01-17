@@ -47,7 +47,8 @@ and string_of_struct_pair_list acc = function
 and string_of_expr = function
   | Ecst (n, _)              -> "Ecst("^(string_of_crust_consts n)^")"
   | Eident (id, _)           -> "Eident("^id^")"
-  | Eref (id, _)             -> "Eref("^id^")"
+  | Eref (id, _)             -> "Eref("^id^")"  
+  | Erefmut (id, _)          -> "Erefmut("^id^")"
   | Ebinop (binop, e1, e2, _)-> "Ebinop("^(string_of_binop binop)^", "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
   | Eunop (unop , e1, _)     -> "Eunop("^(string_of_unop unop)^", "^(string_of_expr e1)^")"
   | Estrc_access (id, el, _) -> "Estrc_access("^ id^", "^el^")"

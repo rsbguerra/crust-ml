@@ -20,6 +20,7 @@ and expr =
   | Ecst     of crust_const * int
   | Eident   of ident * int
   | Eref     of ident * int (* & *)
+  | Erefmut  of ident * int (* &mut *)
   | Ebinop   of binop * expr * expr * int
   | Eunop    of unop * expr * int
   | Estrc_access of ident * ident * int            (* S.x (S-> struct, x -> element of struct)*)

@@ -1,36 +1,26 @@
 	.text
 	.globl	main
-test:
-	pushq %rbp
-	movq %rsp, %rbp
-	subq $8, %rsp
-	movq $1, %rax
-	pushq %rax
-	popq %rax
-	jmp test_fim
-test_fim:
-	addq $8, %rsp
-	popq %rbp
-	ret
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $24, %rsp
-	movq $666, %rax
+	subq $40, %rsp
+	movq $10, %rax
 	pushq %rax
 	popq %rax
 	movq %rax, -8(%rbp)
-	movq $42, %rax
+	movq $20, %rax
 	pushq %rax
-	movq -8(%rbp), %rax
-	pushq %rax
-	popq %rax
-	popq %rbx
-	addq %rax, %rbx
-	pushq %rbx
 	popq %rax
 	movq %rax, -16(%rbp)
-	movq -16(%rbp), %rax
+	movq $30, %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -24(%rbp)
+	movq $-16, %rax
+	pushq %rax
+	popq %rax
+	movq %rax, -32(%rbp)
+	movq -8(%rbp), %rax
 	pushq %rax
 	popq %rdi
 	call printn_int
@@ -39,7 +29,7 @@ main:
 	popq %rax
 	jmp main_fim
 main_fim:
-	addq $24, %rsp
+	addq $40, %rsp
 	popq %rbp
 	ret
 printn_int:
