@@ -8,41 +8,12 @@ main:
 	pushq %rax
 	popq %rax
 	movq %rax, -8(%rbp)
-while_1_inicio:
-	movq -8(%rbp), %rax
-	pushq %rax
-	movq $5, %rax
-	pushq %rax
-	popq %rbx
-	popq %rax
-	cmpq %rbx, %rax
-	jl bool_true_1
-	movq $0, %rax
-	pushq %rax
-	jmp bool_end_1
-bool_true_1:
-	movq $1, %rax
-	pushq %rax
-bool_end_1:
-	popq %rax
-	cmpq $0, %rax
-	je while_1_fim
-	movq -8(%rbp), %rax
-	pushq %rax
-	movq $1, %rax
 	pushq %rax
 	popq %rax
-	popq %rbx
-	addq %rax, %rbx
-	pushq %rbx
-	popq %rax
-	movq %rax, -8(%rbp)
 	movq -8(%rbp), %rax
 	pushq %rax
 	popq %rdi
-	call printn_int
-	jmp while_1_inicio
-while_1_fim:
+	call printn_bool
 	movq $0, %rax
 	pushq %rax
 	popq %rax

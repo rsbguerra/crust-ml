@@ -1,12 +1,11 @@
-fn main()
-{
-    let mut x : i32 = 0;
-    
-    while(x < 5)
-    {
-        x = x+1;
-        println!(x);
-    }
-    
+struct Boolean{
+    v: bool
+}
+
+fn main(){
+    let test : Boolean = Boolean{v:false};
+
+    println!(test.v);
+
     return;
 }

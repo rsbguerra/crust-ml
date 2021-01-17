@@ -1,8 +1,11 @@
-
-struct t(i8,bool);
+struct Boolean{
+    v: bool
+}
 
 fn main(){
-    let test = t(1, false)
+    let test : Boolean = Boolean{v:false};
 
-    println!("{}, {}", test.0, test.1);
+    println!(test.v);
+
+    return;
 }

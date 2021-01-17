@@ -10,6 +10,7 @@ bash ./run-test Ifs
 bash ./run-test Functions
 bash ./run-test Loops
 bash ./run-test Output
+bash ./run-test Structs
 
 # To run a new category (the name folder in good/bad directory) add:
 # bash ./run-test <category>

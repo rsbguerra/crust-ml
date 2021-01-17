@@ -81,9 +81,8 @@ let rec ownership_expr ctxs = function
 
   | TEstrc_decl (id, pairs, t) ->
     (* 1 - Verificar se id é dono *)
-    if(not (Hashtbl.find (find_var_id id ctxs) id)) then error ("Invalid use of the variable "^id^", it's not the current owner.");
     List.iter(fun (_,e,_) -> ignore(ownership_expr ctxs e)) pairs;
-    false
+    true
 
   | TEstrc_access (id, el, tid, tel) ->
     (* 1 - Verificar se id é o dono *)
