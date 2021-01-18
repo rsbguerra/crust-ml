@@ -2,13 +2,13 @@ fn main()
 {
     let mut x : i32 = 0;
     
-    while 1
+    while true
     {
         x = x+1;
-        println!(x);
         if (x > 5){
             break;
         }
+        println!(x);
     }
     
     return;
