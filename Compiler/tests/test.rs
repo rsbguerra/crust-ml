@@ -1,9 +1,14 @@
-fn main() -> ()
+fn main() 
 {
-  
-  let x : Vec<i32> = vec![55, 66, 88];
+  let x:i32 = 123;
+  let y:i32 = 126;
+
+  let mut v:Vec<i32> = vec![x, y];
+
+  v = vec![y];
 
 
-  println!(x[1]);
+  println!(v[0]);
+
   return;
 }

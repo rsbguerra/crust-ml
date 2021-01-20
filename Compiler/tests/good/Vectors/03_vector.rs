@@ -1,16 +1,11 @@
-struct Point{
-    x:i32,
-    y:i32
-}
+fn main() 
+{
+  let x:i32 = 123;
+  let y:i32 = 126;
 
-fn main() {
-    let p1:Point = Point{x:12, y:14};
-    let p2:Point = Point{x:15, y:54};
+  let v:Vec<&i32> = vec![&x, &y];
 
-    let p:Vec<Point> = vec![p1, p2];
-    
+  println!(v[0]);
 
-    let v :Point = p[1];
-    print!(v.x);
-    return;
+  return;
 }
