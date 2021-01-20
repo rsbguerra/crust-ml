@@ -101,7 +101,7 @@ let () =
     exit 1
   | Typing.Error (s, line)-> 
     eprintf "\n\nFile \"%s\", line %d:\n" !ifile line;
-    eprintf "\nerror:\n\n  Semmantic analysis:\n  %s\n@." s;
+    eprintf "\nerror:\n\n  Typing analysis:\n  %s\n@." s;
     exit 1
   | Ownership.Error s -> 
     eprintf "\n\nFile \"%s\\n" !ifile;

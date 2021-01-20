@@ -73,14 +73,44 @@ let rec get_type_size ctxs = function
   | Tref (t, id) -> get_type_size ctxs t
   | Tmut t -> get_type_size ctxs t
 
+let rec get_type_size_struct ctxs = function
+  | Ti32 | Tbool -> 8
+  | Tunit -> 0
+  | Tstruct s -> 0
+  | Tvec (t, sz) -> 0
+  | Tref (t, id) -> get_type_size ctxs t
+  | Tmut t -> get_type_size ctxs t
+
 let rec get_type_elements ctxs start_pos previus_next next = function
   | Ti32 | Tbool | Tunit -> [-start_pos], 1
   | Tstruct s ->
     (* 2.1 - Get struct elements *)
     let struct_els = fst(Hashtbl.find (find_struct_id s ctxs) s) in
     (* 2.1.2 - Calculate pos of each element *)
-    let a, l  = List.fold_left_map(fun a (id, t, r_pos) -> (a+1), -(start_pos + r_pos)) 0 struct_els in
-    l, a
+    
+    let l = ref [] in
+
+    List.iter(fun (id, t, r_pos) -> 
+       let tmp, _ = (get_type_elements ctxs (start_pos + abs(r_pos)) previus_next next t) in
+       l := !l@tmp;
+
+      ) struct_els;
+    
+    List.iter(fun pos -> ()
+    ) !l;
+
+    
+    
+    (*List.fold_left_map(fun a (id, t, r_pos) -> 
+    let out =ref "" in
+       out := !out^", start:" ^ string_of_int start_pos ^", r_pos: " ^ string_of_int r_pos;
+    Printf.eprintf "\n[%s]\n\n" !out;
+    
+
+    (a+1), -(start_pos + r_pos)) 0 struct_els in
+    *)
+
+    !l, (List.length !l)
   | Tvec (t, _) ->
     let size = (next - previus_next) / (get_type_size ctxs t) in
     let curr_pos = ref previus_next in
@@ -168,10 +198,14 @@ let rec pcompile_expr ctxs next = function
     let next, p_els = List.fold_left_map(
       fun next (el, t_el, t_e) -> 
         (* 3. Precompilar expressão t_el *)
-        let p_el, next = pcompile_expr ctxs next t_el in
-        (next+(get_type_size ctxs t_e)), (el, p_el, (-next))
+        let p_el, next = pcompile_expr ctxs next t_el in        
+        (* Calcular a posição da expressão calculada *)
+
+        (next+(get_type_size_struct ctxs t_e)), (el, p_el, (-(next + (get_type_start ctxs t_e) )))
     ) next pairs in
-    
+
+
+
     PEstrc_decl (id, p_els, -(next + (get_type_start ctxs t))), next
 
   | TEstrc_access (id, el, tid, tel) ->
@@ -182,8 +216,12 @@ let rec pcompile_expr ctxs next = function
     let struct_els = fst(Hashtbl.find (find_struct_id struct_id ctxs) struct_id) in
     let el_pos = find_struct_element el struct_els in
 
+
     (* if id_pos > 0 then is an arg*)
     let final_pos = if id_pos > 0 then (id_pos+abs(el_pos)) else (id_pos+el_pos) in
+
+    Printf.eprintf "ACESSO: %s -> el_pos: %d,  id_pos: %d, final_pos: %d\n\n" id el_pos id_pos final_pos;
+
     PEstrc_access(id, el, final_pos), next
   | TEvec_decl (els, t) ->
     (* 1. Precompilar lista de expressões *)
@@ -323,11 +361,10 @@ and pcompile_global_stmt ctxs = function
     (* 1 - Adiocionar identificador da struct ao contexto *)
     (* 2 - Calcular espaço na memória*)
     let next, pcompiled_fields = 
-      List.fold_left_map(fun next (id, t) -> 
-        (next+(get_type_size ctxs t)), (id, t, (-next))) 0 args in
+    List.fold_left_map(fun next (id, t) -> (next+(get_type_size ctxs t)), (id, t, (-(next)))) 0 args in
+
     Hashtbl.add (struct_ctx_hd ctxs) id (pcompiled_fields, next);
 
-    
     PGSstruct(id, pcompiled_fields, next)
 
 

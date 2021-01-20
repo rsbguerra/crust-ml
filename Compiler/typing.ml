@@ -267,12 +267,19 @@ and type_expr ctxs = function
     if not ((List.length args) = (List.length params)) then error ("Invalid number of arguments given.") line;
     
     let typed_args = ref [] in
+    let arg_types = ref [] in
     List.iteri(fun i e ->
       let te, t = type_expr ctxs e in
-      let ta = snd (List.nth params i) in
+      let arg_name, ta = List.nth params i in
       if not (compare_crust_types (ta,t)) then error ("Invalid argument type was given "^Printer.string_of_crust_types t^" but was expected a "^Printer.string_of_crust_types ta^".") line;
-      typed_args := !typed_args@[(te, t)]
+      typed_args := !typed_args@[(te, t)];
+      arg_types := !arg_types@[arg_name, ta]
     )args;
+
+    let _ = match find_fun_id id ctxs with
+      | None -> error ("The function with identifier " ^ id ^ " was not defined.") line
+      | Some ctx -> Hashtbl.replace ctx id ((!arg_types), r)
+    in
 
     TEcall(id, !typed_args, r), r
   

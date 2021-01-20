@@ -3,7 +3,8 @@ fn print_vec(v:Vec<i32>)
     let size:i32 = v.len();
     let mut i:i32 = 0;
     
-    while(i<size){
+    while(i < size)
+    {
         println!(v[i]);
         i = i+1;
     }

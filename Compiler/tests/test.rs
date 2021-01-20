@@ -1,16 +1,9 @@
-fn test(a:&mut i32)
+fn main() -> ()
 {
-   *a = 3;
-    return;
-}
-
-fn main()
-{  
-  let mut x:i32 = 52;
   
-  test(&mut x);
+  let x : Vec<i32> = vec![55, 66, 88];
 
-  println!(x);
-  
+
+  println!(x[1]);
   return;
 }

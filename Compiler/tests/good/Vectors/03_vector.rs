@@ -9,6 +9,8 @@ fn main() {
 
     let p:Vec<Point> = vec![p1, p2];
     
-    print!(p[1].x);
+
+    let v :Point = p[1];
+    print!(v.x);
     return;
 }

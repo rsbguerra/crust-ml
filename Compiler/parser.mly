@@ -17,32 +17,32 @@ prog:
 ;
 
 global_stmt:
-| KW_STRUCT i = ident "{" l = separated_list(",", pair) "}" { GSstruct (i, l, !Lexer.line_num) }
+| KW_STRUCT i = ident "{" l = separated_list(",", struct_pair) "}" { GSstruct (i, l, !Lexer.line_num) }
 | KW_FN f = ident x = function_argument r = option(function_return) s = function_suite
   { let r = (match r with | None -> Tunit | Some t -> t) in 
     GSfunction(f, x, r, s, !Lexer.line_num) } 
 ;
 
-pair:
+struct_pair:
+|  id = ident ":" t = crust_types {(id, t)}
+;
+
+parser_pair:
 |  id = ident ":" t = crust_types {(id, t)}
 |  KW_MUT id = ident ":" t = crust_types {(id, Ast.Tmut(t) )}
 ;
 
 function_argument:
-| "(" x = separated_list(",", pair) ")" { x }
+| "(" x = separated_list(",", parser_pair) ")" { x }
 | UNIT                                  { [] }
-;
-
-function_suite:
-| "{" l = list(stmt) "}"     {Sblock (l, !Lexer.line_num) }
 ;
 
 function_return:
 | ARROW r = crust_types { r }
 ;
 
-suite:
-| "{" l = list(stmt) r = option(expr) "}"     { let r = (match r with | None -> [] | Some e -> [Sexpr(e, !Lexer.line_num)]) in Sblock (l@r, !Lexer.line_num) }
+function_suite:
+| "{" l = list(stmt) "}"     {Sblock (l, !Lexer.line_num) }
 ;
 
 elif:

@@ -8,10 +8,12 @@ fn main()
   let mut x:i32 = 52;
   let mut y:&mut i32 = &mut x;
     
-  let y: &mut i32 = &y;
+  {
+    let y: &mut i32 = &y;
+    println!(x);
+  }
   
 
-  println!(*y);
   
   return;
 }

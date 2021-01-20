@@ -52,7 +52,6 @@
 (* ======== Rules ========== *)
 
 (** Integer Literals*)
-let INTEGER_SUFFIX = "i32"
 let HEX_DIGIT      = ['0'-'9' 'a'-'f' 'A'-'F']
 let DEC_DIGIT      = ['0'-'9']
 let OCT_DIGIT      = ['0'-'7']

@@ -14,6 +14,7 @@ bash ./run-test Variables
 bash ./run-test Ifs
 bash ./run-test Functions
 bash ./run-test Loops
+bash ./run-test Vectors
 bash ./run-test Structs
 bash ./run-test Ownership
 bash ./run-test Referencias
@@ -28,6 +29,8 @@ echo ""
 bash ./run-bad-test Comments
 bash ./run-bad-test Output
 bash ./run-bad-test Variables
+bash ./run-bad-test Ifs
+bash ./run-bad-test Ownership
 
 echo "number of tests: $(ls -l bad/*/*.rs | grep -v ^l | wc -l)"
 
