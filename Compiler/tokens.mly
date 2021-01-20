@@ -13,7 +13,7 @@
 %token KW_FN KW_RETURN
 %token PLUS "+"
 %token MINUS TIMES DIV MOD
-%token BITAND BITOR BITXOR LSHIFT RSHIFT
+%token BITAND
 %token GT GET LT LET
 %token EQ NEQ
 %token LPR "(" 
@@ -33,7 +33,6 @@
 %token EOF
 %token ARROW "->"
 %token UNIT
-%token REFMUT
 
 %token KW_FALSE
 %token KW_LET
@@ -48,16 +47,10 @@
 
 /* Definição das prioridades e associatividades dos tokens */
 
-%right "="
 %left OR
 %left AND
-%left BITOR
-%left BITXOR
-%left BITAND
 %left EQ NEQ GT LT GET LET 
 %left PLUS MINUS
 %left TIMES DIV MOD
-%left NOT PTR BITNOT REF
-%left "[" "]"
-%nonassoc DOT
+%left NOT
 %%

@@ -1,6 +1,6 @@
 fn main()
 {
-    while false {
+    while(false){
         println!(3);
     }
     break;

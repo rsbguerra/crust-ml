@@ -9,13 +9,17 @@ fn main()
     {
         let x:i32 = 12;
 
-        if x < 20{
+        if(x < 20)
+        {
             println!(x);
         }
-        else{
+        else
+        {
             println!(3);
         }
-    } else{
+    } 
+    else
+    {
         println!(42);
     }
 

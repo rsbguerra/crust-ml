@@ -88,10 +88,6 @@ rule analisador = parse
   | '/'             { [DIV] }
   | '%'             { [MOD] }
   | '&'             { [BITAND] }
-  | '|'             { [BITOR] }
-  | '^'             { [BITXOR] }
-  | "<<"            { [LSHIFT] }
-  | ">>"            { [RSHIFT] }
   | "<"             { [LT] }
   | "<="            { [LET] }
   | ">"             { [GT] }

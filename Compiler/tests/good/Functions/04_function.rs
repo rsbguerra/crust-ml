@@ -1,6 +1,6 @@
 fn ToTen(i : i32)
 {
-    if i > 10
+    if(i > 10)
     {
         return;
     }

@@ -1,7 +1,6 @@
 (*
-  Last Modification: 12-12-2020
+  Last Modification: 20-12-2020
   Description: Pico Rust Parser
-  Author: Dário Santos (dariovfsantos@gmail.com)
 *)
 
 /* Grammar Entry Point */
@@ -46,14 +45,14 @@ function_suite:
 ;
 
 elif:
-| KW_ELSE KW_IF e = expr s = function_suite  { (e, s, !Lexer.line_num) }
+| KW_ELSE KW_IF "(" e = expr ")" s = function_suite  { (e, s, !Lexer.line_num) }
 | KW_ELSE s = function_suite                 { ( Ecst( Cbool true, !Lexer.line_num), s, !Lexer.line_num) }
 ;
 
 stmt:
 | s = simple_stmt                           { s } 
-| KW_IF e = expr s1 = function_suite l = list(elif)  { Sif(e, s1, l, !Lexer.line_num)}
-| KW_WHILE e = expr s = function_suite               { Swhile(e, s, !Lexer.line_num) }
+| KW_IF "(" e = expr ")" s1 = function_suite l = list(elif)  { Sif(e, s1, l, !Lexer.line_num)}
+| KW_WHILE "(" e = expr ")" s = function_suite               { Swhile(e, s, !Lexer.line_num) }
 | "{" l = list(stmt) "}"                             { Sblock(l, !Lexer.line_num) }
 ;
 

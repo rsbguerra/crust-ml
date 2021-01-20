@@ -12,7 +12,8 @@ fn printa(x:i32) -> bool
 
 fn main()
 {
-  if(printa(0) || printa(1)){
+  if(printa(0) || printa(1))
+  {
     println!(3);
   } 
   else

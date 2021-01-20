@@ -2,7 +2,7 @@ fn main()
 {
     let mut x : i32 = 0;
     
-    while true
+    while(true)
     {
         x = x+1;
         if (x > 5){
