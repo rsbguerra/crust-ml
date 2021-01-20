@@ -100,15 +100,7 @@ let rec get_type_elements ctxs start_pos previus_next next = function
     ) !l;
 
     
-    
-    (*List.fold_left_map(fun a (id, t, r_pos) -> 
-    let out =ref "" in
-       out := !out^", start:" ^ string_of_int start_pos ^", r_pos: " ^ string_of_int r_pos;
-    Printf.eprintf "\n[%s]\n\n" !out;
-    
-
-    (a+1), -(start_pos + r_pos)) 0 struct_els in
-    *)
+  
 
     !l, (List.length !l)
   | Tvec (t, _) ->
@@ -204,8 +196,6 @@ let rec pcompile_expr ctxs next = function
         (next+(get_type_size_struct ctxs t_e)), (el, p_el, (-(next + (get_type_start ctxs t_e) )))
     ) next pairs in
 
-
-
     PEstrc_decl (id, p_els, -(next + (get_type_start ctxs t))), next
 
   | TEstrc_access (id, el, tid, tel) ->
@@ -219,8 +209,6 @@ let rec pcompile_expr ctxs next = function
 
     (* if id_pos > 0 then is an arg*)
     let final_pos = if id_pos > 0 then (id_pos+abs(el_pos)) else (id_pos+el_pos) in
-
-    Printf.eprintf "ACESSO: %s -> el_pos: %d,  id_pos: %d, final_pos: %d\n\n" id el_pos id_pos final_pos;
 
     PEstrc_access(id, el, final_pos), next
   | TEvec_decl (els, t) ->
