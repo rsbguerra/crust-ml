@@ -1,18 +1,20 @@
+(*
+  Last Modification: 23-12-2020
+  Description: Pico-Rust Lexer Tokens
+*)
+
 %{
   open Ast
 %}
 
-%token <Ast.crust_const>     CST
+%token <int32> CST
+%token <string> STRING
 %token <Ast.ident> IDENT
-%token KW_TVEC
 
-%token I32 BOOL 
 %token KW_IF KW_ELSE
 %token KW_WHILE
-%token KW_CONTINUE KW_BREAK
 %token KW_FN KW_RETURN
-%token PLUS "+"
-%token MINUS TIMES DIV MOD
+%token PLUS MINUS TIMES DIV MOD
 %token BITAND
 %token GT GET LT LET
 %token EQ NEQ
@@ -30,27 +32,27 @@
 %token DOT "."
 %token DELIMITER ";"
 %token COMMA ","
-%token EOF
 %token ARROW "->"
-%token UNIT
+%token EOF
 
 %token KW_FALSE
 %token KW_LET
 %token KW_STRUCT
 %token KW_TRUE
-%token KW_PRINTLN
 %token KW_PRINT
 %token KW_VEC
 %token KW_LEN
-
 %token KW_MUT
 
 /* Definição das prioridades e associatividades dos tokens */
 
+%right ASSIGN
 %left OR
 %left AND
-%left EQ NEQ GT LT GET LET 
+%nonassoc EQ NEQ GT LT GET LET 
 %left PLUS MINUS
 %left TIMES DIV MOD
-%left NOT
+%nonassoc UNARY_EXPR
+%nonassoc LBK
+%nonassoc DOT
 %%

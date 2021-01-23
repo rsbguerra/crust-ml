@@ -1,9 +1,8 @@
 
 fn main() {
-    let mut a : i32 = 41;
-    let mut b : i32 = 42;
-    let y : &mut i32 = &mut b;
+    let mut a = 41;
+    let mut b = 42;
+    let y = &mut b;
     y = &mut a;
     *y = 42;
-    return;
 }

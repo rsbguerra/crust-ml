@@ -1,1 +1,1 @@
-fn main() { print! ( 1 ); return; }
+fn main() { print ! ( "hello" ) }

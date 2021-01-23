@@ -1,4 +1,1 @@
-fn main() { 
-    x = 2; 
-    return;
-}
+fn main() { 1 = 2; }

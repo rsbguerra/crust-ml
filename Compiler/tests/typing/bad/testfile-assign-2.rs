@@ -1,2 +1,2 @@
 
-fn main() { let x : i32 = 42; let y : i32 = 89; x = 2; return; }
+fn main() { let x = 42; let y = 89; (x+y) = 2; }

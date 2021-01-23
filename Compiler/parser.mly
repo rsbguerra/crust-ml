@@ -12,121 +12,109 @@
 %%
 
 prog:
-| b = list(global_stmt) EOF { GSblock(b, !Lexer.line_num) }
+| l = list(decl) EOF { l }
 ;
 
-global_stmt:
-| KW_STRUCT i = ident "{" l = separated_list(",", struct_pair) "}" { GSstruct (i, l, !Lexer.line_num) }
-| KW_FN f = ident x = function_argument r = option(function_return) s = function_suite
-  { let r = (match r with | None -> Tunit | Some t -> t) in 
-    GSfunction(f, x, r, s, !Lexer.line_num) } 
+decl:
+| KW_STRUCT id = ident "{" l = separated_list(",", struct_pair) "}" { Dstruct (id, l, !Lexer.line_num) }
+| KW_FN id = ident "(" args = separated_list(",", function_pair) ")" r = option(function_return) s = function_suite
+  { Dfun(id, args, r, s, !Lexer.line_num) } 
 ;
 
 struct_pair:
-|  id = ident ":" t = crust_types {(id, t)}
+| id = ident ":" t = prust_types {(id, t)}
 ;
 
-parser_pair:
-|  id = ident ":" t = crust_types {(id, t)}
-|  KW_MUT id = ident ":" t = crust_types {(id, Ast.Tmut(t) )}
-;
-
-function_argument:
-| "(" x = separated_list(",", parser_pair) ")" { x }
-| UNIT                                  { [] }
+function_pair:
+| id = ident ":" t = prust_types {(false, id, t)}
+| KW_MUT id = ident ":" t = prust_types {(true, id, t)}
 ;
 
 function_return:
-| ARROW r = crust_types { r }
+| ARROW r = prust_types { r }
+;
+
+bloc_body:
+| id = stmt b = bloc_body { let l, e = b in (id::l, e) }
+| e = option(expr)        { ([], e) }
 ;
 
 function_suite:
-| "{" l = list(stmt) "}"     {Sblock (l, !Lexer.line_num) }
+|  "{" b = bloc_body "}" { let l, e = b in (l, e) }
 ;
 
-elif:
-| KW_ELSE KW_IF "(" e = expr ")" s = function_suite  { (e, s, !Lexer.line_num) }
-| KW_ELSE s = function_suite                 { ( Ecst( Cbool true, !Lexer.line_num), s, !Lexer.line_num) }
+if_suite:
+| KW_IF e = expr s = function_suite                              { Sif(e, s,  ([], None), !Lexer.line_num) }
+| KW_IF e = expr s1 = function_suite KW_ELSE s2 = function_suite { Sif(e, s1, s2, !Lexer.line_num) }
+| KW_IF e = expr s1 = function_suite KW_ELSE s2 = if_suite       { Sif(e, s1, ([s2], None), !Lexer.line_num) }
 ;
 
 stmt:
-| s = simple_stmt                           { s } 
-| KW_IF "(" e = expr ")" s1 = function_suite l = list(elif)  { Sif(e, s1, l, !Lexer.line_num)}
-| KW_WHILE "(" e = expr ")" s = function_suite               { Swhile(e, s, !Lexer.line_num) }
-| "{" l = list(stmt) "}"                             { Sblock(l, !Lexer.line_num) }
-;
+| ";"                                                    { Snothing(!Lexer.line_num) }
+| e = expr ";"                                           { Sexpr(e, !Lexer.line_num) }
+| KW_LET m = option(KW_MUT) id = ident "=" e = expr ";"
+  { let v = match m with | None -> false | _ -> true in 
+    Sdeclare (v, id, e, !Lexer.line_num) }
+| KW_LET m = option(KW_MUT) id = ident "=" s = ident "{" l = separated_list("," , expr_pair) "}" ";"
+  { let v = match m with | None -> false | _ -> true in 
+    Sdeclare_struct(v, id, s, l, !Lexer.line_num) }
+| KW_RETURN e = option(expr) ";"                         { Sreturn(e, !Lexer.line_num) }
 
-simple_stmt:
-| KW_RETURN e = option(expr) ";"                      { let e1 = match e with |None -> Ecst(Cunit, !Lexer.line_num) | Some e -> e in  Sreturn(e1, !Lexer.line_num) }
-| KW_BREAK ";"                                        { Sbreak !Lexer.line_num }
-| KW_CONTINUE ";"                                     { Scontinue !Lexer.line_num }
-| KW_LET id = ident ":" t = crust_types "=" e = expr ";" { Sdeclare (id, t, e, !Lexer.line_num) }
-| KW_LET KW_MUT id = ident ":" t = crust_types "=" e = expr ";" { Sdeclare (id, (Ast.Tmut t), e, !Lexer.line_num) }
-| id = ident "=" e = expr ";"                         { Sassign (id, e, !Lexer.line_num) }
-| TIMES id = ident "=" e = expr ";"                   { Sptr_assign (id, e, !Lexer.line_num) }
-| KW_PRINT "(" e = expr ")" ";"                       { Sprint(e, !Lexer.line_num) }
-| KW_PRINTLN "(" e = expr ")" ";"                     { Sprintn(e, !Lexer.line_num) }
-| ";"                                                 { Snothing(!Lexer.line_num) }
-| e = expr ";"                                        { Sexpr(e, !Lexer.line_num) }
+| KW_WHILE e = expr s = function_suite                   { Swhile(e, s, !Lexer.line_num) }
+| ifl = if_suite                                         { ifl }
 ;
 
 expr_pair:
 | id = ident ":" e = expr {(id, e)}
 ;
 
-call_argument:
-| "(" l = separated_list("," , expr) ")" { l }
-| UNIT                                   { [] }
-;
-
 expr:
-| c = CST                           { Ecst (c, !Lexer.line_num) }
-| KW_TRUE                           { Ecst ((Cbool true), !Lexer.line_num) }
-| KW_FALSE                          { Ecst ((Cbool false), !Lexer.line_num) }
-| u  = unop e1 = expr               { Eunop (u, e1, !Lexer.line_num) }
-| e1 = expr o = binop e2 = expr     { Ebinop (o, e1, e2, !Lexer.line_num) }
+| c = CST                           { Eint (c, !Lexer.line_num) }
+| KW_TRUE                           { Ebool (true, !Lexer.line_num) }
+| KW_FALSE                          { Ebool (false, !Lexer.line_num) }
 | id = ident                        { Eident (id, !Lexer.line_num) }
-| BITAND id = ident                 { Eref (id, !Lexer.line_num) }
-| BITAND  KW_MUT id = ident         { Erefmut (id, !Lexer.line_num) }
-| TIMES id = ident                  { Eptr (id, !Lexer.line_num) }
-| id = ident l = call_argument      { Ecall(id, l, !Lexer.line_num) }
-| id = ident "{" l = separated_list("," , expr_pair) "}" { Estrc_decl(id, l, !Lexer.line_num) }
-| id1 = ident "." id2 = ident                            { Estrc_access(id1, id2, !Lexer.line_num) }
+| u  = unop e1 = expr %prec UNARY_EXPR { Eunop (u, e1, !Lexer.line_num) }
+| e1 = expr o = binop e2 = expr     { Ebinop (o, e1, e2, !Lexer.line_num) }
+| id = ident "(" l = separated_list("," , expr) ")"      { Ecall(id, l, !Lexer.line_num) }
+| e = expr "." id = ident                                { Estruct_access(e, id, !Lexer.line_num) }
 | KW_VEC "[" l = separated_list("," , expr) "]"          { Evec_decl(l, !Lexer.line_num) }
-| id = ident "[" e = expr "]"                            { Evec_access(id, e, !Lexer.line_num) }
-| id = ident "." KW_LEN UNIT                             { Elen(id, !Lexer.line_num) }
+| e1 = expr "[" e2 = expr "]"                            { Evec_access(e1, e2, !Lexer.line_num) }
+| e = expr "." KW_LEN                                    { Elen(e, !Lexer.line_num) }
 | "(" e = expr ")"                                       { e }
+| KW_PRINT "(" s = STRING ")"                            { Eprint(s, !Lexer.line_num) }
+| b = function_suite                                     { Eblock(b, !Lexer.line_num) }
 ;
 
-crust_types:
-| I32    { Ti32  }
-| BOOL   { Tbool }
-| UNIT   { Tunit }
-| id = ident { Tstruct id }
-| KW_TVEC LT t = crust_types GT { Tvec (t,-1) }
-| BITAND t = crust_types { Tref (t,"") }
-| KW_MUT t = crust_types { Tmut t }
+prust_types:
+| id = ident                    { Tid id }
+| id = ident LT t = prust_types GT { Tid_typed (id, t) }
+| BITAND t = prust_types        { Tref t }
+| BITAND KW_MUT t = prust_types { Trefmut t }
 ;
 
 %inline unop:
 | MINUS  { Uneg }
 | NOT    { Unot }
+| BITAND { Uref }
+| BITAND KW_MUT { Urefmut }
+| TIMES  { Uderef }
 ;
 
 %inline binop:
-| PLUS  { Badd }
-| MINUS { Bsub }
-| TIMES { Bmul }
-| DIV   { Bdiv }
-| MOD   { Bmod }
-| EQ    { Beq }
-| NEQ   { Bneq }
-| GT    { Bgt }
-| LT    { Blt }
-| GET   { Bge }
-| LET   { Ble }
-| AND   { Band }
-| OR    { Bor  }
+| PLUS   { Badd }
+| MINUS  { Bsub }
+| TIMES  { Bmul }
+| DIV    { Bdiv }
+| MOD    { Bmod }
+| EQ     { Beq }
+| NEQ    { Bneq }
+| GT     { Bgt }
+| LT     { Blt }
+| GET    { Bge }
+| LET    { Ble }
+| AND    { Band }
+| OR     { Bor  }
+| ASSIGN { Bassign }
 ;
 
 %inline ident:

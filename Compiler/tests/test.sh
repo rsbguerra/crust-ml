@@ -5,7 +5,7 @@ shopt -s nullglob
 # script para testar o trabalho de DLPC
 
 option=$1
-compilo='../_build/default/crust.exe'
+compilo=$2
 score=0
 max=0
 verbose=0

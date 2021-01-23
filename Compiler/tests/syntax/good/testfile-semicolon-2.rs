@@ -1,2 +1,2 @@
 
-fn main() { ;; print!(1);;; print!(2); return; }
+fn main() { ;; print!("hello");;; print!("world\n") }

@@ -71,18 +71,6 @@ let () =
 
     (* Pára-se aqui se só queremos o parsing *)
     if !parse_only then exit 0;
-    if !print_ast || !print_tast || !print_past then Printer.print_file p;
-
-    (* Compilação da árvore de sintaxe abstracta p. O código máquina
-       resultante desta transformação deve ficar escrito no ficheiro alvo ofile. *)
-    let typed_p = Typing.type_file p in
-    if !print_tast then Printer_tast.print_typed_ast typed_p;
-    Ownership.verify_ownership typed_p;
-    
-    let precomp_p = Pre_compile.precompile typed_p in
-    if !print_past then Printer_past.print_precomp_past precomp_p;
-
-    Compile.compile_program precomp_p !ofile
 
   with
   | Lexer.Lexing_error c ->
@@ -98,16 +86,4 @@ let () =
 	  (* Erro sintáctio. Recupera-se a posição e converte-se para número de linha *)
 	  localisation (Lexing.lexeme_start_p buf);
 	  eprintf "\nerror:\n\n  Syntatic error: invalid derivation.\n\n@.";
-    exit 1
-  | Typing.Error (s, line)-> 
-    eprintf "\n\nFile \"%s\", line %d:\n" !ifile line;
-    eprintf "\nerror:\n\n  Typing analysis:\n  %s\n@." s;
-    exit 1
-  | Ownership.Error s -> 
-    eprintf "\n\nFile \"%s\\n" !ifile;
-    eprintf "\nerror:\n\n  Ownership error:\n  %s\n@." s;
-    exit 1
-  | Compile.Error s->
-	  (* Erro de utilização de variáveis durante a compilação *)
-	  eprintf "\nerror:\n\n  Compilation error:\n  %s\n@." s;
     exit 1

@@ -1,1 +1,1 @@
-fn main() { 1 + true; return; }
+fn main() { 1 + true; }

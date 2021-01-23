@@ -1,47 +1,46 @@
 (*
-  Última alteração: 17-01-2021
+  Última alteração: 23-01-2021
   Descricao: Typed Abstract Syntax Tree
 *)
 
-type ident = string
+type program = typed_decl list
+
+and typed_decl = 
+  | TDstruct of ident * pair list
+  | TDfun    of ident * argument list * prust_type * typed_block
+
+and pairs = ident * prust_type
+and argument = bool * ident * prust_type
+
+and prust_type =
+  | Tunit | Ti32 | Tbool
+  | Tstruct of ident
+  | Tvec of prust_type
+  | Tref of bool * prust_type
 
 and typed_expr =
-  | TEcst     of Ast.crust_const * Ast.crust_types
-  | TEident   of ident * Ast.crust_types
-  | TEbinop   of Ast.binop * typed_expr * typed_expr * Ast.crust_types
-  | TEref     of ident * Ast.crust_types
-  | TErefmut  of ident * Ast.crust_types
-  | TEptr     of ident * Ast.crust_types
-  | TEunop    of Ast.unop * typed_expr * Ast.crust_types
-  | TEstrc_access of ident * ident * Ast.crust_types * Ast.crust_types
-  | TEstrc_decl  of ident * (ident * typed_expr * Ast.crust_types) list  * Ast.crust_types
-  | TEvec_decl   of typed_expr list * Ast.crust_types
-  | TEvec_access of ident * typed_expr * Ast.crust_types * Ast.crust_types
-  | TElen     of ident
-  | TEcall    of ident * (typed_expr * Ast.crust_types) list * Ast.crust_types
-  
+  | TEInt   of int32 * prust_type
+  | TEbool  of bool  * prust_type
+  | TEident of ident * prust_type
+  | TEunop  of Ast.unop * typed_expr * prust_type
+  | TEbinop of Ast.binop * typed_expr * typed_expr * prust_type
+  | TEstrc_access of typed_expr * ident * prust_type * prust_type
+  | TElen   of typed_expr * prust_type
+  | TEvec_access of typed_expr * typed_expr * prust_type * prust_type
+  | TEcall  of ident * (typed_expr * prust_type) list * prust_type
+  | TEvec_decl of typed_expr list * prust_type
+  | Eprint  of string * prust_type
+  | Eblock  of typed_block * prust_type
+
+and typed_block = typed_stmt list * typed_expr option
+
 and typed_stmt =
-  | TSif       of typed_expr * typed_stmt * typed_elif list  * Ast.crust_types
-  | TSwhile    of typed_expr * typed_stmt * Ast.crust_types
-  | TSdeclare  of ident * Ast.crust_types * typed_expr * Ast.crust_types
-  | TSassign   of ident * typed_expr * Ast.crust_types
-  | TSptr_assign of ident * typed_expr * Ast.crust_types
-  | TSprintn   of typed_expr * Ast.crust_types * Ast.crust_types
-  | TSprint    of typed_expr * Ast.crust_types * Ast.crust_types
-  | TSblock    of typed_stmt list * Ast.crust_types
-  | TScontinue of Ast.crust_types
-  | TSbreak    of Ast.crust_types
-  | TSreturn   of typed_expr * Ast.crust_types
-  | TSnothing  of Ast.crust_types
-  | TSexpr     of typed_expr * Ast.crust_types
+  | TSnothing of prust_type
+  | TSexpr    of typed_expr * prust_type
+  | TSdeclare of bool * ident * typed_expr * prust_type
+  | TSdeclare_struct of bool * ident * ident * (ident * typed_expr) list * prust_type
+  | TSwhile   of typed_expr * typed_block * prust_type
+  | TSreturn  of typed_expr option * prust_type
+  | TSif      of typed_expr * typed_block * typed_block * prust_type
 
-and typed_elif = typed_expr * typed_stmt
-
-and typed_global_stmt = 
-  | TGSblock    of typed_global_stmt list
-  | TGSfunction of ident * pairs list * Ast.crust_types * typed_stmt
-  | TGSstruct   of ident * pairs list
- 
-and pairs = ident * Ast.crust_types
-
-and program = typed_global_stmt
+and ident = string

@@ -1,3 +1,3 @@
 
-fn foo(x: &mut i32) { return; }
-fn main() { let mut x : i32 = 42; foo(& x); return; }
+fn foo(x: &mut i32) { }
+fn main() { let mut x = 42; foo(& x); }

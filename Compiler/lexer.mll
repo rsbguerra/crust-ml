@@ -19,22 +19,15 @@
   let keyword_table =
     create_hashtable 16
     [
-      "break",    KW_BREAK;
-      "continue", KW_CONTINUE;
       "else",     KW_ELSE;
       "false",    KW_FALSE;
       "fn",       KW_FN;
       "if",       KW_IF;
-      "len",      KW_LEN;
       "let",      KW_LET;
       "mut",      KW_MUT;
-      "print!",   KW_PRINT;
-      "println!", KW_PRINTLN;
       "return",   KW_RETURN;
       "struct",   KW_STRUCT;
       "true",     KW_TRUE;
-      "vec!",     KW_VEC;
-      "Vec",      KW_TVEC;
       "while",    KW_WHILE;
     ]
 
@@ -62,13 +55,17 @@ let BIN_LITERAL    = ("0b"|"0B") (BIN_DIGIT|'_')*
 let DEC_LITERAL    = DEC_DIGIT(DEC_DIGIT|'_')*
 let INTEGER_LITERAL= (DEC_LITERAL|BIN_LITERAL|OCT_LITERAL|HEX_LITERAL)
 
-(** Boolean Literals*)
-let BOOLEAN_LITERAL = "true"|"false"
+let alpha      = ['a'-'z' 'A'-'Z']
+let id         = alpha ('_'|alpha|DEC_DIGIT)*
+let newline    = '\n'
+let whitespace = [' ' '\t' '\r']
 
-let alpha     = ['a'-'z' 'A'-'Z']
-let id         = alpha(('_'|alpha|DEC_DIGIT)*)('!')*
-let newline    = ['\n']
-let whitespace = [' ' '\t']
+let len   = "len" whitespace* "(" whitespace* ")"
+let print = "print" whitespace* "!"
+let vec   = "vec" whitespace* "!"
+
+let letra  = [^ '"' '\\' ] | ( '\\' '"') | ('\\' '\\') | ('\\' 'n')
+let p_string = '"' letra* '"' 
 
 rule analisador = parse
   | "//"            { singlecomment lexbuf}
@@ -87,7 +84,6 @@ rule analisador = parse
   | '*'             { [TIMES] }
   | '/'             { [DIV] }
   | '%'             { [MOD] }
-  | '&'             { [BITAND] }
   | "<"             { [LT] }
   | "<="            { [LET] }
   | ">"             { [GT] }
@@ -96,26 +92,25 @@ rule analisador = parse
   | "!="            { [NEQ] }
   | "||"            { [OR] }
   | "&&"            { [AND] }
+  | '&'             { [BITAND] }
   | '!'             { [NOT] }
   | '.'             { [DOT] }
   | ':'             { [COLON] }
   | "->"            { [ARROW] }
   | ';'             { [DELIMITER] }
   | ','             { [COMMA] }
-  | "i32"           { [I32] }
-  | "bool"          { [BOOL] }
-  | "()"            { [UNIT] }
-  | INTEGER_LITERAL as snum 
-    { (*Todo decide wich type this integer is *)
-      try
-        [CST ( Ci32 (Int32.of_string snum))]
-      with _ -> raise (Lexing_error ("The constant is too big : _" ^ snum^"_")) }
+  | len             { [KW_LEN] }
+  | print           { [KW_PRINT] }
+  | vec             { [KW_VEC] }
+  | p_string as s   { [STRING s] }
+  | INTEGER_LITERAL as snum { try [CST (Int32.of_string snum)] with _ -> raise (Lexing_error ("The constant is too big : _" ^ snum^"_")) }
   | id as word
-  { try
-      let token = Hashtbl.find keyword_table word in  
-      [token]
-    with Not_found -> [IDENT word]
-  }
+    { try 
+        let token = Hashtbl.find keyword_table word in 
+        [token]
+      with Not_found -> 
+        [IDENT word]
+    }
   | eof       { [EOF] }
   | _ as c    { raise (Lexing_error (Char.escaped c)) }
 

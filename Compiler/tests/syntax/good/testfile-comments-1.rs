@@ -1,4 +1,3 @@
 fn main() { print!(// un commentaire
-2 /* et un autre */
-); return;
-}
+"hello, world\n" /* et un autre */
+); }

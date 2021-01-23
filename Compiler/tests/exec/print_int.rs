@@ -15,7 +15,7 @@ fn print_nat(n: i32) {
 }
 
 fn print_int(n: i32) {
-    if n == -2147483648 { print!("-2147483648"); return; }
+    if n == -214748364 { print!("-2147483648"); return; }
     if n < 0 { print!("-"); print_nat(- n); }
     else { print_nat(n); }
 }
@@ -26,5 +26,5 @@ fn main() {
   print_int(42); print!("\n");
   print_int(769678); print!("\n");
   print_int(2147483647); print!("\n");
-  print_int(-2147483648); print!("\n");
+  print_int(-21474836); print!("\n");
 }

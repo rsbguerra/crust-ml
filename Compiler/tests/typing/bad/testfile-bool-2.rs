@@ -1,3 +1,3 @@
 
-fn foo() {return; }
-fn main() { !(foo()); return; }
+fn foo() {}
+fn main() { !(foo()); }

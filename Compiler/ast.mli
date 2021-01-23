@@ -1,69 +1,59 @@
 (*
-  Última alteração: 17-12-2020
-  Descricao: Árvore de sintaxe abastrata do Rust
+  Last Modification: 23-01-2020
+  Description: Pico-Rust Abstract Syntax Tree
 *)
 
-type ident = string
+type program = decl list
 
-type unop = 
-  | Uneg      (* - *)
-  | Unot      (* ! *)
+and decl = 
+  | Dstruct of ident * pair list * int
+  | Dfun    of ident * argument list * prust_type option * block * int
+
+and pair = ident * prust_type
+and argument = bool * ident * prust_type
+
+and prust_type =
+  | Tid       of ident
+  | Tid_typed of ident * prust_type
+  | Tref      of prust_type
+  | Trefmut   of prust_type
+
+and unop = 
+  | Uneg    (* -    *)
+  | Unot    (* !    *)
+  | Uref    (* &    *)
+  | Urefmut (* &mut *)
+  | Uderef  (* *    *)
 
 and binop =
   | Badd | Bsub | Bmul | Bdiv | Bmod
   | Beq  | Bneq | Blt  | Ble  | Bgt | Bge
-  | Band | Bor 
+  | Band | Bor
+  | Bassign
 
 and expr =
-  | Ecst     of crust_const * int
-  | Eident   of ident * int
-  | Eref     of ident * int (* & *)
-  | Erefmut  of ident * int (* &mut *)
-  | Eptr     of ident * int
-  | Ebinop   of binop * expr * expr * int
-  | Eunop    of unop * expr * int
-  | Estrc_access of ident * ident * int            (* S.x (S-> struct, x -> element of struct)*)
-  | Estrc_decl   of ident * (ident * expr) list  * int            
-  | Elen       of ident * int
-  | Evec_decl  of expr list * int
-  | Evec_access  of ident * expr * int
-  | Ecall      of ident * expr list * int
+  | Eint   of int32 * int
+  | Ebool  of bool * int
+  | Eident of ident * int
+  | Ebinop of binop * expr * expr * int
+  | Eunop  of unop * expr * int
+  | Estruct_access of expr * ident * int
+  | Elen           of expr * int
+  | Evec_access of expr * expr * int
+  | Ecall     of ident * expr list * int
+  | Evec_decl of expr list * int
+  | Eprint    of string * int
+  | Eblock    of block * int
+
+and block = stmt list * expr option
 
 and stmt =
-  | Sif       of expr * stmt * elif list * int
-  | Swhile    of expr * stmt * int
-  | Sdeclare  of ident * crust_types * expr * int
-  | Sassign   of ident * expr * int
-  | Sptr_assign of ident * expr * int
-  | Sprintn   of expr * int
-  | Sprint    of expr * int
-  | Sblock    of stmt list * int
-  | Scontinue of int
-  | Sbreak    of int
-  | Sreturn   of expr * int
-  | Snothing  of int
-  | Sexpr     of expr * int 
+  | Snothing of int
+  | Sexpr    of expr * int
+  | Sdeclare of bool * ident * expr * int
+  | Sdeclare_struct of bool * ident * ident * (ident * expr) list * int
+  | Swhile   of expr * block * int
+  | Sreturn  of expr option * int
+  | Sif      of expr * block * block * int
 
-and elif = expr * stmt * int
-
-and crust_const =
-  | Ci32 of int32
-  | Cbool of bool
-  | Cunit
-  
-and crust_types =
-  | Tunit | Ti32 | Tbool
-  | Tstruct of ident
-  | Tmut of crust_types
-  | Tvec of crust_types * int
-  | Tref of crust_types * ident
-  
-
-and global_stmt = 
-  | GSblock    of global_stmt list * int
-  | GSfunction of ident * pairs list * crust_types * stmt * int
-  | GSstruct   of ident * pairs list * int
-
-and pairs = ident * crust_types
-
-and program = global_stmt
+and ident = string
