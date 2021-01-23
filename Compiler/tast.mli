@@ -6,8 +6,8 @@
 type program = typed_decl list
 
 and typed_decl = 
-  | TDstruct of ident * pair list
-  | TDfun    of ident * argument list * prust_type * typed_block
+  | TDstruct of ident * pair list * prust_type
+  | TDfun    of ident * argument list * prust_type * typed_block * prust_type
 
 and pairs = ident * prust_type
 and argument = bool * ident * prust_type
@@ -24,15 +24,15 @@ and typed_expr =
   | TEident of ident * prust_type
   | TEunop  of Ast.unop * typed_expr * prust_type
   | TEbinop of Ast.binop * typed_expr * typed_expr * prust_type
-  | TEstrc_access of typed_expr * ident * prust_type * prust_type
+  | TEstrc_access of typed_expr * ident * prust_type
   | TElen   of typed_expr * prust_type
   | TEvec_access of typed_expr * typed_expr * prust_type * prust_type
-  | TEcall  of ident * (typed_expr * prust_type) list * prust_type
+  | TEcall  of ident * typed_expr list * prust_type
   | TEvec_decl of typed_expr list * prust_type
   | Eprint  of string * prust_type
   | Eblock  of typed_block * prust_type
 
-and typed_block = typed_stmt list * typed_expr option
+and typed_block = typed_stmt list * typed_expr option * prust_type
 
 and typed_stmt =
   | TSnothing of prust_type
