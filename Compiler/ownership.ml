@@ -162,6 +162,7 @@ and ownership_stmt ctxs = function
   | TSblock (bl, _) ->
     (* 1 - Tipar bloco *)
     let ctxs = ((make_ctx ())::ctxs) in
+    
     let block_ctxs = List.fold_right(fun (v,f) l -> 
       let nv = Hashtbl.copy v in
       let nf = Hashtbl.copy f in

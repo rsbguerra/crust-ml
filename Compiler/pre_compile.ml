@@ -206,7 +206,6 @@ let rec pcompile_expr ctxs next = function
     let struct_els = fst(Hashtbl.find (find_struct_id struct_id ctxs) struct_id) in
     let el_pos = find_struct_element el struct_els in
 
-
     (* if id_pos > 0 then is an arg*)
     let final_pos = if id_pos > 0 then (id_pos+abs(el_pos)) else (id_pos+el_pos) in
 

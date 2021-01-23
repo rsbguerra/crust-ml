@@ -42,6 +42,8 @@ This project contains a folder with a set of tests, the easiast way to test the 
 make test
 ```
 
+In the directory `/Compiler/tests` there's another **Readme** file about the test scripts developed to this project.
+
 ## Pico-Rust Documentation
 
 The full documentation of the Pico-Rust language can be accessed bellow:

@@ -1,0 +1,16 @@
+entering foo...
+[ +, true ]
+[ -, false ]
+...leaving foo
+entering foo...
+[ -, false ]
+[ -, true ]
+...leaving foo
+entering foo...
+[ -, true ]
+[ +, false ]
+...leaving foo
+entering foo...
+[ +, false ]
+[ +, true ]
+...leaving foo

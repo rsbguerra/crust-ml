@@ -17,13 +17,13 @@ let set_file f s = f := s
 
 (* As opções do compilador que são mostradas quando é invocada o comando --help *)
 let options =
-  ["-parse-only", Arg.Set parse_only,
+  ["--parse-only", Arg.Set parse_only,
    "  Executes only the lexer and parser ";
-  "-print-ast", Arg.Set print_ast,
+  "--print-ast", Arg.Set print_ast,
   "  Prints the AST of a givin file ";
-  "-print-tast", Arg.Set print_tast,
+  "--print-tast", Arg.Set print_tast,
   "  Prints the TAST of a givin file ";
-  "-print-past", Arg.Set print_past,
+  "--print-past", Arg.Set print_past,
   "  Prints the PAST of a givin print_past ";
    "-o", Arg.String (set_file ofile),
    "<file>  To indicate the name of the output file"]

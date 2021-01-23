@@ -1,0 +1,2 @@
+/* oups
+fn main() { }
