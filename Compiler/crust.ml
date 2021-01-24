@@ -69,9 +69,14 @@ let () =
     let p = Parser.prog Lexer.next_token buf in
     close_in f;
 
-    (* Pára-se aqui se só queremos o parsing *)
+    (* Stop here aqui se só queremos o parsing *)
     if !parse_only then exit 0;
     if !print_ast || !print_tast || !print_past then Printer.print_file p;
+    
+    (* Type AST *)
+    let p = Typing.type_file p in
+    ()
+
 
   with
   | Lexer.Lexing_error c ->

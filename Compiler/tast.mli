@@ -9,7 +9,7 @@ and typed_decl =
   | TDstruct of ident * pair list * prust_type
   | TDfun    of ident * argument list * prust_type * typed_block * prust_type
 
-and pairs = ident * prust_type
+and pair = ident * prust_type
 and argument = bool * ident * prust_type
 
 and prust_type =
@@ -19,7 +19,7 @@ and prust_type =
   | Tref of bool * prust_type
 
 and typed_expr =
-  | TEInt   of int32 * prust_type
+  | TEint   of int32 * prust_type
   | TEbool  of bool  * prust_type
   | TEident of ident * prust_type
   | TEunop  of Ast.unop * typed_expr * prust_type
