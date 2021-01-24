@@ -39,9 +39,8 @@ and string_of_struct_pair_list acc = function
 and string_of_call_pair_list pair = 
   List.fold_left (fun acc e -> acc ^ ", " ^ (string_of_typed_expr e)) "" pair
 
-and string_of_struct_decl_pair_list acc = function
-  | []      -> acc
-  | (id, e, t)::tl -> string_of_struct_decl_pair_list (acc^id^" : "^(string_of_typed_expr e)^": "^(string_of_prust_types t)^", ") tl
+and string_of_struct_decl_pair_list d = 
+  List.fold_left (fun acc (id, e) -> (acc^id^":"^(string_of_typed_expr e) ^", ")) "" d
 
 and string_of_typed_expr = function
   | TEint (n, t)            -> "TEint("^(Int32.to_string n)^", "^(string_of_prust_types t)^")"
@@ -68,12 +67,15 @@ and string_of_typed_stmt = function
   | TSnothing t            -> "TSnothing"^(string_of_prust_types t)^")"
   | TSexpr (e,t)           -> "TSexpr("^(string_of_typed_expr e)^", "^(string_of_prust_types t)^")"
   | TSdeclare(mut,id,e,t) -> "TSdeclare(" ^ (if mut then "mut " else "") ^id^", "^(string_of_typed_expr e)^","^(string_of_prust_types t)^")"
-  | TSdeclare_struct(mut, id, tid, el, t) -> "TSdeclare_struct(" ^ (if mut then "mut " else "") ^ id^", "^tid^", "^(string_of_struct_decl_pair_list "" el)", "^(string_of_prust_types t)^")"
+  | TSdeclare_struct(mut, id, tid, el, t) -> 
+  "TSdeclare_struct(" ^ (if mut then "mut " else "") ^ id^", "^tid^", "^
+  (string_of_struct_decl_pair_list el) ^ ", "^
+  (string_of_prust_types t) ^ ")"
   | TSwhile(e, bl, t)     -> "TSwhile("^(string_of_typed_expr e)^"\n"^(string_of_typed_block bl) ^ ", " ^(string_of_prust_types t)^")"
   | TSreturn (None, t)    -> "TSreturn("^(string_of_prust_types t)^")"
   | TSreturn (Some e, t)  -> "TSreturn("^(string_of_typed_expr e)^", "^(string_of_prust_types t)^")"
   | TSif (e, bl1, bl2, t) -> 
   "TSif("^(string_of_typed_expr e)^", "^(string_of_typed_block bl1)^", "^(string_of_typed_block bl2)^", "^(string_of_prust_types t)^")"
 
-let print_typed_ast s = 
+let print_file s = 
   Printf.printf "TYPED AST:\n\n%s\n\n" (string_of_program s)
