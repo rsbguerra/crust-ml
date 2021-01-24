@@ -1,7 +1,7 @@
 open Tast
 open Int32
 let rec string_of_program p = 
-  List.fold_left (fun acc d -> acc ^ string_of_typed_decl d) "" p
+  List.fold_left (fun acc d -> acc ^ (string_of_typed_decl d)) "" p
 
 and string_of_typed_decl = function
   | TDstruct (id, p, t) -> 
@@ -37,7 +37,7 @@ and string_of_struct_pair_list acc = function
   | (id, e)::tl -> string_of_struct_pair_list (acc^id^" : "^(string_of_typed_expr e)^", ") tl
 
 and string_of_call_pair_list pair = 
-  List.fold_left (fun acc e -> acc ^ ", " ^ string_of_typed_expr e) "" pair
+  List.fold_left (fun acc e -> acc ^ ", " ^ (string_of_typed_expr e)) "" pair
 
 and string_of_struct_decl_pair_list acc = function
   | []      -> acc
