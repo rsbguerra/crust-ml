@@ -321,9 +321,10 @@ and type_stmt ctxs = function
     (* 3 - Retornar declaração tipada *)
     Tast.TSdeclare(ismut, id, te, Tast.Tunit), Tast.Tunit 
    
-  | Sdeclare_struct(ismut, id, idt, el, line) -> 
+  | Sdeclare_struct(ismut, id, idt, el, line) ->
+
     (* 1 - Verificar se a estrutura idt existe *)
-    let struct_els = match find_struct_id id ctxs with
+    let struct_els = match find_struct_id idt ctxs with
       | None     -> error ("The structure with the identifier "^idt^" was not defined.") line
       | Some ctx -> Hashtbl.find ctx idt
     in
@@ -435,35 +436,7 @@ and type_decl ctxs = function
     
 (* Tipa uma AST *)
 let type_file f =
-
-
-  let tdcl = ref [] in
-  let ctxs = ref [] in
-  
-  let out = ref "" in
-
-  List.iter(fun s ->
-    ctxs := (make_ctx ())::(!ctxs);
-    tdcl := (!tdcl)@[type_decl !ctxs s];
-
-    List.iter(fun (v,f,s) ->
-      out := !out ^ "---VALUES: ";
-      Hashtbl.iter(fun k v -> out := !out ^ ", " ^ k)v;
-      out := !out ^ "---FUNCTIONS: ";
-      Hashtbl.iter(fun k v -> out := !out ^ ", " ^ k)f;
-      out := !out ^ "---STRUCTS: ";
-      Hashtbl.iter(fun k v -> out := !out ^ ", " ^ k)s;
-          out := !out ^ "\n";
-
-    )!ctxs;
-    
-    Printf.eprintf "CTXS: %s\n" !out;
-  ) f;
-  !tdcl
-
-  
-  (*List.fold_left_map(fun ctxs s ->
+  List.fold_left_map(fun ctxs s ->
     let ctxs = (make_ctx ())::ctxs in
     ctxs, (type_decl ctxs s) 
   ) [] f
-*)
