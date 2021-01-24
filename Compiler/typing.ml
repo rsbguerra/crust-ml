@@ -61,7 +61,6 @@ let compare_prust_types = function
  | Tast.Tstruct s1, Tast.Tstruct s2 -> s1 = s2
  | _ -> false
 
-
 let is_bool = function
  | Tast.Tbool  -> true
  | _           -> false
@@ -73,6 +72,19 @@ let is_i32 = function
 let is_vec = function
  | Tast.Tvec _ -> true
  | _           -> false
+
+let is_refmut = function
+ | Tast.Trefmut _ -> true
+ | _           -> false
+
+let get_refmut_type = function
+ | Tast.Trefmut t -> Some t
+ | _              -> None
+
+
+let string_of_tstruct = function 
+  | Tast.Tstruct t  -> Some t
+  | _              -> None
 
 let type_prust_type = function
   | Ast.Tid id -> 
@@ -86,13 +98,104 @@ let type_prust_type = function
   | Tref t -> assert false
   | Trefmut t -> assert false
 
+let rec type_binop_expr op te1 t1 te2 t2 line = match op with
+  | Ast.Badd | Ast.Bsub | Ast.Bmul | Ast.Bdiv | Ast.Bmod ->
+    (* 1 - Verificar t1 e t2 *)
+    if not (is_i32 t1) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^ "-----" ^" but a "^ "-----" ^" was expected.") line;
+    if not (is_i32 t2) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^ "-----" ^" but a " ^ "-----" ^ " was expected.") line;
+    (* 2 - Retornar operação tipada*)
+    Tast.TEbinop(op, te1, te2, Tast.Ti32), Tast.Ti32
+  | Ast.Beq | Ast.Bneq | Ast.Blt | Ast.Ble | Ast.Bgt | Ast.Bge ->
+    (* 1 - Verificar t1 e t2 *)
+    if not (is_i32 t1) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^"-----"^" but a "^"-----"^" was expected.") line;
+    if not (is_i32 t2) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^"-----"^" but a "^"-----"^" was expected.") line;
+    (* 2 - Retornar operação tipada*)
+    TEbinop(op, te1, te2, Tast.Tbool), Tast.Tbool
+  | Ast.Bor | Ast.Band ->
+    (* 1 - Verificar t1 e t2 *)
+    if not (is_bool t1) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^"-----"^" but a "^"-----"^" was expected.") line;
+    if not (is_bool t2) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^"-----"^" but a "^"-----"^" was expected.") line;
+    (* 2 - Retornar operação tipada*)
+    TEbinop(op, te1, te2, Tast.Tbool), Tast.Tbool
+  | _ -> assert false
+
+
+let rec type_unop_expr op te t line = match op with
+  | Ast.Uneg ->
+    (* 1 - Verificar t *)
+    if not (is_i32 t) then error ("Wrong type given to operand "^(Printer.string_of_unop op)^", was given"^ "-----" ^" but a "^ "-----" ^" was expected.") line;
+    (* 2 - Retornar operação tipada*)
+    Tast.TEunop(op, te, Tast.Ti32), Tast.Ti32
+  | Ast.Unot  ->
+    (* 1 - Verificar t *)
+    if not (is_bool t) then error ("Wrong type given to operand "^(Printer.string_of_unop op)^", was given"^"-----"^" but a "^"-----"^" was expected.") line;
+    (* 2 - Retornar operação tipada*)
+    Tast.TEunop(op, te, Tast.Tbool), Tast.Tbool
+  | Ast.Uref ->
+    (* 1 - Retornar operação tipada*)
+    Tast.TEunop(op, te, Tast.Tref(t)), Tast.Tref(t)
+  | Ast.Urefmut ->
+    (* 1 - Retornar operação tipada *)
+    (* Todo: verificar se te é mutável *)
+    Tast.TEunop(op, te, Tast.Trefmut(t)), Tast.Trefmut(t)
+   | Ast.Uderef ->
+    (* 1 - Retornar operação tipada *)
+    if not (is_refmut t) then error ("Wrong type given to operand "^(Printer.string_of_unop op)^", was given"^"-----"^" but a "^"-----"^" was expected.") line;
+    
+    let t = match get_refmut_type t with
+     | None -> assert false
+     | Some t -> t
+    in
+
+    Tast.TEunop(op, te, t), t
+
 let rec type_expr ctxs = function
   | Ast.Eint(v, _) -> Tast.TEint(v, Tast.Ti32), Tast.Ti32
   | Ebool(v, _) -> Tast.TEbool(v, Tast.Tbool), Tast.Tbool
-  | Eident(id, line) -> assert false
-  | Ebinop (op, e1, e2, line) -> assert false
-  | Eunop (op, e, line) -> assert false
-  | Estruct_access(id, el, line) -> assert false
+  | Eident(id, line) ->
+    (* 1 - Ir buscar o CTX em que esta variável está declarada *)
+    (* 2 - Retornar o seu tipo *)
+    let t = match find_var_id id ctxs with
+      | None     -> error ("The identifier " ^ id ^ " was not defined.") line
+      | Some ctx -> snd (Hashtbl.find ctx id) 
+    in
+    TEident(id, t), t
+
+  | Ebinop (op, e1, e2, line) ->
+    (* 1 - Tipar e1 e2*) 
+    let te1, t1 = type_expr ctxs e1 in
+    let te2, t2 = type_expr ctxs e2 in
+
+    (* 2 - Verificar as regras de tipos para cada conjunto de operadores *)
+    type_binop_expr op te1 t1 te2 t2 line
+
+  | Eunop (op, e, line) ->
+    (* 1 - Tipar e *) 
+    let te, t = type_expr ctxs e in
+    
+    (* 2 - Verificar as regras de tipos para cada conjunto de operadores *)
+    type_unop_expr op te t line
+
+  | Estruct_access(e, el, line) ->
+    (* 1 - Tipar expressão *)
+    let te, t = type_expr ctxs e in
+
+    (* 2 - ir buscar o tipo estrutura *)
+    let strct = match string_of_tstruct t with
+      | None   -> error ("The structure " ^ "----" ^ " was not defined.") line
+      | Some s -> 
+        begin match find_struct_id s ctxs with
+          | None     -> error ("The structure with the identifier " ^ s ^ " was not defined.") line
+          | Some ctx -> Hashtbl.find ctx s 
+        end 
+      in
+    
+    (* 3 - verificar se a estrutura tem o elemento el *)
+    begin match find_struct_element el strct with
+       | None   -> error ("Trying to access element "^ el ^" of struct "^ "----" ^" but this structure does not contain it.") line;
+       | Some tel -> TEstruct_access(te, el, t, tel), tel
+    end 
+
   | Elen (e, line) ->
     (* 1 - Tipar e *)
     let te, t = type_expr ctxs e in
@@ -118,8 +221,21 @@ let rec type_expr ctxs = function
     TEvec_access(te1, te2, Tast.Ti32), Tast.Ti32
 
   | Ecall(id, args, line) -> assert false
-  | Evec_decl(els, line) -> assert false
-  | Eprint(s, line) -> Tast.TEprint(s, Tast.Tunit), Tast.Tunit
+  | Evec_decl(els, line) ->
+    (* 1 - O tipo da primeira expressão manda *)
+    let te1, t1 = type_expr ctxs (List.hd els) in
+
+    (* 1 - Tipar todas as expressões *)
+    let l = te1::(List.map(fun e ->  
+       let te2, t2 = type_expr ctxs e in
+       if not (compare_prust_types (t1, t2)) then error ("Invalid type in vec declaration was expecting "^"----"^" but was given "^ "----" ^".") line;
+       te2
+    ) (List.tl els)) in
+
+   TEvec_decl(l, (Tast.Tvec t1)), (Tast.Tvec t1)
+
+  | Eprint(s, line) -> 
+    Tast.TEprint(s, Tast.Tunit), Tast.Tunit
   | Eblock(b, line) ->
     let tb, t = type_block ((make_ctx ())::ctxs) b in
 
@@ -139,7 +255,7 @@ and type_stmt ctxs = function
     (* 3 - Verificar o corpo do else *)
     let typed_body_else, tbelse = type_block ((make_ctx ())::ctxs) belse in
 
-    Tast.TSif(te1, typed_body_if, typed_body_else, Tast.Tunit), Tast.Tunit
+    Tast.TSif(te, typed_body_if, typed_body_else, Tast.Tunit), Tast.Tunit
 
   | Swhile(e, body, line) ->
     (* 1 - Tipar e verificar a condição e *)
@@ -199,7 +315,8 @@ and type_stmt ctxs = function
 
     Tast.TSreturn(te, Tast.Tunit), Tast.Tunit
 
-  | Snothing _  -> Tast.TSnothing(Tast.Tunit), Tast.Tunit
+  | Snothing _  -> 
+    Tast.TSnothing(Tast.Tunit), Tast.Tunit
   | Sexpr(e, line) ->
     let te, _ = type_expr ctxs e in
     Tast.TSexpr(te, Tast.Tunit), Tast.Tunit

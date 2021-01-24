@@ -16,7 +16,8 @@ and prust_type =
   | Tunit | Ti32 | Tbool
   | Tstruct of ident
   | Tvec of prust_type
-  | Tref of bool * prust_type
+  | Tref of prust_type
+  | Trefmut of prust_type
 
 and typed_expr =
   | TEint   of int32 * prust_type
@@ -24,7 +25,7 @@ and typed_expr =
   | TEident of ident * prust_type
   | TEunop  of Ast.unop * typed_expr * prust_type
   | TEbinop of Ast.binop * typed_expr * typed_expr * prust_type
-  | TEstrc_access of typed_expr * ident * prust_type
+  | TEstruct_access of typed_expr * ident * prust_type * prust_type
   | TElen   of typed_expr * prust_type
   | TEvec_access of typed_expr * typed_expr * prust_type
   | TEcall  of ident * typed_expr list * prust_type
