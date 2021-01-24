@@ -1,17 +1,18 @@
 open Ast
+open Int32
 
-let rec string_of_crust_types = function 
-  | Tunit -> "Tunit"
-  | Ti32  -> "Ti32"
-  | Tbool -> "Tbool"
-  | Tstruct s    -> "Tstruct( " ^ s ^ " )"
-  | Tvec (s, sz) -> "Tvec( " ^ string_of_crust_types s ^ ", "^string_of_int sz^" )"
-  | Tref (t, id) -> "Tref( " ^ string_of_crust_types t ^  ", " ^ id ^ " )"
-  | Tmut t       -> "Tmut( " ^ string_of_crust_types t ^ " )"
+let rec string_of_type = function
+  | Tid id -> "Tid(" ^ id ^ ")"
+  | Tid_typed (id, t) -> "Tid(" ^ id ^ string_of_type t ^ ")"
+  | Tref t -> "Tref(" ^ string_of_type t ^ ")"
+  | Trefmut t -> "Trefmut(" ^ string_of_type t ^ ")"
 
 let string_of_unop = function
   | Uneg -> "-"
   | Unot -> "!"
+  | Uref -> "&"
+  | Urefmut -> "&mut"
+  | Uderef -> "*"
 
 let string_of_binop = function
   | Badd -> "+"
@@ -27,77 +28,71 @@ let string_of_binop = function
   | Bge -> ">="
   | Band -> "&&"
   | Bor -> "||"
+  | Bassign -> "="
 
-let string_of_crust_consts = function 
-  | Ci32  c -> "Ci32("^(Stdint.Int32.to_string c)^")"
-  | Cbool c -> "Cbool("^(string_of_bool c)^")"
-  | Cunit   -> "Cunit( () )"
+let rec string_of_expr_list exprs = 
+  let rec aux acc = function
+    | []      -> acc
+    | hd::tl -> aux (acc^(string_of_expr hd)^", ") tl
+  in aux "" exprs
 
-let rec string_of_expr_list acc = function
-  | []      -> acc
-  | hd::tl -> string_of_expr_list (acc^(string_of_expr hd)^", ") tl
+and string_of_block (stmts, exp) = 
+  let stmts = List.fold_left (fun acc s -> (string_of_stmt s) ^ ", " ^ acc) "" stmts in
+  match exp with
+  | Some exp -> stmts ^ string_of_expr exp
+  | None -> stmts
 
-and string_of_struct_pair_list acc = function
-  | []      -> acc
-  | (id, e)::tl -> string_of_struct_pair_list (acc^id^" : "^(string_of_expr e)^", ") tl
+and string_of_pair_list pairs = 
+  let rec aux acc = function
+    | []           -> acc
+    | (id, t)::tl  -> aux (acc^id^" : "^(string_of_type t)^", ") tl
+  in aux "" pairs
 
+and string_of_struct_decl_pair_list pairs = 
+  let rec aux acc = function
+    | []          -> acc
+    | (id, e)::tl -> aux (acc ^id^" : "^(string_of_expr e)^", ") tl
+  in aux "" pairs
+
+and string_of_arg_list args =
+  let rec aux acc = function
+    | []          -> acc
+    | (mut, id, t)::tl -> aux (acc ^ (if mut then "mut " else "") ^ id ^ " : "^(string_of_type t)^", ") tl
+  in aux "" args
 
 and string_of_expr = function
-  | Ecst (n, _)              -> "Ecst("^(string_of_crust_consts n)^")"
-  | Eident (id, _)           -> "Eident("^id^")"
-  | Eref (id, _)             -> "Eref("^id^")"  
-  | Erefmut (id, _)          -> "Erefmut("^id^")"
-  | Eptr (id, _)             -> "Eptr("^id^")"
-  | Ebinop (binop, e1, e2, _)-> "Ebinop("^(string_of_binop binop)^", "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
-  | Eunop (unop , e1, _)     -> "Eunop("^(string_of_unop unop)^", "^(string_of_expr e1)^")"
-  | Estrc_access (id, el, _) -> "Estrc_access("^ id^", "^el^")"
-  | Estrc_decl (id, el, _)   -> "Estrc_decl("^ id^", "^(string_of_struct_pair_list "" el)^")"
-  | Ecall (f, el, _)         -> "Ecall("^f^", "^(string_of_expr_list "" el)^")"  
-  | Elen (id, _)             -> "Elen("^id^")"
-  | Evec_access(id, e, _)    -> "Evec_access("^id^", "^(string_of_expr e)^")"
-  | Evec_decl(el, _)         -> "Evec_decl("^(string_of_expr_list "" el)^")" 
-
-
+  | Eint (n, _)               -> "Eint("^(Int32.to_string n)^")"
+  | Ebool (b, _)              -> "Ecst("^(string_of_bool b)^")"
+  | Eident (id, _)            -> "Eident("^id^")"
+  | Ebinop (binop, e1, e2, _) -> "Ebinop("^(string_of_binop binop)^", "^(string_of_expr e1)^", "^(string_of_expr e2)^")"
+  | Eunop (unop , e1, _)      -> "Eunop("^(string_of_unop unop)^", "^(string_of_expr e1)^")"
+  | Estruct_access (e, id, _) -> "Estrc_access("^ (string_of_expr e) ^ ", " ^ id ^")"
+  | Elen (e, _)               -> "Elen("^ (string_of_expr e) ^")"
+  | Evec_access(e1, e2, _)    -> "Evec_access("^ string_of_expr e1 ^", "^(string_of_expr e2)^")"
+  | Ecall (f, el, _)          -> "Ecall("^ f ^", "^(string_of_expr_list el)^")"  
+  | Evec_decl(el, _)          -> "Evec_decl("^(string_of_expr_list el)^")" 
+  | Eprint (s, _)             -> "Eprint(" ^ s ^ ")"
+  | Eblock (b, _)             -> "Eblock(" ^ (string_of_block b) ^ ")"
 
 and string_of_stmt = function
-  | Sif (e, s1, elifs, _)-> "Sif("^(string_of_expr e)^", "^(string_of_stmt s1)^", "^(string_of_elif elifs)^")"
-  | Swhile(e, bl, _)     -> "Swhile("^(string_of_expr e)^"\n"^(string_of_stmt bl)^")"
-  | Sdeclare (id,t,e1,_) -> "Sdeclare("^id^", "^(string_of_crust_types t)^", "^(string_of_expr e1)^")"
-  | Sassign (id, e1, _)  -> "Sassign("^id^", "^(string_of_expr e1)^")"
-  | Sptr_assign (id, e, _) -> "Sptr_assign("^id^", "^(string_of_expr e)^")"
-  | Sprintn (e, _)       -> "Sprintln("^(string_of_expr e)^")"
-  | Sprint (e, _)        -> "Sprint("^(string_of_expr e)^", "^")"
-  | Sblock (bl, _)       -> string_of_block_stmt "" bl
-  | Scontinue _          -> "Scontinue"
-  | Sbreak _             -> "Sbreak"
-  | Sreturn (e, _)       -> "Sreturn("^(string_of_expr e)^")"
-  | Snothing _           -> "Snothing"
-  | Sexpr(e, _)          -> "Sexpr("^(string_of_expr e)^")"
+  | Snothing _            -> "Snothing"
+  | Sexpr(e, _)           -> "Sexpr("^(string_of_expr e)^")"
+  | Sdeclare (mut,id,e,_) -> "Sdeclare(" ^ (if mut then "mut " else "") ^ id ^", " ^(string_of_expr e)
+  | Sdeclare_struct (mut,id,t,el,_) -> "Sdeclare_struct(" ^ (if mut then "mut " else "") ^ id ^", " ^ t ^ ", "^(string_of_struct_decl_pair_list el)^")"
+  | Swhile(e, bl, _)      -> "Swhile("^(string_of_expr e)^"\n"^(string_of_block bl)^")"
+  | Sreturn (Some e, _)   -> "Sreturn("^(string_of_expr e)^")"
+  | Sreturn (None, _)     -> "Sreturn("^")"
+  | Sif (e, b1, b2, _)    -> "Sif("^ (string_of_expr e) ^ ", "^(string_of_block b1)^", "^(string_of_block b2)^")"
 
-and string_of_elif l = 
-  let out = ref "" in
-  List.iter(fun (e, body, _) -> 
-    out := !out ^ "Selif("^(string_of_expr e)^", "^(string_of_stmt body)^ ")"
-  )l;
-  !out
+and string_of_decl = function
+  | Dstruct (id, pairs, _)-> "Dstruct("^id^"(,"^(string_of_pair_list pairs)^")"
+  | Dfun (f,args,t,body,_) -> 
+    match t with
+    | Some t -> "Dfunction("^f^", ("^(string_of_arg_list args)^"), "^(string_of_type t)^", \n"^(string_of_block body)
+    | None   -> "Dfunction("^f^", ("^(string_of_arg_list args)^")"^", \n"^(string_of_block body)
 
-and string_of_block_stmt acc = function
-  | []      -> acc^"\n"
-  | s :: sl -> string_of_block_stmt (acc^(string_of_stmt s)^"\n") sl
-
-and string_of_block_global_stmt acc = function
-  | []      -> acc^"\n"
-  | s :: sl -> string_of_block_global_stmt (acc^(string_of_global_stmt s)^"\n") sl
-
-and string_of_global_stmt = function
-  | GSblock (bl, _) -> string_of_block_global_stmt "" bl
-  | GSfunction (f, args, return, body, _) -> 
-    "GSfunction("^f^", ("^(string_of_pairs "" args)^"), "^(string_of_crust_types return)^", \n    "^(string_of_stmt body)
-  | GSstruct (id, el, _)-> "GSstruct("^id^"(,"^(string_of_pairs "" el)^")"
-
-and string_of_pairs acc = function
-  | []           -> acc
-  | (id, t):: tl -> string_of_pairs (acc^id^":"^(string_of_crust_types t)^", ") tl
+and string_of_program p = 
+  List.fold_left (fun acc d -> acc ^ string_of_decl d) "" p
 
 let print_file s = 
-  Printf.printf "AST:\n\n\n%s\n\n" (string_of_global_stmt s)
+  Printf.printf "AST:\n\n\n%s\n\n" (string_of_program s)

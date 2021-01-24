@@ -2,45 +2,38 @@
   Última alteração: 17-01-2021
   Descricao: Árvore de sintaxe abastrata do CRust
 *)
-type ident = string
+type program = decl list
 
-and expr =
-  | PEcst   of Ast.crust_const
-  | PEident of ident * int list
-  | PEref   of int
-  | PErefmut of int
-  | PEptr   of int
-  | PEbinop  of Ast.binop * expr * expr
-  | PEunop   of Ast.unop * expr
-  | PElen    of int
-  | PEcall   of ident * expr list * int
-  | PEstrc_access of ident * ident * int
-  | PEstrc_decl   of ident * (ident * expr * int) list * int
-  | PEvec_decl    of (expr * int) list * int
-  | PEvec_access  of ident * expr * int * int * int
- 
-and stmt =
-  | PSif    of expr * stmt * elif list
-  | PSwhile of expr * stmt
-  | PSdeclare of ident * Ast.crust_types * expr * int list
-  | PSassign of ident * expr * int
-  | PSptr_assign of ident * expr * int
-  | PSprintn of expr * Ast.crust_types
-  | PSprint  of expr * Ast.crust_types
-  | PSblock  of stmt list
-  | PScontinue
-  | PSbreak
-  | PSreturn of expr * int list
-  | PSnothing
-  | PSexpr   of expr
-
-and elif = expr * stmt
-
-and global_stmt =
-  | PGSblock    of global_stmt list
-  | PGSfunction of ident * pairs list * Ast.crust_types * stmt * int
-  | PGSstruct   of ident * pairs list * int
+and decl = 
+  | PDstruct of ident * pair list
+  | PDfun    of ident * argument list * int
 
 and pairs = ident * Ast.crust_types * int
+and argument = bool * ident * int
 
-and program = global_stmt
+and expr =
+  | PEint   of int32 * int
+  | PEbool  of bool * int
+  | PEident of ident * int
+  | PEunop  of Ast.unop * expr
+  | PEbinop of Ast.binop * expr * expr
+  | PEstrc_access of expr * ident * int
+  | PElen   of expr * int
+  | PEvec_access of epxr * expr * int * int * int
+  | PEcall  of ident * expr list * int
+  | PEvec_decl  of (expr * int) list * int
+  | PEprint of string * int
+  | PEblock of block * int
+
+and block = stmt list * expr option * int
+
+and stmt =
+  | PSnothing
+  | PSexpr    of expr
+  | PSdeclare of bool * ident * Ast.crust_types * expr * int list
+  | PSdeclare_struct of bool * ident * ident * (ident * expr) list * int
+  | PSwhile  of expr * stmt
+  | PSreturn of expr option * int list
+  | PSif     of expr * block * block
+
+and ident = string

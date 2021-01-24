@@ -71,6 +71,7 @@ let () =
 
     (* Pára-se aqui se só queremos o parsing *)
     if !parse_only then exit 0;
+    if !print_ast || !print_tast || !print_past then Printer.print_file p;
 
   with
   | Lexer.Lexing_error c ->

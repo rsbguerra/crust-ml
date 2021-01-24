@@ -1,5 +1,15 @@
 open Tast
 
+let rec string_of_crust_types = function 
+  | Tunit -> "Tunit"
+  | Ti32  -> "Ti32"
+  | Tbool -> "Tbool"
+  | Tstruct s    -> "Tstruct( " ^ s ^ " )"
+  | Tvec (s, sz) -> "Tvec( " ^ string_of_crust_types s ^ ", "^string_of_int sz^" )"
+  | Tref (t, id) -> "Tref( " ^ string_of_crust_types t ^  ", " ^ id ^ " )"
+  | Tmut t       -> "Tmut( " ^ string_of_crust_types t ^ " )"
+
+
 let rec string_of_typed_expr_list acc = function
   | []      -> acc
   | hd::tl -> (string_of_typed_expr_list (acc^(string_of_typed_expr hd)^", ") tl)
