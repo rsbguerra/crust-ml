@@ -102,15 +102,10 @@ let rec is_value_mut ctxs = function
     begin match find_var_id id ctxs with
       | None     -> error ("The identifier " ^ id ^ " was not defined.") (-1)
       | Some ctx -> fst (Hashtbl.find ctx id) end
-  | TEunop (Uderef, _, t) ->
-      begin
-        match t with
-        | Tast.Trefmut _ -> true
-        | _ -> false
-      end
+  | TEstruct_access(e,_, _, _) -> is_value_mut ctxs e
   | _ -> false
 
-let rec type_binop_expr op te1 t1 te2 t2 line = match op with
+let rec type_binop_expr op te1 t1 te2 t2 line ctxs = match op with
   | Ast.Badd | Ast.Bsub | Ast.Bmul | Ast.Bdiv | Ast.Bmod ->
     (* 1 - Verificar t1 e t2 *)
     if not (is_i32 t1) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^ "-----" ^" but a "^ "-----" ^" was expected.") line;
@@ -133,6 +128,7 @@ let rec type_binop_expr op te1 t1 te2 t2 line = match op with
     (* 1 - Verificar t1 e t2 *)
     if not (compare_prust_types (t1, t2)) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^"-----"^" but a "^"-----"^" was expected.") line;
     (* Todo: verificar se te1 é mutável *)
+    if not (is_value_mut ctxs te1) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^"-----"^" but a "^"-----"^" was expected.") line;
     (* 2 - Retornar operação tipada*)
     TEbinop(op, te1, te2, t1), t1
 
@@ -185,7 +181,7 @@ let rec type_expr ctxs = function
     let te2, t2 = type_expr ctxs e2 in
 
     (* 2 - Verificar as regras de tipos para cada conjunto de operadores *)
-    type_binop_expr op te1 t1 te2 t2 line
+    type_binop_expr op te1 t1 te2 t2 line ctxs
 
   | Eunop (op, e, line) ->
     (* 1 - Tipar e *) 
@@ -334,6 +330,10 @@ and type_stmt ctxs = function
       
       let typed_el = ref [] in
 
+      let struct_els = List.sort (fun (id1,_) (id2,_) -> compare id1 id2) struct_els in
+
+      let el = List.sort (fun (id1,_) (id2,_) -> compare id1 id2) el in
+
       List.iter2(fun (id1,t1) (id2,e2) -> 
         let te2, t2 = type_expr ctxs e2 in
         (* 2.1 - Verificar se os nomes de e2 estão corretos *)
@@ -388,7 +388,7 @@ and type_decl ctxs = function
       let tt = type_prust_type t in
       Hashtbl.add v e (false, tt);
 
-      (id, tt)
+      (e, tt)
 
     )els in
 
