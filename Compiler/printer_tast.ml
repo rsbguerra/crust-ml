@@ -5,11 +5,11 @@ let rec string_of_program p =
 
 and string_of_typed_decl = function
   | TDstruct (id, p, t) -> 
-    "GSstruct("^id^",("^(string_of_pairs "" p)^")" ^ (string_of_prust_types t)^ ")"
+    "TDstruct("^id^",("^(string_of_pairs "" p)^")" ^ (string_of_prust_types t)^ ")"
   | TDfun (f, args, return, body, t) -> 
-    "TGSfunction("^f^", ("^(string_of_args args)^"), "^
+    "TDfun("^f^", ("^(string_of_args args)^"), "^
     (string_of_prust_types return)^", "^
-    (string_of_typed_block body)
+    (string_of_typed_block body) ^
     (string_of_prust_types t)
 
 and string_of_pairs acc = function
@@ -26,6 +26,7 @@ and string_of_prust_types = function
   | Tstruct s    -> "Tstruct( " ^ s ^ " )"
   | Tvec t -> "Tvec( " ^ (string_of_prust_types t) ^ " )"
   | Tref t -> "Tref( " ^ (string_of_prust_types t) ^ " )"
+  | Trefmut t -> "Trefmut( " ^ (string_of_prust_types t) ^ " )"
 
 and string_of_typed_expr_list acc = function
   | []      -> acc
@@ -54,21 +55,20 @@ and string_of_typed_expr = function
   | TEcall (f, el, t)            -> "TEcall("^ f ^ ", " ^ (string_of_call_pair_list el) ^ "," ^(string_of_prust_types t)^")"
   | TEvec_decl (els, t)          -> "TEvec_decl("^ (List.fold_left(fun a e -> a ^ ", " ^ (string_of_typed_expr e)) "" els) ^ ", " ^ (string_of_prust_types t)^ ")"
   | TEprint (s, t)  -> "TEprint(" ^ s ^ ", " ^ (string_of_prust_types t) ^ ")"
-  | TEblock (bl, t) -> "TEblock(" ^ (string_of_typed_block bl) ^ ", " ^ (string_of_typed_expr t) ^ ")"
+  | TEblock (bl, t) -> "TEblock(" ^ (string_of_typed_block bl) ^ ", " ^ (string_of_prust_types t) ^ ")"
 
 and string_of_typed_block (stmts, exp, t) = 
-  let stmts = List.fold_left (fun acc s -> acc ^ (string_of_typed_stmt s) ^ "\n") "" stmts in
+  let stmts = List.fold_left (fun acc s -> acc ^ "," ^ (string_of_typed_stmt s) ^ "\n") "" stmts in
   match exp with
-  | Some e -> stmts ^( string_of_typed_expr e) ^ ", " ^ (string_of_prust_types t)
-  | None -> stmts ^ ", " ^ (string_of_prust_types t)
+    | Some e -> stmts ^( string_of_typed_expr e) ^ ", " ^ (string_of_prust_types t)
+    | None -> stmts ^ ", " ^ (string_of_prust_types t)
 
 
 and string_of_typed_stmt = function
   | TSnothing t            -> "TSnothing"^(string_of_prust_types t)^")"
   | TSexpr (e,t)           -> "TSexpr("^(string_of_typed_expr e)^", "^(string_of_prust_types t)^")"
-  | TSdeclare(mut,id,e,ts) -> 
-  "TSdeclare(" ^ (if mut then "mut " else "") ^ id ^ ", " ^(string_of_prust_types t)^", "^(string_of_typed_expr e)^","^(string_of_prust_types ts)^")"
-  | TEdeclare_struct(id, el, t) -> "TSdeclare_struct(" ^ (if mut then "mut " else "") ^ id^", "^(string_of_struct_decl_pair_list "" el)^", "^(string_of_prust_types t)^")"
+  | TSdeclare(mut,id,e,t) -> "TSdeclare(" ^ (if mut then "mut " else "") ^id^", "^(string_of_typed_expr e)^","^(string_of_prust_types t)^")"
+  | TSdeclare_struct(mut, id, tid, el, t) -> "TSdeclare_struct(" ^ (if mut then "mut " else "") ^ id^", "^tid^", "^(string_of_struct_decl_pair_list "" el)", "^(string_of_prust_types t)^")"
   | TSwhile(e, bl, t)     -> "TSwhile("^(string_of_typed_expr e)^"\n"^(string_of_typed_block bl) ^ ", " ^(string_of_prust_types t)^")"
   | TSreturn (None, t)    -> "TSreturn("^(string_of_prust_types t)^")"
   | TSreturn (Some e, t)  -> "TSreturn("^(string_of_typed_expr e)^", "^(string_of_prust_types t)^")"

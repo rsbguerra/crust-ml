@@ -78,6 +78,7 @@ let () =
     
     (* Type AST *)
     let p = Typing.type_file p in
+    if !print_tast then Printer_tast.print_file p;
     if !type_only then exit 0
     
 
