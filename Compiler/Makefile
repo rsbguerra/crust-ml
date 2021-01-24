@@ -19,8 +19,6 @@ test:
 
 test-s:
 	dune exec $(release) -- ./crust.exe $(test).rs
-	gcc -g -no-pie $(test).s
-	./a.out
 
 clean:
 	dune clean

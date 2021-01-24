@@ -25,7 +25,7 @@ let error s line = raise (Error (s, line))
 
 
 (* table_ctx representa um scope, contexto *)
-type tbl_variables_ctx = (string,Tast.prust_type) Hashtbl.t
+type tbl_variables_ctx = (string, (bool * Tast.prust_type)) Hashtbl.t
 type tbl_functions_ctx = (string, Tast.argument list * Tast.prust_type) Hashtbl.t
 type tbl_structs_ctx = (string, Tast.pair list) Hashtbl.t
 
@@ -55,6 +55,25 @@ let rec is_id_unique id = function
   | []          -> true
   | (v,f,s)::tl -> if (Hashtbl.mem v id || Hashtbl.mem f id || Hashtbl.mem s id) then false else (is_id_unique id tl)
 
+let compare_prust_types = function
+ | Tast.Ti32, Tast.Ti32 -> true
+ | Tast.Tbool, Tast.Tbool -> true
+ | Tast.Tstruct s1, Tast.Tstruct s2 -> s1 = s2
+ | _ -> false
+
+
+let is_bool = function
+ | Tast.Tbool  -> true
+ | _           -> false
+
+let is_i32 = function
+ | Tast.Ti32   -> true
+ | _           -> false
+
+let is_vec = function
+ | Tast.Tvec _ -> true
+ | _           -> false
+
 let type_prust_type = function
   | Ast.Tid id -> 
   begin match id with
@@ -74,26 +93,120 @@ let rec type_expr ctxs = function
   | Ebinop (op, e1, e2, line) -> assert false
   | Eunop (op, e, line) -> assert false
   | Estruct_access(id, el, line) -> assert false
-  | Elen (id,line) -> assert false
-  | Evec_access(id, e, line) -> assert false
+  | Elen (e, line) ->
+    (* 1 - Tipar e *)
+    let te, t = type_expr ctxs e in
+    
+    (* 2 - Verificar se e é do tipo vec *)
+    (* Todo: Call tast printer *)
+    if not (is_vec t) then error ("Trying to invoke len method with type  instead of Tvec.") line;
+
+    TElen(te, Tast.Ti32), Tast.Ti32
+
+  | Evec_access(e1, e2, line) ->
+    (* 1 - Tipar e *)
+    let te1, t1 = type_expr ctxs e1 in
+    
+    (* 2 - Verificar se e é do tipo vec *)
+    (* Todo: Call tast printer *)
+    if not (is_vec t1) then error ("Trying to use type"^ "----" ^" has Tvec.") line;
+
+    (* 3 - Tipar e2 *)
+    let te2, t2 = type_expr ctxs e2 in
+    if not (is_i32 t2) then error ("Trying to access element of vector with type"^ "----" ^".") line;
+
+    TEvec_access(te1, te2, Tast.Ti32), Tast.Ti32
+
   | Ecall(id, args, line) -> assert false
   | Evec_decl(els, line) -> assert false
-  | Eprint(s, line) -> assert false
-  | Eblock(b, line) -> assert false
+  | Eprint(s, line) -> Tast.TEprint(s, Tast.Tunit), Tast.Tunit
+  | Eblock(b, line) ->
+    let tb, t = type_block ((make_ctx ())::ctxs) b in
+
+    TEblock(tb, t), t
+
   
 (* Verificacao de uma instrucao - Instruções nao devolvem um valor *)
 and type_stmt ctxs = function
-  | Ast.Sif(e1, body, elifs, line) -> assert false
-  | Swhile(e, body, line) -> assert false
-  | Sdeclare(ismut, id, e, line) -> assert false
-  | Sdeclare_struct(ismut, id, idt, e, line) -> assert false
-  | Sreturn (e, line) -> assert false
-  | Snothing _  -> assert false
-  | Sexpr(e, line) -> assert false
+  | Ast.Sif(e, bif, belse, line) ->
+    (* 1 - Verificar o tipo de e *)
+    let te, t = type_expr ctxs e in
+    if not (is_bool t) then error ("Wrong type in the if condition, was given " ^ "---" ^ " but a bool was expected.") line;
+
+    (* 2 - Verificar o corpo do if *)
+    let typed_body_if, tbif = type_block ((make_ctx ())::ctxs) bif in
+
+    (* 3 - Verificar o corpo do else *)
+    let typed_body_else, tbelse = type_block ((make_ctx ())::ctxs) belse in
+
+    Tast.TSif(te1, typed_body_if, typed_body_else, Tast.Tunit), Tast.Tunit
+
+  | Swhile(e, body, line) ->
+    (* 1 - Tipar e verificar a condição e *)
+    let te1, t1 = type_expr ctxs e in
+    if not (is_bool t1) then error ("Wrong type in the while condition, was given "^ "----" ^" but a bool was expected.") line;
+    (* 2 - Tipar corpo do while *)
+    let typed_body, tb = type_block ((make_ctx ())::ctxs) body in
+
+    Tast.TSwhile(te1, typed_body, Tast.Tunit), Tast.Tunit
+
+  | Sdeclare(ismut, id, e, line) ->
+    (* 1 - Tipar e verificar a expressão e *)
+    let te, t = type_expr ctxs e in
+    
+    (* 2 - Adicionar variável ao contexto *)
+    let v_ctx,_,_ = (List.hd ctxs) in 
+    
+    Hashtbl.add v_ctx id (ismut, t);
+
+    (* 3 - Retornar declaração tipada *)
+    Tast.TSdeclare(ismut, id, te, Tast.Tunit), Tast.Tunit 
+   
+  | Sdeclare_struct(ismut, id, idt, el, line) -> 
+    (* 1 - Verificar se a estrutura idt existe *)
+    let struct_els = match find_struct_id id ctxs with
+      | None     -> error ("The structure with the identifier "^idt^" was not defined.") line
+      | Some ctx -> Hashtbl.find ctx idt
+    in
+
+    (* 2 - Tipar elementos *)
+    if (List.length struct_els) <> (List.length el) then error ("The structure with the identifier "^id^" has "^(string_of_int (List.length struct_els))^" elements but were givin "^string_of_int(List.length el)^".") line;
+      
+      let typed_el = ref [] in
+
+      List.iter2(fun (id1,t1) (id2,e2) -> 
+        let te2, t2 = type_expr ctxs e2 in
+        (* 2.1 - Verificar se os nomes de e2 estão corretos *)
+        if id1 <> id2 then error ("Wrong name given in the declaration of a struct condition, was given "^id1^" but "^id2^" was expected.") line;
+        (* 2.1 - Verificar se os tipos de e2 estão corretos *)
+        if not (compare_prust_types (t1, t2)) then error ("Wrong type in the if condition, was given " ^ "----" ^ " but a " ^ "----" ^ " was expected.") line;
+        typed_el := (!typed_el)@[(id2,te2)]
+      ) struct_els el;
+
+    (* 3 - Adicionar variável ao contexto *)
+    let v_ctx,_,_ = (List.hd ctxs) in 
+    
+    Hashtbl.add v_ctx id (ismut, (Tstruct idt));
+
+    (* 3 - Retornar declaração tipada *)
+    Tast.TSdeclare_struct(ismut, id, idt, !typed_el, Tast.Tunit), Tast.Tunit 
+
+  | Sreturn (e, line) ->
+    let te = match e with
+      | None   -> None
+      | Some e -> Some (fst (type_expr ctxs e))
+    in
+
+    Tast.TSreturn(te, Tast.Tunit), Tast.Tunit
+
+  | Snothing _  -> Tast.TSnothing(Tast.Tunit), Tast.Tunit
+  | Sexpr(e, line) ->
+    let te, _ = type_expr ctxs e in
+    Tast.TSexpr(te, Tast.Tunit), Tast.Tunit
 
 and type_block ctxs b = 
  let stmts, e = b in
- let t_stmts = List.map (fun s -> type_stmt ctxs s)stmts in
+ let t_stmts = List.map (fun s -> fst (type_stmt ctxs s))stmts in
 
  let te, t = match e with
   | None   -> None, Tast.Tunit
@@ -112,7 +225,7 @@ and type_decl ctxs = function
       if not (is_id_unique e [ctx]) then error ("The struct element with identifier " ^ e ^ " was already defined.") line;
       let v,_,_ = ctx in
       let tt = type_prust_type t in
-      Hashtbl.add v e tt;
+      Hashtbl.add v e (false, tt);
 
       (id, tt)
 
@@ -135,7 +248,7 @@ and type_decl ctxs = function
       let v,_,_ = List.hd args_ctxs in
       let tt = type_prust_type t in
 
-      Hashtbl.add v arg tt;
+      Hashtbl.add v arg (ismut, tt);
       (ismut, arg, tt)
     ) args in 
     
@@ -147,20 +260,22 @@ and type_decl ctxs = function
      | None   -> Tast.Tunit
      | Some t -> type_prust_type t
     in
-   let _,f,_ = List.hd ctxs in
+
+    let _,f,_ = List.hd ctxs in
     Hashtbl.add f id (targs, r);
 
     (* 3 - Tipar corpo *)
     let typed_body, tb = type_block args_ctxs body in
+    
     (*
-    Todo: if not (compare_crust_types (tb,r)) then error ("The function "^id^" has return type "^Printer.string_of_crust_types r^" but is body has return type "^Printer.string_of_crust_types tb^".") line;
+      TODO: if not (compare_crust_types (tb,r)) then error ("The function "^id^" has return type "^Printer.string_of_crust_types r^" but is body has return type "^Printer.string_of_crust_types tb^".") line;
     *)
     Tast.TDfun(id, targs, r, typed_body, Tast.Tunit)
 
     
 (* Tipa uma AST *)
 let type_file f = 
-  List.fold_left_map(fun ctxs s ->  
+  List.fold_left_map(fun ctxs s ->
     let ctxs = (make_ctx ())::ctxs in
-    ctxs, (type_decl ctxs) 
+    ctxs, (type_decl ctxs s) 
   ) [] f

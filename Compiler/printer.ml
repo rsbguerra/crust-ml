@@ -88,8 +88,8 @@ and string_of_decl = function
   | Dstruct (id, pairs, _)-> "Dstruct("^id^"(,"^(string_of_pair_list pairs)^")"
   | Dfun (f,args,t,body,_) -> 
     match t with
-    | Some t -> "Dfunction("^f^", ("^(string_of_arg_list args)^"), "^(string_of_type t)^", \n"^(string_of_block body)
-    | None   -> "Dfunction("^f^", ("^(string_of_arg_list args)^")"^", \n"^(string_of_block body)
+    | Some t -> "Dfun("^f^", ("^(string_of_arg_list args)^"), "^(string_of_type t)^", \n    "^(string_of_block body)
+    | None   -> "Dfun("^f^", ("^(string_of_arg_list args)^")"^", \n    "^(string_of_block body)
 
 and string_of_program p = 
   List.fold_left (fun acc d -> acc ^ string_of_decl d) "" p

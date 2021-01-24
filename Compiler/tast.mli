@@ -26,11 +26,11 @@ and typed_expr =
   | TEbinop of Ast.binop * typed_expr * typed_expr * prust_type
   | TEstrc_access of typed_expr * ident * prust_type
   | TElen   of typed_expr * prust_type
-  | TEvec_access of typed_expr * typed_expr * prust_type * prust_type
+  | TEvec_access of typed_expr * typed_expr * prust_type
   | TEcall  of ident * typed_expr list * prust_type
   | TEvec_decl of typed_expr list * prust_type
-  | Eprint  of string * prust_type
-  | Eblock  of typed_block * prust_type
+  | TEprint  of string * prust_type
+  | TEblock  of typed_block * prust_type
 
 and typed_block = typed_stmt list * typed_expr option * prust_type
 

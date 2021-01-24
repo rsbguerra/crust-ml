@@ -5,6 +5,7 @@ open Lexing
 
 (* Opção de compilação, para parar na fase de parsing *)
 let parse_only = ref false
+let type_only = ref false
 let print_ast = ref false
 let print_tast = ref false
 let print_past = ref false
@@ -19,12 +20,14 @@ let set_file f s = f := s
 let options =
   ["--parse-only", Arg.Set parse_only,
    "  Executes only the lexer and parser ";
-  "--print-ast", Arg.Set print_ast,
-  "  Prints the AST of a givin file ";
-  "--print-tast", Arg.Set print_tast,
-  "  Prints the TAST of a givin file ";
-  "--print-past", Arg.Set print_past,
-  "  Prints the PAST of a givin print_past ";
+   "--type-only", Arg.Set type_only,
+   "  Executes only the typing ";
+   "--print-ast", Arg.Set print_ast,
+   "  Prints the AST of a givin file ";
+   "--print-tast", Arg.Set print_tast,
+   "  Prints the TAST of a givin file ";
+   "--print-past", Arg.Set print_past,
+   "  Prints the PAST of a givin print_past ";
    "-o", Arg.String (set_file ofile),
    "<file>  To indicate the name of the output file"]
 
@@ -75,8 +78,8 @@ let () =
     
     (* Type AST *)
     let p = Typing.type_file p in
-    ()
-
+    if !type_only then exit 0
+    
 
   with
   | Lexer.Lexing_error c ->
@@ -92,4 +95,8 @@ let () =
 	  (* Erro sintáctio. Recupera-se a posição e converte-se para número de linha *)
 	  localisation (Lexing.lexeme_start_p buf);
 	  eprintf "\nerror:\n\n  Syntatic error: invalid derivation.\n\n@.";
+    exit 1
+  | Typing.Error (s, line)-> 
+    eprintf "\n\nFile \"%s\", line %d:\n" !ifile line;
+    eprintf "\nerror:\n\n  Typing analysis:\n  %s\n@." s;
     exit 1
