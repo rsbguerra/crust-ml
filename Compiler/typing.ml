@@ -81,7 +81,6 @@ let get_refmut_type = function
  | Tast.Trefmut t -> Some t
  | _              -> None
 
-
 let string_of_tstruct = function 
   | Tast.Tstruct t  -> Some t
   | _              -> None
@@ -97,6 +96,19 @@ let type_prust_type = function
   | Tid_typed (id, t) -> assert false
   | Tref t -> assert false
   | Trefmut t -> assert false
+
+let rec is_value_mut ctxs = function
+  | Tast.TEident (id, _) ->
+    begin match find_var_id id ctxs with
+      | None     -> error ("The identifier " ^ id ^ " was not defined.") (-1)
+      | Some ctx -> fst (Hashtbl.find ctx id) end
+  | TEunop (Uderef, _, t) ->
+      begin
+        match t with
+        | Tast.Trefmut _ -> true
+        | _ -> false
+      end
+  | _ -> false
 
 let rec type_binop_expr op te1 t1 te2 t2 line = match op with
   | Ast.Badd | Ast.Bsub | Ast.Bmul | Ast.Bdiv | Ast.Bmod ->
@@ -117,8 +129,12 @@ let rec type_binop_expr op te1 t1 te2 t2 line = match op with
     if not (is_bool t2) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^"-----"^" but a "^"-----"^" was expected.") line;
     (* 2 - Retornar operação tipada*)
     TEbinop(op, te1, te2, Tast.Tbool), Tast.Tbool
-  | _ -> assert false
-
+  | Ast.Bassign ->
+    (* 1 - Verificar t1 e t2 *)
+    if not (compare_prust_types (t1, t2)) then error ("Wrong type given to operand "^(Printer.string_of_binop op)^", was given"^"-----"^" but a "^"-----"^" was expected.") line;
+    (* Todo: verificar se te1 é mutável *)
+    (* 2 - Retornar operação tipada*)
+    TEbinop(op, te1, te2, t1), t1
 
 let rec type_unop_expr op te t line = match op with
   | Ast.Uneg ->
@@ -150,8 +166,10 @@ let rec type_unop_expr op te t line = match op with
     Tast.TEunop(op, te, t), t
 
 let rec type_expr ctxs = function
-  | Ast.Eint(v, _) -> Tast.TEint(v, Tast.Ti32), Tast.Ti32
-  | Ebool(v, _) -> Tast.TEbool(v, Tast.Tbool), Tast.Tbool
+  | Ast.Eint(v, _) -> 
+    Tast.TEint(v, Tast.Ti32), Tast.Ti32
+  | Ebool(v, _) -> 
+    Tast.TEbool(v, Tast.Tbool), Tast.Tbool
   | Eident(id, line) ->
     (* 1 - Ir buscar o CTX em que esta variável está declarada *)
     (* 2 - Retornar o seu tipo *)
@@ -220,7 +238,32 @@ let rec type_expr ctxs = function
 
     TEvec_access(te1, te2, Tast.Ti32), Tast.Ti32
 
-  | Ecall(id, args, line) -> assert false
+  | Ecall(id, args, line) ->
+    (* 1 - Verificar se a função existe *)
+    let params, r = match find_fun_id id ctxs with
+      | None -> error ("The function with identifier " ^ id ^ " was not defined.") line
+      | Some ctx -> Hashtbl.find ctx id in
+
+    (* 2 - Verificar os tipos dos argumentos *)
+    if not ((List.length args) = (List.length params)) then error ("Invalid number of arguments given.") line;
+    
+    let typed_args = ref [] in
+    let arg_types = ref [] in
+    List.iteri(fun i e ->
+      let te, t = type_expr ctxs e in
+      let ismut, arg_name, ta = List.nth params i in
+      if not (compare_prust_types (ta,t)) then error ("Invalid argument type was given "^"----"^" but was expected a "^"------"^".") line;
+      typed_args := !typed_args@[te];
+      arg_types := !arg_types@[ismut, arg_name, ta]
+    )args;
+
+    let _ = match find_fun_id id ctxs with
+      | None -> error ("The function with identifier " ^ id ^ " was not defined.") line
+      | Some ctx -> Hashtbl.replace ctx id ((!arg_types), r)
+    in
+
+    TEcall(id, !typed_args, r), r
+    
   | Evec_decl(els, line) ->
     (* 1 - O tipo da primeira expressão manda *)
     let te1, t1 = type_expr ctxs (List.hd els) in
@@ -391,8 +434,36 @@ and type_decl ctxs = function
 
     
 (* Tipa uma AST *)
-let type_file f = 
-  List.fold_left_map(fun ctxs s ->
+let type_file f =
+
+
+  let tdcl = ref [] in
+  let ctxs = ref [] in
+  
+  let out = ref "" in
+
+  List.iter(fun s ->
+    ctxs := (make_ctx ())::(!ctxs);
+    tdcl := (!tdcl)@[type_decl !ctxs s];
+
+    List.iter(fun (v,f,s) ->
+      out := !out ^ "---VALUES: ";
+      Hashtbl.iter(fun k v -> out := !out ^ ", " ^ k)v;
+      out := !out ^ "---FUNCTIONS: ";
+      Hashtbl.iter(fun k v -> out := !out ^ ", " ^ k)f;
+      out := !out ^ "---STRUCTS: ";
+      Hashtbl.iter(fun k v -> out := !out ^ ", " ^ k)s;
+          out := !out ^ "\n";
+
+    )!ctxs;
+    
+    Printf.eprintf "CTXS: %s\n" !out;
+  ) f;
+  !tdcl
+
+  
+  (*List.fold_left_map(fun ctxs s ->
     let ctxs = (make_ctx ())::ctxs in
     ctxs, (type_decl ctxs s) 
   ) [] f
+*)
