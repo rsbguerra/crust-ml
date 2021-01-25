@@ -17,11 +17,11 @@ and expr =
   | PEident of ident * int
   | PEunop  of Ast.unop * expr
   | PEbinop of Ast.binop * expr * expr
-  | PEstrc_access of expr * ident * int
+  | PEstruct_access of expr * ident * int
   | PElen   of expr * int
-  | PEvec_access of epxr * expr * int * int * int
+  | PEvec_access of expr * expr * int * int * int
   | PEcall  of ident * expr list * int
-  | PEvec_decl  of (expr * int) list * int
+  | PEvec_decl of (expr * int) list * int
   | PEprint of string * int
   | PEblock of block * int
 
