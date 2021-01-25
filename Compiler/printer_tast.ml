@@ -1,11 +1,11 @@
 open Tast
 open Int32
 let rec string_of_program p = 
-  List.fold_left (fun acc d -> acc ^ (string_of_typed_decl d)) "" p
+  List.fold_left (fun acc d -> acc ^"\n\n"^ (string_of_typed_decl d)) "" p
 
 and string_of_typed_decl = function
   | TDstruct (id, p, t) -> 
-    "TDstruct("^id^",("^(string_of_pairs "" p)^")" ^ (string_of_prust_types t)^ ")"
+    "TDstruct("^id^",("^(string_of_pairs p)^")" ^ (string_of_prust_types t)^ ")"
   | TDfun (f, args, return, body, t) -> 
     "TDfun("^f^", ("^(string_of_args args)^"), "^
     (string_of_prust_types return)^", "^
@@ -22,16 +22,17 @@ and string_of_prust_types = function
   | Tunit -> "Tunit"
   | Ti32  -> "Ti32"
   | Tbool -> "Tbool"
+  | Tempty -> "Tempty"
   | Tstruct s -> "Tstruct( " ^ s ^ " )"
   | Tvec t -> "Tvec( " ^ (string_of_prust_types t) ^ " )"
   | Tref t -> "Tref( " ^ (string_of_prust_types t) ^ " )"
   | Trefmut t -> "Trefmut( " ^ (string_of_prust_types t) ^ " )"
 
 and string_of_typed_expr_list exprs =
-  List.fold_left (fun acc e -> acc^(string_of_typed_expr exp)^", ") expr
+  List.fold_left (fun acc e -> acc^(string_of_typed_expr e)^", ") "" exprs
 
 and string_of_struct_pair_list p =
-  List.fold_left (fun acc (id, e) -> acc^id^" : "^(string_of_typed_expr e)^", ") p
+  List.fold_left (fun acc (id, e) -> acc^id^" : "^(string_of_typed_expr e)^", ") "" p
 
 and string_of_call_pair_list pair = 
   List.fold_left (fun acc e -> acc ^ ", " ^ (string_of_typed_expr e)) "" pair
@@ -56,7 +57,7 @@ and string_of_typed_expr = function
 and string_of_typed_block (stmts, exp, t) = 
   let stmts = List.fold_left (fun acc s -> acc ^ "," ^ (string_of_typed_stmt s) ^ "\n") "" stmts in
   match exp with
-    | Some e -> stmts ^( string_of_typed_expr e) ^ ", " ^ (string_of_prust_types t)
+    | Some e -> stmts ^(string_of_typed_expr e) ^ ", " ^ (string_of_prust_types t)
     | None -> stmts ^ ", " ^ (string_of_prust_types t)
 
 
@@ -73,5 +74,4 @@ and string_of_typed_stmt = function
   | TSreturn (Some e, t)  -> "TSreturn("^(string_of_typed_expr e)^", "^(string_of_prust_types t)^")"
   | TSif (e, bl1, bl2, t) -> "TSif("^(string_of_typed_expr e)^", "^(string_of_typed_block bl1)^", "^(string_of_typed_block bl2)^", "^(string_of_prust_types t)^")"
 
-let print_file s = 
-  Printf.printf "TYPED AST:\n\n%s\n\n" (string_of_program s)
+let print_file s =  Printf.printf "TYPED AST:\n\n%s\n\n" (string_of_program s)

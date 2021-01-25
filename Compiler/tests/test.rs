@@ -1,21 +1,13 @@
-fn swap(x: &mut i32, y: &mut i32) {
-    let t = *x;
-    *x = *y;
-    *y = t;
+
+fn bar(v: Vec<& i32>) 
+{ 
+
 }
 
-fn compare(x: i32, y: i32) {
-    if x < y { print!("-") }
-    else if x > y { print!("+") }
-    else { print!("=") };
-    print!("\n");
-}
-
-fn main() {
-    let mut x = 41;
-    let mut y = 42;
-    compare(x, y);
-    swap(&mut x, &mut y);
-    compare(x, y);
+fn main() 
+{ 
+  let mut x = 42;
+  let y = 89;
+  bar(vec![&mut x, &y]);
 }
 
