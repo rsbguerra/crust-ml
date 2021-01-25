@@ -1,7 +1,7 @@
 open Tast
 open Int32
 let rec string_of_program p = 
-  List.fold_left (fun acc d -> acc ^ (string_of_typed_decl d)) "" p
+  List.fold_left (fun acc d -> acc ^"\n\n"^ (string_of_typed_decl d)) "" p
 
 and string_of_typed_decl = function
   | TDstruct (id, p, t) -> 
@@ -23,6 +23,7 @@ and string_of_prust_types = function
   | Tunit -> "Tunit"
   | Ti32  -> "Ti32"
   | Tbool -> "Tbool"
+  | Tempty -> "Tempty"
   | Tstruct s    -> "Tstruct( " ^ s ^ " )"
   | Tvec t -> "Tvec( " ^ (string_of_prust_types t) ^ " )"
   | Tref t -> "Tref( " ^ (string_of_prust_types t) ^ " )"

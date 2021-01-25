@@ -14,6 +14,7 @@ and argument = bool * ident * prust_type
 
 and prust_type =
   | Tunit | Ti32 | Tbool
+  | Tempty
   | Tstruct of ident
   | Tvec of prust_type
   | Tref of prust_type
