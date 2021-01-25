@@ -11,6 +11,15 @@ and decl =
 and pairs = ident * Ast.crust_types * int
 and argument = bool * ident * int
 
+and prust_type =
+  | Tunit of int
+  | Ti32  of int
+  | Tbool of int
+  | Tstruct of ident
+  | Tvec of prust_type
+  | Tref of prust_type
+  | Trefmut of prust_type
+
 and expr =
   | PEint   of int32 * int
   | PEbool  of bool * int
