@@ -29,6 +29,8 @@ type tbl_variables_ctx = (string, (bool * Tast.prust_type)) Hashtbl.t
 type tbl_functions_ctx = (string, Tast.argument list * Tast.prust_type) Hashtbl.t
 type tbl_structs_ctx = (string, Tast.pair list) Hashtbl.t
 
+let expected_vec_type = ref None
+
 let make_ctx () = 
   let v = (Hashtbl.create 16 : tbl_variables_ctx) in
   let f = (Hashtbl.create 16 : tbl_functions_ctx) in
@@ -308,14 +310,18 @@ and type_expr ctxs ret = function
     let typed_args = ref [] in
     let arg_types = ref [] in
     List.iteri(fun i e ->
-      let te, t = type_expr ctxs ret e in
       let ismut, arg_name, ta = List.nth params i in
+      expected_vec_type := (get_vec_type ta);
+
+      let te, t = type_expr ctxs ret e in
 
       if not (compare_prust_types (ta,t)) then error ("Invalid argumentin function "^id^" type was given "^Printer_tast.string_of_prust_types t^" but was expected a "^Printer_tast.string_of_prust_types ta^".") line;
       
       typed_args := !typed_args@[te];
       arg_types := !arg_types@[ismut, arg_name, ta]
     )args;
+
+    expected_vec_type := None;
 
     let _ = match find_fun_id id ctxs with
       | None -> error ("The function with identifier " ^ id ^ " was not defined.") line
@@ -326,11 +332,16 @@ and type_expr ctxs ret = function
     
   | Evec_decl(els, line) ->
     (* 1 - O tipo da primeira expressão manda *)
-    let t1 = try snd(type_expr ctxs ret (List.hd els)) with _ -> Tast.Tempty in
+    
+    let t1 = match !expected_vec_type with
+     | None -> (try snd(type_expr ctxs ret (List.hd els)) with _ -> Tast.Tempty)
+     | Some t -> t
+    in
 
     (* 1 - Tipar todas as expressões *)
     let l = (List.map(fun e ->  
        let te2, t2 = type_expr ctxs ret e in
+       
        if not (compare_prust_types (t1, t2)) then error ("Invalid type in vec declaration was expecting "^Printer_tast.string_of_prust_types t1^" but was given "^ Printer_tast.string_of_prust_types t2 ^".") line;
        te2
     ) (els)) in
