@@ -12,13 +12,14 @@ and pairs = ident * Ast.crust_types * int
 and argument = bool * ident * int
 
 and prust_type =
-  | Tunit of int
-  | Ti32  of int
-  | Tbool of int
-  | Tstruct of ident
-  | Tvec of prust_type
-  | Tref of prust_type
-  | Trefmut of prust_type
+  | PTunit of int
+  | PTi32  of int
+  | PTbool of int
+  | PTempty
+  | PTstruct of ident
+  | PTvec of prust_type * int
+  | PTref of prust_type
+  | PTrefmut of prust_type
 
 and expr =
   | PEint   of int32 * int
@@ -41,7 +42,7 @@ and stmt =
   | PSexpr    of expr
   | PSdeclare of bool * ident * Ast.crust_types * expr * int list
   | PSdeclare_struct of bool * ident * ident * (ident * expr) list * int
-  | PSwhile  of expr * stmt
+  | PSwhile  of expr * block
   | PSreturn of expr option * int list
   | PSif     of expr * block * block
 

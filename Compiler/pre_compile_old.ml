@@ -133,9 +133,6 @@ let rec get_ident_type_elements ctxs pos sz = function
     !out
   | Tmut t -> get_ident_type_elements ctxs pos sz t
 
-    let pb, next = pcompile_block_stmt ((make_ctx())::ctxs) next stmts in
-    PSblock pblock, next
-
 let rec old_pcompile_expr ctxs next = function
   | TEcst (c, t) -> 
     PEcst c, next
