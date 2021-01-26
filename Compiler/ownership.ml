@@ -5,8 +5,8 @@ exception Error of string
 
 let error s  = raise (Error s)
 
-(* table_ctx representa um scope, contexto *)
-type tbl_variables_ctx = (string, bool) Hashtbl.t
+(* tbl_variables_ctx  id (disponibilidade, DonoDe, NivelDeDonoDe, Nivel desta variável) *)
+type tbl_variables_ctx = (string, bool * string * int * int) Hashtbl.t
 type tbl_functions_ctx = (string, unit) Hashtbl.t
 
 type tbl_ctx = tbl_variables_ctx * tbl_functions_ctx
@@ -24,13 +24,20 @@ let rec find_fun_id id = function
   | []     -> assert false
   | (_,ct)::tl -> if Hashtbl.mem ct id then ct else (find_fun_id id tl) 
 
-
-let remove_ownership e ctxs = match e with
-  | TEident (id, _) -> Hashtbl.replace (find_var_id id ctxs) id false
+let rec remove_ownership e ctxs = match e with
+  | TEident (id, _) ->
+    let _,id2, l2, l1 = Hashtbl.find (find_var_id id ctxs) id in
+    Hashtbl.replace (find_var_id id ctxs) id (false, id2, l2, l1)
+  | TEvec_access(e,_,_) -> remove_ownership e ctxs
+  | TEstruct_access(e,_,_,_) -> remove_ownership e ctxs
   | _ -> assert false
 
-let give_ownership e ctxs = match e with
-  | TEident (id, _) -> Hashtbl.replace (find_var_id id ctxs) id true
+let rec give_ownership e borrowed ctxs = match e with
+  | TEident (id, _) -> 
+    let _,_,_,l1 = Hashtbl.find (find_var_id id ctxs) id in
+    let id2, l2 = borrowed in
+
+    Hashtbl.replace (find_var_id id ctxs) id (true, id2, l2, l1)
   | _ -> assert false
 
 let rec type_unop_expr op e ctxs = match op with
@@ -45,19 +52,33 @@ let rec type_unop_expr op e ctxs = match op with
     remove_ownership e ctxs;
     true
 
+and get_expr_id ctxs = function
+  | TEident (id, _) -> 
+    let _,_,_,l = Hashtbl.find (find_var_id id ctxs) id in
+    Some (id,l)
+  | TEunop(_,e,_) -> get_expr_id ctxs e
+  | TEvec_access(e,_,_) -> get_expr_id ctxs e
+  | TEstruct_access(e,_,_,_) -> get_expr_id ctxs e
+  | _ -> None 
+
 and ownership_expr ctxs = function
   | TEint _  -> false
   | TEbool _ -> false
   | TEident (id, _) ->
     (* 1 - Verificar se id é o dono *)
-    if(not (Hashtbl.find (find_var_id id ctxs) id)) then error ("Invalid use of the variable "^id^", it's not the current owner.");
+    let d,_,_,_ = Hashtbl.find (find_var_id id ctxs) id in
+
+    if not d then error ("Invalid use of the variable "^id^", it's not the current owner.");
     false
 
   | TEbinop (Ast.Bassign, e1, e2, t) ->
     (* Todo verificar ambas as expressões *)
-    let is_to_give = ownership_expr ctxs e2 in
     let _ = ownership_expr ctxs e1 in
-    if is_to_give then give_ownership e1 ctxs;
+    let is_to_give = ownership_expr ctxs e2 in
+    if is_to_give then 
+    (match get_expr_id ctxs e2 with
+      | Some(id,l) -> give_ownership e1 (id, l) ctxs
+      | None -> assert false);
     false
 
   | TEbinop (op, e1, e2, t) ->
@@ -73,15 +94,15 @@ and ownership_expr ctxs = function
     ownership_expr ctxs e
 
   | TEcall (id, args, t) ->
-   let argument_ctxs = List.fold_right(fun (v,f) l -> 
-      let nv = Hashtbl.copy v in
-      let nf = Hashtbl.copy f in
-      (nv, nf)::l
-    ) ctxs [] in
-
+  
 
     (* 1 - Verificar se as expressão são donas *)
-    List.iter(fun e -> ignore(ownership_expr argument_ctxs e)) args;
+    List.iter(function
+      | TEident(id, _) ->     
+        let _,id2, l2, l1 = Hashtbl.find (find_var_id id ctxs) id in
+        Hashtbl.replace (find_var_id id ctxs) id (false, id2, l2, l1)
+      | _ -> ()
+    ) args;
     false
 
   | TEstruct_access (e, el, tid, tel) ->
@@ -101,8 +122,17 @@ and ownership_expr ctxs = function
   | TEprint (s, t) -> false
   | TEblock (b, t) ->
     (* TODO: restaurar contextos *)
+    (* 1 - Tipar bloco *)
+    let ctxs = ((make_ctx ())::ctxs) in
+
+    let block_ctxs = List.fold_right(fun (v,f) l -> 
+      let nv = Hashtbl.copy v in
+      let nf = Hashtbl.copy f in
+      (nv, nf)::l
+    ) ((make_ctx ())::ctxs) [] in
+
     (* 1 - Verificar ownership no corpo *)
-    ownership_block ((make_ctx ())::ctxs) b
+    ownership_block block_ctxs b
 
 and ownership_stmt ctxs = function
   | TSif (e, bif, belse, _) -> 
@@ -130,8 +160,11 @@ and ownership_stmt ctxs = function
     (* 2 - Verificar se a expressão é válida *)
     ignore(ownership_expr ctxs e);
 
+    let level = List.length ctxs in
+
     (* 3 - Tem que ser sempre dono no ato da declaração *)
-    Hashtbl.add v_ctx id true;
+    (* TODO: mudar id e level para os valores certos *)
+    Hashtbl.add v_ctx id (true, id, level, level);
     false
 
   | TSdeclare_struct (ismut, id, idt, els, t) ->
@@ -140,9 +173,10 @@ and ownership_stmt ctxs = function
 
     (* 2 - Verificar se as expressões são válidas *)
     List.iter(fun (_, e) -> ignore(ownership_expr ctxs e)) els;
+    let level = List.length ctxs in
 
     (* 3 - Tem que ser sempre dono no ato da declaração *)
-    Hashtbl.add v_ctx id true;
+    Hashtbl.add v_ctx id (true, id, level, level);
     false
 
   | TSreturn (e, t) ->
@@ -176,7 +210,7 @@ and ownership_dec ctxs = function
     (* 2 - Adicionar os argumentos *)
     let args_ctxs = ((make_ctx ())::ctxs) in
     let v,_ = List.hd args_ctxs in
-    List.iter(fun (ismut, arg, _) -> Hashtbl.add v arg true) args;
+    List.iter(fun (ismut, arg, _) -> Hashtbl.add v arg (true, arg, 0, 0)) args;
 
     (* 3 - Verificar ownership no corpo*)
     ignore(ownership_block args_ctxs body)
