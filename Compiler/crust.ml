@@ -6,6 +6,7 @@ open Lexing
 (* Opção de compilação, para parar na fase de parsing *)
 let parse_only = ref false
 let type_only = ref false
+let no_asm = ref false
 let print_ast = ref false
 let print_tast = ref false
 let print_past = ref false
@@ -22,6 +23,8 @@ let options =
    "  Executes only the lexer and parser ";
    "--type-only", Arg.Set type_only,
    "  Executes only the typing ";
+   "--no-asm", Arg.Set no_asm,
+   "  Executes until ownership ";
    "--print-ast", Arg.Set print_ast,
    "  Prints the AST of a givin file ";
    "--print-tast", Arg.Set print_tast,
@@ -79,8 +82,12 @@ let () =
     (* Type AST *)
     let p = Typing.type_file p in
     if !print_tast then Printer_tast.print_file p;
-    if !type_only then exit 0
+    if !type_only then exit 0;
     
+    (* Ownership *)
+    let _ = Ownership.verify_ownership p in
+    if !no_asm then exit 0;
+    ()
 
   with
   | Lexer.Lexing_error c ->
@@ -100,4 +107,8 @@ let () =
   | Typing.Error (s, line)-> 
     eprintf "\n\nFile \"%s\", line %d:\n" !ifile line;
     eprintf "\nerror:\n\n  Typing analysis:\n  %s\n@." s;
+    exit 1
+  | Ownership.Error s -> 
+    eprintf "\n\nFile \"%s\n" !ifile;
+    eprintf "\nerror:\n\n  Ownership error:\n  %s\n@." s;
     exit 1
