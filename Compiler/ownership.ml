@@ -98,9 +98,13 @@ and ownership_expr ctxs = function
 
     (* 1 - Verificar se as expressão são donas *)
     List.iter(function
-      | TEident(id, _) ->     
-        let _,id2, l2, l1 = Hashtbl.find (find_var_id id ctxs) id in
-        Hashtbl.replace (find_var_id id ctxs) id (false, id2, l2, l1)
+      | TEident(id, t) ->
+        begin match t with
+          | Tvec _ | Tstruct _ ->
+            let _,id2, l2, l1 = Hashtbl.find (find_var_id id ctxs) id in
+            Hashtbl.replace (find_var_id id ctxs) id (false, id2, l2, l1)
+          | _ -> () 
+        end
       | _ -> ()
     ) args;
     false
