@@ -64,7 +64,7 @@ and get_expr_id ctxs = function
 and ownership_expr ctxs = function
   | TEint _  -> false
   | TEbool _ -> false
-  | TEident (id, _) ->
+  | TEident (id, t) ->
     (* 1 - Verificar se id é o dono *)
     let d,_,_,_ = Hashtbl.find (find_var_id id ctxs) id in
 
@@ -75,10 +75,12 @@ and ownership_expr ctxs = function
     (* Todo verificar ambas as expressões *)
     let _ = ownership_expr ctxs e1 in
     let is_to_give = ownership_expr ctxs e2 in
+
     if is_to_give then 
     (match get_expr_id ctxs e2 with
       | Some(id,l) -> give_ownership e1 (id, l) ctxs
       | None -> assert false);
+
     false
 
   | TEbinop (op, e1, e2, t) ->
@@ -94,8 +96,6 @@ and ownership_expr ctxs = function
     ownership_expr ctxs e
 
   | TEcall (id, args, t) ->
-  
-
     (* 1 - Verificar se as expressão são donas *)
     List.iter(function
       | TEident(id, t) ->
@@ -127,7 +127,6 @@ and ownership_expr ctxs = function
   | TEblock (b, t) ->
     (* TODO: restaurar contextos *)
     (* 1 - Tipar bloco *)
-    let ctxs = ((make_ctx ())::ctxs) in
 
     let block_ctxs = List.fold_right(fun (v,f) l -> 
       let nv = Hashtbl.copy v in
@@ -135,8 +134,26 @@ and ownership_expr ctxs = function
       (nv, nf)::l
     ) ((make_ctx ())::ctxs) [] in
 
+    let ctxs = ((make_ctx ())::ctxs) in
+    
+    let block_level = List.length block_ctxs in
+
+    
+
     (* 1 - Verificar ownership no corpo *)
-    ownership_block block_ctxs b
+    let r = ownership_block block_ctxs b in
+
+    (* Percorrer as listas e ver quais as variáveis que referenciam variáveis deste nível *)
+    List.iter2(fun (v1,f1) (v2,f2) ->
+      Hashtbl.iter(fun k (d,id2,l2,l1) -> 
+        if l2 = block_level then
+          (* 1 - Remover ownership deste *)
+          Hashtbl.replace v2 k (false, id2, l2, l1);
+          (* 2 - Dar ownership a quem este estava a apontar *)
+         
+        ) v1
+    ) (List.tl block_ctxs)  (List.tl ctxs);
+    r
 
 and ownership_stmt ctxs = function
   | TSif (e, bif, belse, _) -> 
@@ -166,6 +183,17 @@ and ownership_stmt ctxs = function
 
     let level = List.length ctxs in
 
+    (match e with
+      | TEident(id, t) ->
+        begin match t with
+          | Tvec _ | Tstruct _ ->
+            let _,id2, l2, l1 = Hashtbl.find (find_var_id id ctxs) id in
+            Hashtbl.replace (find_var_id id ctxs) id (false, id2, l2, l1)
+          | _ -> () 
+        end
+      | _ -> ()
+    );
+    
     (* 3 - Tem que ser sempre dono no ato da declaração *)
     (* TODO: mudar id e level para os valores certos *)
     Hashtbl.add v_ctx id (true, id, level, level);
