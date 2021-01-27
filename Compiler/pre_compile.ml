@@ -9,7 +9,7 @@ let error s  = raise (Error s)
 (* table_ctx representa um scope, contexto *)
 type tbl_variables_ctx = (string, int * int) Hashtbl.t
 type tbl_functions_ctx = (string, int) Hashtbl.t
-type tbl_structs_ctx = (string, ((string * Ast.crust_types * int) list * int)) Hashtbl.t
+type tbl_structs_ctx = (string, ((string * prust_type * int) list * int)) Hashtbl.t
 
 type tbl_ctx = tbl_variables_ctx * tbl_functions_ctx * tbl_structs_ctx
 
@@ -27,7 +27,7 @@ let var_ctx_hd l = var_ctx (List.hd l)
 let fun_ctx_hd l = fun_ctx (List.hd l)
 let struct_ctx_hd l = struct_ctx (List.hd l)
 
-let rec get_struct_type s = function
+let rec get_struct_type = function
   | Tast.Tstruct t  -> t
   | Tast.Tref t     -> get_struct_type t
   | Tast.Trefmut t  -> get_struct_type t
@@ -74,14 +74,10 @@ and get_type_start ctxs = function
   | Tstruct s -> -snd (get_struct_id ctxs s)
   | Tvec (t, _) | Tref (t, _) | Trefmut t -> get_type_start ctxs t
   
-
-  
 let find_struct_element el s = 
   let _,_,pos = List.find (fun (id, _, _) -> id = el) s in pos
 
-
 (* ---- *)
-
 
 let rec pcompile_expr ctxs next = function
   | TEint (n, _) ->
@@ -160,6 +156,8 @@ let rec pcompile_expr ctxs next = function
     let pb, next = pcompile_block_stmt ((make_ctx())::ctxs) next stmts in
     PSblock pblock, next
 
+(* ---- *)
+
 and pcompile_block ctxs next (body, e, _) =
   (* 1 - precompilar stmts do bloco *)
   let next, p_body = List.fold_left_map (fun next s -> 
@@ -168,8 +166,10 @@ and pcompile_block ctxs next (body, e, _) =
   (* 2 - se existir, precompilar expressão *)
   let e = match e with
     | Some e -> Some (pcompile_expr ctxs next e)
-    | None -> None
+    | None -> None in
   (p_body, e), next
+
+(* ---- *)
 
 and pcompile_stmt ctxs next = function
   | TSnothing _ -> PSnothing, next 
@@ -235,21 +235,21 @@ and pcompile_stmt ctxs next = function
     let pb1, next  = pcompile_stmt ((make_ctx())::ctxs) next s in
     let pb2, next  = pcompile_stmt ((make_ctx())::ctxs) next s in
     PSif(pe, pb1, pb2), next
-and pcompile_decl ctx next =
+
+(* ---- *)
+
+and pcompile_decl ctx next = function
   | TDstruct (id, els, _) -> 
     (* 1 - Calcular espaço na memória*)
     let next, pcompiled_fields = 
     List.fold_left_map(fun next (id, t) -> (next+(get_type_size ctxs t)), (id, t, (-(next)))) 0 args in
-
     (* 2 - Adiocionar identificador da struct ao contexto *)
     Hashtbl.add (struct_ctx_hd ctxs) id (pcompiled_fields, next);
 
     PGSstruct(id, pcompiled_fields, next)
-
+    
   | TDfun (f, args, t, b, _) -> 
-    (* TODO: por esta função global *)
     let new_ctxs = (make_ctx())::ctxs in
-
       (* 1- Precompilar argumentos *)
       let p_next, p_args = List.fold_left_map(
         fun next (arg, t_arg) -> 
@@ -260,10 +260,8 @@ and pcompile_decl ctx next =
       (* 2 - Pre compilar corpo *)
       let pb, next = pcompile_block new_ctxs 8 b in
       Hashtbl.replace (fun_ctx_hd new_ctxs) f next;
-      
       PGSfunction(f, p_args, t, p_stmt, next)
 
-(* TODO *)
-and pcompile_program = ""
+and pcompile_file p = 
+  List.map (fun dec -> pcompile_decl [make_ctx()] dec) [] p
 
-let precompile = pcompile_global_stmt [make_ctx()]

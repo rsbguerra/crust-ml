@@ -8,7 +8,7 @@ and decl =
   | PDstruct of ident * pair list
   | PDfun    of ident * argument list * int
 
-and pairs = ident * Ast.crust_types * int
+and pair = ident * prust_type * int
 and argument = bool * ident * int
 
 and prust_type =
@@ -40,7 +40,7 @@ and block = stmt list * expr option * int
 and stmt =
   | PSnothing
   | PSexpr    of expr
-  | PSdeclare of bool * ident * Ast.crust_types * expr * int list
+  | PSdeclare of bool * ident * prust_type * expr * int list
   | PSdeclare_struct of bool * ident * ident * (ident * expr) list * int
   | PSwhile  of expr * block
   | PSreturn of expr option * int list

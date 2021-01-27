@@ -87,6 +87,9 @@ let () =
     (* Ownership *)
     let _ = Ownership.verify_ownership p in
     if !no_asm then exit 0;
+
+    let p = Pre_compile.pcompile_file p in
+    if !print_tast then Printer_tast.print_file p;
     ()
 
   with

@@ -273,7 +273,6 @@ and pcompile_stmt ctxs next = function
   | TSptr_assign (id, e, _) ->
     let ep, next = (pcompile_expr ctxs next e) in
     let pos, _ = Hashtbl.find (find_var_id id ctxs) id in
-
     PSptr_assign (id, ep, pos), next
 
   | TSprintn (e, t, _) -> 
