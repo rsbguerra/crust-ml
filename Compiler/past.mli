@@ -6,20 +6,20 @@ type program = decl list
 
 and decl = 
   | PDstruct of ident * pair list
-  | PDfun    of ident * argument list * int
-
-and pair = ident * prust_type * int
-and argument = bool * ident * int
+  | PDfun    of ident * argument list * block * int
 
 and prust_type =
-  | PTunit of int
-  | PTi32  of int
-  | PTbool of int
+  | PTunit 
+  | PTi32  
+  | PTbool 
   | PTempty
   | PTstruct of ident
-  | PTvec of prust_type * int
+  | PTvec of prust_type
   | PTref of prust_type
   | PTrefmut of prust_type
+
+and pair = ident * prust_type * int
+and argument = bool * ident * prust_type * int
 
 and expr =
   | PEint   of int32 * int
@@ -28,8 +28,8 @@ and expr =
   | PEunop  of Ast.unop * expr
   | PEbinop of Ast.binop * expr * expr
   | PEstruct_access of expr * ident * int
-  | PElen   of expr * int
-  | PEvec_access of expr * expr * int * int * int
+  | PElen   of expr 
+  | PEvec_access of expr * expr * int * int
   | PEcall  of ident * expr list * int
   | PEvec_decl of (expr * int) list * int
   | PEprint of string * int
