@@ -29,4 +29,4 @@ setup.log
 _opam/
 
 Compiler/tests/test.rs
-.vscode/settings.json
+/.vscode/
