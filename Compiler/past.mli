@@ -22,8 +22,8 @@ and pair = ident * prust_type * int
 and argument = bool * ident * prust_type * int
 
 and expr =
-  | PEint   of int32 * int
-  | PEbool  of bool * int
+  | PEint   of int32
+  | PEbool  of bool
   | PEident of ident * int
   | PEunop  of Ast.unop * expr
   | PEbinop of Ast.binop * expr * expr
@@ -35,13 +35,13 @@ and expr =
   | PEprint of string * int
   | PEblock of block * int
 
-and block = stmt list * expr option * int
+and block = stmt list * expr option
 
 and stmt =
   | PSnothing
   | PSexpr    of expr
   | PSdeclare of bool * ident * prust_type * expr * int list
-  | PSdeclare_struct of bool * ident * ident * (ident * expr) list * int
+  | PSdeclare_struct of bool * ident * ident * (ident * expr * int) list * int
   | PSwhile  of expr * block
   | PSreturn of expr option * int list
   | PSif     of expr * block * block

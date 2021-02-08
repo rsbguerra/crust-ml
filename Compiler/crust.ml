@@ -89,7 +89,7 @@ let () =
     if !no_asm then exit 0;
 
     let p = Pre_compile.pcompile_file p in
-    if !print_tast then Printer_tast.print_file p;
+    if !print_past then Printer_past.print_file p;
     ()
 
   with
