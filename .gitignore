@@ -30,3 +30,5 @@ _opam/
 
 Compiler/tests/test.rs
 /.vscode/
+*.s
+*.out
