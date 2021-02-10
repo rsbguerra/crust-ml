@@ -9,9 +9,9 @@ and decl =
   | PDfun    of ident * argument list * block * int
 
 and prust_type =
-  | PTunit 
-  | PTi32  
-  | PTbool 
+  | PTunit
+  | PTi32
+  | PTbool
   | PTempty
   | PTstruct of ident
   | PTvec of prust_type
@@ -26,7 +26,7 @@ and expr =
   | PEbool  of bool
   | PEident of ident * int
   | PEunop  of Ast.unop * expr
-  | PEbinop of Ast.binop * expr * expr
+  | PEbinop of Ast.binop * expr * expr * int
   | PEstruct_access of expr * ident * int
   | PElen   of expr 
   | PEvec_access of expr * expr * int * int

@@ -22,20 +22,21 @@ and string_of_precomp_expr = function
     "PEbool(" ^ 
     (string_of_bool b) ^ ")"
 
-  | PEident (id, fps) -> "PEident(" ^
+  | PEident (id, fp) -> "PEident(" ^
     id ^ ", " ^
-    (string_of_int fps) ^ ")"
+    (string_of_int fp) ^ ")"
 
   | PEunop (unop, e) ->
     "PEunop(" ^ 
     Printer.string_of_unop unop ^ 
     (string_of_precomp_expr e)^")"
 
-  | PEbinop (binop, e1, e2) ->
+  | PEbinop (binop, e1, e2, fp) ->
     "PEbinop(" ^ 
     Printer.string_of_binop binop ^ ", " ^ 
     (string_of_precomp_expr e1)^ ", " ^ 
-    (string_of_precomp_expr e2) ^ ")"
+    (string_of_precomp_expr e2) ^ ", " ^ 
+    (string_of_int fp) ^ ")"
 
   | PEstruct_access(e, id, el_pos) ->
     "PEstrc_access(" ^ string_of_precomp_expr e ^ ", " ^ id ^ ", " ^

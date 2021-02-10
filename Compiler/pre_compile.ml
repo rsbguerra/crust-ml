@@ -156,7 +156,7 @@ and pcompile_expr ctxs next = function
     let e1, fp1 = pcompile_expr ctxs next e1 in
     let e2, fp2 = pcompile_expr ctxs next e2 in
     let next = max fp1 fp2 in
-    PEbinop(op, e1, e2), next
+    PEbinop(op, e1, e2, next), next
 
   | TEstruct_access(e, id, tid, _) ->
     let pt = pcompile_type tid in
