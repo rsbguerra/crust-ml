@@ -1,5 +1,7 @@
 #!/bin/bash
-
+DIR="$(dirname "${BASH_SOURCE[0]}")"
+DIR='./tests'
+echo $DIR
 shopt -s nullglob
 
 # script para testar o trabalho de DLPC
@@ -18,7 +20,7 @@ echo
 # todos os testes passam com rustc
 test_rustc() {
 echo -n "syntax... "
-for f in syntax/bad/*.rs; do
+for f in $DIR/syntax/bad/*.rs; do
     if rustc $f -o a.out > /dev/null 2>&1 ; then
       echo "rustc: success over $f"; exit 1
     fi
@@ -26,11 +28,11 @@ done
 echo "OK"
 
 echo -n "typing... "
-for f in syntax/good/*.rs typing/good/*.rs typing2/good/*.rs exec/*.rs exec-fail/*.rs; do
+for f in $DIR/syntax/good/*.rs $DIR/$DIR/typing/good/*.rs $DIR/typing2/good/*.rs $DIR/exec/*.rs $DIR/exec-fail/*.rs; do
     rustc --emit=dep-info $f -o a.out  > /dev/null 2>&1 ||
      (echo "rustc : failure over $f"; exit 1)
 done
-for f in typing/bad/*.rs typing2/bad/*.rs; do
+for f in $DIR/typing/bad/*.rs typing2/bad/*.rs; do
     if rustc $f -o a.out > /dev/null 2>&1 ; then
       echo "succ�s de rustc sur $f"; exit 1
     fi
@@ -68,9 +70,9 @@ done
 compile () {
 if [[ $verbose != 0 ]]; then
   echo Compile $1 $2
-  '../_build/default/crust.exe' $1 $2;
+  "$DIR/../_build/default/crust.exe" $1 $2;
 else
-  '../_build/default/crust.exe' $1 $2 > /dev/null 2>&1;
+  "$DIR/../_build/default/crust.exe" $1 $2 > /dev/null 2>&1;
 fi;
 }
 
@@ -86,7 +88,7 @@ echo "Parte 1"
 
 # os maus
 echo -n "bad ones "
-for f in syntax/bad/*.rs; do
+for f in $DIR/syntax/bad/*.rs; do
     echo -n ".";
     max=`expr $max + 1`;
     compile --parse-only $f;
@@ -104,7 +106,7 @@ echo
 
 # os bons
 echo -n "good ones "
-for f in syntax/good/*.rs typing/bad/*.rs typing/good/*.rs typing2/bad/*.rs typing2/good/*.rs exec/*.rs exec-fail/*.rs; do
+for f in $DIR/syntax/good/*.rs $DIR/typing/bad/*.rs $DIR/typing/good/*.rs $DIR/typing2/bad/*.rs $DIR/typing2/good/*.rs $DIR/exec/*.rs $DIR/exec-fail/*.rs; do
     echo -n ".";
     max=`expr $max + 1`;
     compile --parse-only $f;
@@ -136,7 +138,7 @@ max=0
 
 # os maus
 echo -n "bad ones "
-for f in typing/bad/*.rs; do
+for f in $DIR/typing/bad/*.rs; do
     echo -n ".";
     max=`expr $max + 1`;
     compile --type-only $f;
@@ -154,7 +156,7 @@ echo
 
 # os bons
 echo -n "good ones "
-for f in typing/good/*.rs typing2/bad/*.rs typing2/good/*.rs exec/*.rs exec-fail/*.rs; do
+for f in $DIR/typing/good/*.rs $DIR/typing2/bad/*.rs $DIR/typing2/good/*.rs $DIR/exec/*.rs $DIR/exec-fail/*.rs; do
     echo -n ".";
     max=`expr $max + 1`;
     compile --type-only $f;
@@ -184,7 +186,7 @@ max=0
 
 # os maus
 echo -n "bad ones "
-for f in typing2/bad/*.rs; do
+for f in $DIR/typing2/bad/*.rs; do
     echo -n ".";
     max=`expr $max + 1`;
     compile --no-asm $f;
@@ -202,7 +204,7 @@ echo
 
 # os bons
 echo -n "good ones "
-for f in typing2/good/*.rs exec/*.rs exec-fail/*.rs; do
+for f in $DIR/typing2/good/*.rs $DIR/exec/*.rs $DIR/exec-fail/*.rs; do
     echo -n ".";
     max=`expr $max + 1`;
     compile --no-asm $f;
@@ -241,16 +243,16 @@ echo "-----------------"
 
 timeout=""
 
-for f in exec/*.rs; do
+for f in $DIR/exec/*.rs; do
     echo -n "."
-    asm=exec/`basename $f .rs`.s
+    asm=$DIR/exec/`basename $f .rs`.s
     rm -f $asm
-    expected=exec/`basename $f .rs`.out
+    expected=$DIR/exec/`basename $f .rs`.out
     max=`expr $max + 1`;
     if compile $f; then
 	rm -f out
 	score_comp=`expr $score_comp + 1`;
-	if gcc $asm && ./a.out > out; then
+	if gcc -g -no-pie -g -no-pie $asm && ./a.out > out; then
 	    score_out=`expr $score_out + 1`;
 	    if cmp --quiet out $expected; then
 		score_test=`expr $score_test + 1`;
@@ -272,12 +274,12 @@ echo
 echo "Execution driving to a failure"
 echo "-------------------------------"
 
-for f in exec-fail/*.rs; do
+for f in $DIR/exec-fail/*.rs; do
     echo -n "."
-    asm=exec-fail/`basename $f .rs`.s
+    asm=$DIR/exec-fail/`basename $f .rs`.s
     rm -f $asm
     max=`expr $max + 1`;
-    if compile $f && gcc $asm; then
+    if compile $f && gcc -no-pie $asm; then
 	score_comp=`expr $score_comp + 1`;
 	if { ./a.out; } > /dev/null 2>&1; then
 	    echo

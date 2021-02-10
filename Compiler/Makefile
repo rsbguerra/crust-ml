@@ -1,5 +1,6 @@
 release=--profile release
-test=./tests/test
+test-file=./tests/test
+
 
 all:
 	dune build $(release) ./crust.exe
@@ -15,6 +16,19 @@ print-past:
 	
 test-s:
 	dune exec $(release) -- ./crust.exe $(test).rs
+
+test-syntax:
+	dune build $(release) ./crust.exe 
+	bash ./tests/test.sh -1
+
+test-typing:
+	dune build $(release) ./crust.exe 
+	./tests/test.sh -2
+	./tests/test.sh -2b
+
+test-compile:
+	dune build $(release) ./crust.exe 
+	./tests/test.sh -3
 
 clean:
 	dune clean
