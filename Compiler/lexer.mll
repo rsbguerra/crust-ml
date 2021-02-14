@@ -64,14 +64,15 @@ let len   = "len" whitespace* "(" whitespace* ")"
 let print = "print" whitespace* "!"
 let vec   = "vec" whitespace* "!"
 
-let letra  = [^ '"' '\\' ] | ( '\\' '"') | ('\\' '\\') | ('\\' 'n')
-let p_string = '"' letra* '"' 
+(* let letra  = [^ '"' '\\' ] | ( '\\' '"') | ('\\' '\\') | ('\\' 'n')
+let p_string = '"' letra* '"' *)
 
 rule analisador = parse
   | "//"            { singlecomment lexbuf}
   | "/*"            { comment_level := !comment_level+1; multicomment lexbuf }
   | newline         { new_line lexbuf; line_num := !line_num+1; analisador lexbuf}
   | whitespace      { analisador lexbuf}
+  | '"'             { read_string (Buffer.create 17) lexbuf }
   | '='             { [ASSIGN] }
   | '('             { [LPR] }
   | ')'             { [RPR] }
@@ -102,7 +103,7 @@ rule analisador = parse
   | len             { [KW_LEN] }
   | print           { [KW_PRINT] }
   | vec             { [KW_VEC] }
-  | p_string as s   { [STRING s] }
+  (* | p_string as s   { [STRING s] } *)
   | INTEGER_LITERAL as snum { try [CST (Int32.of_string snum)] with _ -> raise (Lexing_error ("The constant is too big : _" ^ snum^"_")) }
   | id as word
     { try 
@@ -113,6 +114,23 @@ rule analisador = parse
     }
   | eof       { [EOF] }
   | _ as c    { raise (Lexing_error (Char.escaped c)) }
+
+and read_string buf =
+  parse
+  | '"'       { [STRING (Buffer.contents buf)] }
+  | '\\' '/'  { Buffer.add_char buf '/'; read_string buf lexbuf }
+  | '\\' '\\' { Buffer.add_char buf '\\'; read_string buf lexbuf }
+  | '\\' 'b'  { Buffer.add_char buf '\b'; read_string buf lexbuf }
+  | '\\' 'f'  { Buffer.add_char buf '\012'; read_string buf lexbuf }
+  | '\\' 'n'  { Buffer.add_char buf '\n'; read_string buf lexbuf }
+  | '\\' 'r'  { Buffer.add_char buf '\r'; read_string buf lexbuf }
+  | '\\' 't'  { Buffer.add_char buf '\t'; read_string buf lexbuf }
+  | [^ '"' '\\']+
+    { Buffer.add_string buf (Lexing.lexeme lexbuf);
+      read_string buf lexbuf
+    }
+  | _ { raise (Lexing_error ("Illegal string character: " ^ Lexing.lexeme lexbuf)) }
+  | eof { raise (Lexing_error ("String is not terminated")) }
 
 and singlecomment = parse
   | newline      { newline lexbuf; line_num := !line_num + 1; analisador lexbuf}
