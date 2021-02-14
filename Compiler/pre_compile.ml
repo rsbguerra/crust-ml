@@ -157,25 +157,25 @@ and pcompile_type t : Past.prust_type = match t with
 
 and pcompile_expr ctxs next = function
   | TEint (n, _) ->
-    PEint (n), next
+    PEint n, next
 
   | TEbool (b, _) ->
-    PEbool (b), next
+    PEbool b, next
 
   | TEident (id, _) ->
     (* 1 - Posição da variável *)
     let pos, size = find_var_id ctxs id in
     PEident(id, pos), next
 
-  | TEunop (op, e, _) ->
-    let pe, next = pcompile_expr ctxs next e in
-    PEunop(op, pe), next
-
   | TEbinop(op, e1, e2, _) ->
     let e1, fp1 = pcompile_expr ctxs next e1 in
     let e2, fp2 = pcompile_expr ctxs next e2 in
     let next = max fp1 fp2 in
     PEbinop(op, e1, e2, next), next
+
+  | TEunop (op, e, _) ->
+    let pe, next = pcompile_expr ctxs next e in
+    PEunop(op, pe), next
 
   | TEstruct_access(e, id, tid, _) ->
     let pt = pcompile_type tid in
@@ -215,13 +215,12 @@ and pcompile_expr ctxs next = function
   | TEcall (id, args, t) ->
 
     let args_type = get_fun_arguments_type ctxs id in
-    let pt = pcompile_type t in
 
     let exprs, size, fpmax = 
-      List.fold_left2 (fun (l, sz, fpmax) el t ->
+      List.fold_right2 (fun el t (l, sz, fpmax) ->
         let e, fp = pcompile_expr ctxs fpmax el in
         (e::l, sz+(get_type_size ctxs t), max fp fpmax)
-        ) ([], 0, next) args args_type
+        )  args args_type ([], 0, next)
       in
       
     PEcall(id, exprs, size), fpmax 

@@ -74,6 +74,7 @@ expr:
 | KW_FALSE                          { Ebool (false, !Lexer.line_num) }
 | id = ident                        { Eident (id, !Lexer.line_num) }
 | u  = unop e1 = expr %prec UNARY_EXPR { Eunop (u, e1, !Lexer.line_num) }
+| MINUS e = expr %prec UNARY_EXPR  { Eunop (Uneg, e, !Lexer.line_num) }
 | e1 = expr o = binop e2 = expr     { Ebinop (o, e1, e2, !Lexer.line_num) }
 | id = ident "(" l = separated_list("," , expr) ")"      { Ecall(id, l, !Lexer.line_num) }
 | e = expr "." id = ident                                { Estruct_access(e, id, !Lexer.line_num) }
