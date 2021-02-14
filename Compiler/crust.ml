@@ -90,7 +90,7 @@ let () =
 
     let p = Pre_compile.pcompile_file p in
     if !print_past then Printer_past.print_file p;
-    ()
+    Compile.compile_program p !ofile
 
   with
   | Lexer.Lexing_error c ->

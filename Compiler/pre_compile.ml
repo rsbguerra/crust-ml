@@ -4,7 +4,8 @@ open Past
 
 exception Error of string
 let error s = raise (Error s)
-
+(* // TODO: remove prints *)
+(* print functions *)
 let rec print_all_structs ctxs = 
   print_string ("ctxs len: " ^ string_of_int (List.length ctxs) ^ "\n");
   List.iter (fun (_, _, s) -> 
@@ -23,6 +24,26 @@ and print_struct id ctxs =
   with Not_found -> 
     raise (Error "List not found")
 
+let rec print_all_fun ctxs =
+  print_string ("ctxs len: " ^ string_of_int (List.length ctxs) ^ "\n");
+  List.iter (fun (_, f, _) -> 
+    if Hashtbl.length f = 0 then print_endline "context with no functions" 
+    else if Hashtbl.length f = 0 then print_endline "context with no functions" 
+    else Hashtbl.iter (fun a _ -> print_fun a ctxs) f) ctxs
+
+and print_fun id ctxs = 
+  print_string ("fn " ^ id ^ ":\n");
+  try 
+    let _, f_ctx, _ = List.find (fun (_,f,_) -> Hashtbl.mem f id) ctxs in
+    try
+      let args, _ = Hashtbl.find f_ctx id in
+      List.iter (fun (mut,id,c,d) -> 
+        print_endline ((if mut then "mut " else "") ^ id)) args 
+    with Not_found ->  
+      raise (Error "Hastable not found")
+  with Not_found -> 
+    raise (Error "List not found")
+  
 
 (* table_ctx representa um scope, contexto *)
 type tbl_variables_ctx = (string, int * int) Hashtbl.t
@@ -54,8 +75,6 @@ let rec find_var_id ctxs id =
 and find_struct_id ctxs id = 
   let _,_,ctx = List.find(fun (_, _, s) -> Hashtbl.mem s id) ctxs in
   Hashtbl.find ctx id
-
-
 
 and get_type_size ctxs = function
 | PTi32 | PTbool -> 8
@@ -194,6 +213,7 @@ and pcompile_expr ctxs next = function
     PEvec_access(pe1, pe2, (get_type_size ctxs pt), id_pos), next
   
   | TEcall (id, args, t) ->
+
     let args_type = get_fun_arguments_type ctxs id in
     let pt = pcompile_type t in
 
@@ -201,7 +221,7 @@ and pcompile_expr ctxs next = function
       List.fold_left2 (fun (l, sz, fpmax) el t ->
         let e, fp = pcompile_expr ctxs fpmax el in
         (e::l, sz+(get_type_size ctxs pt), max fp fpmax)
-      ) ([], 0, next) args args_type
+      ) ([], 8, next) args args_type
       in
     PEcall(id, exprs, size), fpmax 
   
@@ -222,7 +242,6 @@ and pcompile_expr ctxs next = function
   | TEblock (b, t) -> 
     let new_ctxs = (make_ctx())::ctxs in
     let pb, pe, next = pcompile_block new_ctxs next b in
-    (* fix this *)
     PEblock ((pb, pe), next), next
 
 and pcompile_stmt ctxs next = function
@@ -348,17 +367,23 @@ let rec pcompile_decl ctxs next = function
     PDstruct(id, pfields)
 
   | TDfun (f, args, t, b, _) -> 
-    let new_ctxs = (make_ctx())::ctxs in
+    (* print_endline @@ "fun: " ^ f; *)
+    let args_ctxs = (make_ctx())::ctxs in
+
     (* 1 - Pre compilar argumentos *)
-    let next, p_args = 
-    List.fold_left_map (fun next (mut, arg, t_arg) -> 
+    let next, p_args = List.fold_left_map (fun next (mut, arg, t_arg) -> 
       let pt = pcompile_type t_arg in
-      Hashtbl.add (var_ctx_hd new_ctxs) arg (next, 1);
+      (* let ctxs = (make_ctx())::ctxs in *)
+      let v = var_ctx_hd args_ctxs in
+      Hashtbl.add v arg (next, 1);
       (next+(get_type_size ctxs pt)), (mut, arg, pt, next)) 16 args in
-      
+
     (* 2 - Pre compilar corpo *)
-    let pb, pe, next = pcompile_block new_ctxs 8 b in
-    Hashtbl.replace (fun_ctx_hd new_ctxs) f (p_args, next);
+    let f_ctx = fun_ctx_hd ctxs in
+    Hashtbl.add f_ctx f (p_args, next);
+    
+    let pb, pe, next = pcompile_block args_ctxs 8 b in
+
     PDfun(f, p_args, (pb,pe), next)
 
 and pcompile_file p =
