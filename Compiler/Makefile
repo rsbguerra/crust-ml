@@ -6,16 +6,17 @@ all:
 	dune build $(release) ./crust.exe
 
 print:
-	dune exec  $(release) -- ./crust.exe --print-ast $(test).rs
+	dune exec  $(release) -- ./crust.exe --print-ast $(test-file).rs
 
 print-tast:
-	dune exec  $(release) -- ./crust.exe --print-tast $(test).rs
+	dune exec  $(release) -- ./crust.exe --print-tast $(test-file).rs
 
 print-past:
-	dune exec  $(release) -- ./crust.exe --print-past $(test).rs
+	dune exec  $(release) -- ./crust.exe --print-past $(test-file).rs
 	
 test-s:
-	dune exec $(release) -- ./crust.exe $(test).rs
+	dune exec $(release) -- ./crust.exe $(test-file).rs
+
 
 test-syntax:
 	dune build $(release) ./crust.exe 
@@ -32,3 +33,6 @@ test-compile:
 
 clean:
 	dune clean
+	rm a.out
+	find tests -name \*.s -type f -delete
+	
