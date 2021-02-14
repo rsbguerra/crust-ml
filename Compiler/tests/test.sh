@@ -258,15 +258,15 @@ for f in $DIR/exec/*.rs; do
 		score_test=`expr $score_test + 1`;
 	    else
 		echo
-		echo "FAILURE : bad output for $f"
+		echo -e "FAILURE : \e[34mbad output for $f\e[0m"
 	    fi
 	else
 		echo
-		echo "FAILURE of code generation for $f"
+		echo -e "FAILURE : \e[91mcode generation for $f\e[0m"
 	fi
     else
 	echo
-	echo "FAILURE of the compilation for $f (should succeed)"
+	echo -e "FAILURE : \e[91mcompilation for $f (should succeed)\e[0m"
     fi
 done
 echo
