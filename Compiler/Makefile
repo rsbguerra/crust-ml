@@ -16,6 +16,7 @@ print-past:
 	
 test-s:
 	dune exec $(release) -- ./crust.exe $(test-file).rs
+	gcc -no-pie -g $(test-file).s ; ./a.out
 
 
 test-syntax:
@@ -33,6 +34,6 @@ test-compile:
 
 clean:
 	dune clean
-	rm a.out
+	rm a.out 
 	find tests -name \*.s -type f -delete
 	
