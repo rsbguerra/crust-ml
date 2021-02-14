@@ -220,9 +220,10 @@ and pcompile_expr ctxs next = function
     let exprs, size, fpmax = 
       List.fold_left2 (fun (l, sz, fpmax) el t ->
         let e, fp = pcompile_expr ctxs fpmax el in
-        (e::l, sz+(get_type_size ctxs pt), max fp fpmax)
-      ) ([], 8, next) args args_type
+        (e::l, sz+(get_type_size ctxs t), max fp fpmax)
+        ) ([], 0, next) args args_type
       in
+      
     PEcall(id, exprs, size), fpmax 
   
   | TEvec_decl (els, t) ->
@@ -318,15 +319,15 @@ and pcompile_stmt ctxs next = function
     let start_pos = next + (get_type_start ctxs pt) in
     (* 2 - Adicionar todos os elementos *)
     let pos_list =  match t with
-    | Ti32 | Tbool | Tunit | Tempty -> [-start_pos]
-    | Tstruct s ->
-      (* 3.1 - Get struct elements *)
-      let struct_els = fst(find_struct_id ctxs s) in
-      (* 3.1.2 - Calculate pos of each element *)
-      List.filter_map(fun (id, _, r_pos) -> if r_pos <> 0 then Some (-(abs(start_pos) + abs(r_pos))) else None)struct_els
-    | Tvec _ | Tref _ | Trefmut _  -> [-start_pos]
-  in
-  PSreturn (None, pos_list), next
+      | Ti32 | Tbool | Tunit | Tempty -> [-start_pos]
+      | Tstruct s ->
+        (* 3.1 - Get struct elements *)
+        let struct_els = fst(find_struct_id ctxs s) in
+        (* 3.1.2 - Calculate pos of each element *)
+        List.filter_map(fun (id, _, r_pos) -> if r_pos <> 0 then Some (-(abs(start_pos) + abs(r_pos))) else None)struct_els
+      | Tvec _ | Tref _ | Trefmut _  -> [-start_pos]
+    in
+    PSreturn (None, pos_list), next
 
   | TSif (e, b1, b2, _) ->
     let pe,  next = pcompile_expr ctxs next e in
@@ -366,25 +367,25 @@ let rec pcompile_decl ctxs next = function
     
     PDstruct(id, pfields)
 
-  | TDfun (f, args, t, b, _) -> 
+  | TDfun (f, args, t, body, _) -> 
     (* print_endline @@ "fun: " ^ f; *)
     let args_ctxs = (make_ctx())::ctxs in
 
     (* 1 - Pre compilar argumentos *)
-    let next, p_args = List.fold_left_map (fun next (mut, arg, t_arg) -> 
-      let pt = pcompile_type t_arg in
-      (* let ctxs = (make_ctx())::ctxs in *)
-      let v = var_ctx_hd args_ctxs in
-      Hashtbl.add v arg (next, 1);
-      (next+(get_type_size ctxs pt)), (mut, arg, pt, next)) 16 args in
+    let next, p_args = List.fold_left_map (
+      fun next (mut, arg, t_arg) -> 
+        let pt = pcompile_type t_arg in
+        (* let ctxs = (make_ctx())::ctxs in *)
+        Hashtbl.add (var_ctx_hd args_ctxs) arg (next, 1);
+        (next+(get_type_size ctxs pt)), (mut, arg, pt, next)
+      ) 16 args in
 
-    (* 2 - Pre compilar corpo *)
-    let f_ctx = fun_ctx_hd ctxs in
-    Hashtbl.add f_ctx f (p_args, next);
+      (* 2 - Pre compilar corpo *)
+    let pb, pe, next = pcompile_block args_ctxs 8 body in
+    Hashtbl.replace (fun_ctx_hd ctxs) f (p_args, next);
     
-    let pb, pe, next = pcompile_block args_ctxs 8 b in
-
-    PDfun(f, p_args, (pb,pe), next)
+    let ret_type =  pcompile_type t in
+    PDfun(f, p_args, ret_type,(pb,pe), next)
 
 and pcompile_file p =
   (* List.map (fun dec -> pcompile_decl [make_ctx()] 0 dec) p *)

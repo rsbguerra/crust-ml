@@ -6,7 +6,7 @@ type program = decl list
 
 and decl = 
   | PDstruct of ident * pair list
-  | PDfun    of ident * argument list * block * int
+  | PDfun    of ident * argument list * prust_type * block * int
 
 and prust_type =
   | PTunit

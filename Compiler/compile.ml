@@ -74,7 +74,7 @@ match op with
       
     (* 5 - Verifica se estamos a dividir por zero *)
     cmpq (imm 0) (reg rbx) ++
-    je "print_error_z" ++
+    je ".print_error_z" ++
 
     (* 6 - Realiza a operacao e coloca o resultado na pilha *)
     idivq (reg rbx) ++
@@ -283,7 +283,7 @@ and compile_expr = function
     let l = "string_" ^ print_index in
     print_labels := (l, s)::(!print_labels);
     movq (ilab l) (reg rsi) ++
-    call ("print_string")
+    call (".print_string")
 
   | PEblock (bl, pos) -> compile_block bl
   
@@ -400,7 +400,7 @@ and compile_block (b, e) =
 
 and compile_decl = function
 | PDstruct (id, pairs) -> nop
-| PDfun (id, args, body, pos) -> 
+| PDfun (id, args, t, body, pos) -> 
   function_labels := id::(!function_labels);
   (* 1 - Inicio da função *)
   let code =
@@ -412,11 +412,10 @@ and compile_decl = function
     compile_block body ++ 
     label (id ^ "_fim") ++ 
     popn pos ++
-    
-    (* (match args with
-    | [] ->  movq (imm 0) (reg rax)
-    | _ -> nop) ++ *)
     popq rbp ++
+    (match t with
+    | PTunit ->  movq (imm 0) (reg rax)
+    | _ -> nop) ++
     ret in
     function_labels := List.tl !function_labels;
     code
@@ -445,25 +444,25 @@ let compile_program p ofile =
         globl "main" ++
         code ++
         
-        label "print_string" ++
+        label ".print_string" ++
         movq (ilab ".Sprint_string") (reg rdi) ++
         movq (imm 0) (reg rax) ++
         call "printf" ++
         ret ++
-        label "printn_int" ++
+        label ".printn_int" ++
         movq (reg rdi) (reg rsi) ++
         movq (ilab ".Sprintn_int") (reg rdi) ++
         movq (imm 0) (reg rax) ++
         call "printf" ++
         ret ++
-        label "print_int" ++
+        label ".print_int" ++
         movq (reg rdi) (reg rsi) ++
         movq (ilab ".Sprint_int") (reg rdi) ++
         movq (imm 0) (reg rax) ++
         call "printf" ++
         ret ++
         (* print bool *)
-        label "print_bool" ++
+        label ".print_bool" ++
         cmpq (imm 0) (reg rdi) ++
         je ".print_false" ++
         jne ".print_true" ++
@@ -479,7 +478,7 @@ let compile_program p ofile =
         movq (imm 0) (reg rax) ++
         call "printf" ++
         ret ++
-        label "printn_bool" ++
+        label ".printn_bool" ++
         cmpq (imm 0) (reg rdi) ++
         je ".printn_false" ++
         jne ".printn_true" ++
@@ -495,13 +494,13 @@ let compile_program p ofile =
         movq (imm 0) (reg rax) ++
         call "printf" ++
         ret ++
-        label "print_error_z" ++
+        label ".print_error_z" ++
         movq (reg rdi) (reg rsi) ++
         leaq (lab ".Sprint_error_z") rdi ++
         movq (imm64 0L) (reg rax) ++
         call "printf" ++
         jmp "main_fim" ++
-        label "print_error_f" ++
+        label ".print_error_f" ++
         movq (reg rdi) (reg rsi) ++
         leaq (lab ".Sprint_error_f") rdi ++
         movq (imm64 0L) (reg rax) ++

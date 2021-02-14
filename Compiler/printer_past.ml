@@ -123,8 +123,8 @@ and string_of_precomp_block (stmts, exp) =
 and string_of_typed_decl = function
   | PDstruct (id, p) -> 
     "TDstruct("^id^",("^(string_of_pairs p)^")"
-  | PDfun (f, args, body, fp) -> 
-    "TDfun("^f^", ("^(string_of_args args)^"), \n"^
+  | PDfun (f, args, t, body, fp) -> 
+    "TDfun("^f^ ":" ^ (string_of_prust_types t) ^ ", ("^(string_of_args args)^"), \n"^
     (string_of_precomp_block body) ^ ", " ^
     (string_of_int fp) ^ ")"
 
