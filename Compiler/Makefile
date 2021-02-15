@@ -32,6 +32,9 @@ test-compile:
 	dune build $(release) ./crust.exe 
 	./tests/test.sh -3
 
+test-all:
+	dune build $(release) ./crust.exe 
+	./tests/test.sh -all
 clean:
 	dune clean
 	rm a.out 
