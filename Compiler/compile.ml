@@ -121,12 +121,17 @@ match op with
     cmpq (imm64 1L) (reg rax) ++
     cmp_op ("lazy_evaluation_" ^ current_and_or) ++
 
-    (* 4 - COlocar e2 no topo da pilha*)
+    (* 4 - Colocar e2 no topo da pilha*)
     compile_expr e2 ++
     popq rax ++
 
     (* 5 - Realiza a operacao e coloca o resultado na pilha *)
-    op  (imm64 1L) (reg rax) ++
+    (* Só é necessário analisar 2a expressão se:
+      - 1 && b 
+      - 0 || b
+      Como estes dois casos apenas dependem do valor do b basta retornar
+      o valor avaliado*)
+    (* op (imm64 1L) (reg rax) ++ *) 
 
     (* 6 - termina *)
     label ("lazy_evaluation_" ^ current_and_or) ++
