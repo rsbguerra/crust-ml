@@ -25,7 +25,7 @@ and expr =
   | PEint   of int32
   | PEbool  of bool
   | PEident of ident * int
-  | PEunop  of Ast.unop * expr
+  | PEunop  of Ast.unop * expr * int
   | PEbinop of Ast.binop * expr * expr * int
   | PEstruct_access of expr * ident * int
   | PElen   of expr 

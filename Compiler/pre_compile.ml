@@ -175,7 +175,7 @@ and pcompile_expr ctxs next = function
 
   | TEunop (op, e, _) ->
     let pe, next = pcompile_expr ctxs next e in
-    PEunop(op, pe), next
+    PEunop(op, pe, next), next
 
   | TEstruct_access(e, id, tid, _) ->
     let pt = pcompile_type tid in

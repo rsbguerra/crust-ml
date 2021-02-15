@@ -26,10 +26,11 @@ and string_of_precomp_expr = function
     id ^ ", " ^
     (string_of_int fp) ^ ")"
 
-  | PEunop (unop, e) ->
+  | PEunop (unop, e, fp) ->
     "PEunop(" ^ 
     Printer.string_of_unop unop ^ 
-    (string_of_precomp_expr e)^")"
+    (string_of_precomp_expr e)^
+    (string_of_int fp) ^ ")"
 
   | PEbinop (binop, e1, e2, fp) ->
     "PEbinop(" ^ 
