@@ -56,16 +56,16 @@ let DEC_LITERAL    = DEC_DIGIT(DEC_DIGIT|'_')*
 let INTEGER_LITERAL= (DEC_LITERAL|BIN_LITERAL|OCT_LITERAL|HEX_LITERAL)
 
 let alpha      = ['a'-'z' 'A'-'Z']
+let symbol     = [ '!' '"' '#' '$' '%' '&' ''' '+' ',' '-' 
+                   '.' '/' ':' ';' '<' '=' '>' '?' '@' '[' ']' '^' '_' '`' '{' '}' '~' ]
+let char = alpha|INTEGER_LITERAL|symbol
 let id         = alpha ('_'|alpha|DEC_DIGIT)*
 let newline    = '\n'
-let whitespace = [' ' '\t' '\r']
+let whitespace = [' ' '\t' '\r']+
 
 let len   = "len" whitespace* "(" whitespace* ")"
 let print = "print" whitespace* "!"
 let vec   = "vec" whitespace* "!"
-
-(* let letra  = [^ '"' '\\' ] | ( '\\' '"') | ('\\' '\\') | ('\\' 'n')
-let p_string = '"' letra* '"' *)
 
 rule analisador = parse
   | "//"            { singlecomment lexbuf}
@@ -115,8 +115,8 @@ rule analisador = parse
   | eof       { [EOF] }
   | _ as c    { raise (Lexing_error (Char.escaped c)) }
 
-and read_string buf =
-  parse
+
+and read_string buf = parse
   | '"'       { [STRING (Buffer.contents buf)] }
   | '\\' '/'  { Buffer.add_char buf '/'; read_string buf lexbuf }
   | '\\' '\\' { Buffer.add_char buf '\\'; read_string buf lexbuf }
@@ -126,9 +126,13 @@ and read_string buf =
   | '\\' 'r'  { Buffer.add_char buf '\r'; read_string buf lexbuf }
   | '\\' 't'  { Buffer.add_char buf '\t'; read_string buf lexbuf }
   | [^ '"' '\\']+
-    { Buffer.add_string buf (Lexing.lexeme lexbuf);
+    {  Buffer.add_string buf (Lexing.lexeme lexbuf);
       read_string buf lexbuf
     }
+  | '\\' symbol {
+      Buffer.add_char buf (Lexing.lexeme_char lexbuf 1);
+      print_endline (Lexing.lexeme lexbuf);
+      read_string buf lexbuf} 
   | _ { raise (Lexing_error ("Illegal string character: " ^ Lexing.lexeme lexbuf)) }
   | eof { raise (Lexing_error ("String is not terminated")) }
 
