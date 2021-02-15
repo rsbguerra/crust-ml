@@ -179,7 +179,7 @@ match op with
     (* 7a - Termina *)
     label ("bool_end_" ^ current_bool_test)
 
-and compile_unop op e = 
+and compile_unop op e pos = 
   match op with
   | Ast.Uneg -> 
     (* 1 - Compila e *)  
@@ -221,18 +221,15 @@ and compile_unop op e =
     label ("bool_end_" ^ current_bool_test)
 
   (* // TODO: finish ref, refmut and deref*)
-  | Ast.Uref -> nop
-    
-    (* movq (ind ~ofs:pos rbp) (reg rax) ++
-    pushq (reg rax)
-   *)
-  | Ast.Urefmut -> nop
-    (* movq (ind ~ofs:pos rbp) (reg rax) ++
-    pushq (reg rax) *)
-  | Ast.Uderef -> nop
-  (*   
+  | Ast.Uref -> 
     movq (ind ~ofs:pos rbp) (reg rax) ++
-    pushq (reg rax) *)
+    pushq (reg rax)
+  | Ast.Urefmut -> 
+    movq (ind ~ofs:pos rbp) (reg rax) ++
+    pushq (reg rax)
+  | Ast.Uderef -> 
+    movq (ind ~ofs:pos rbp) (reg rax) ++
+    pushq (reg rax)
 
 and compile_expr = function
   | PEint i -> 
@@ -249,7 +246,7 @@ and compile_expr = function
 
   | PEbinop (op, e1, e2, pos)-> compile_binop op e1 e2 pos
   
-  | PEunop (op, e) -> compile_unop op e
+  | PEunop (op, e, pos) -> compile_unop op e pos
 
   | PEstruct_access (id, el, pos) ->
       movq (ind ~ofs:pos rbp) (reg rax) ++
@@ -503,14 +500,13 @@ let compile_program p ofile =
         movq (reg rdi) (reg rsi) ++
         leaq (lab ".Sprint_error_z") rdi ++
         movq (imm64 0L) (reg rax) ++
-        call "printf" ++
-        jmp "main_fim" ++
+        ret ++
         label ".print_error_f" ++
         movq (reg rdi) (reg rsi) ++
         leaq (lab ".Sprint_error_f") rdi ++
         movq (imm64 0L) (reg rax) ++
         call "printf" ++
-        jmp "main_fim";
+        ret;
       data = 
         label ".Sprintn_int" ++ string "%ld\n" ++
         label ".Sprint_int" ++ string "%ld" ++
