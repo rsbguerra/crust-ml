@@ -172,7 +172,7 @@ and pcompile_expr ctxs next = function
     let e2, fp2 = pcompile_expr ctxs next e2 in
     let next = max fp1 fp2 in
     PEbinop(op, e1, e2, next), next
-
+  
   | TEunop (op, e, _) ->
     let pe, next = pcompile_expr ctxs next e in
     PEunop(op, pe, next), next
@@ -222,7 +222,6 @@ and pcompile_expr ctxs next = function
         (e::l, sz+(get_type_size ctxs t), max fp fpmax)
         )  args args_type ([], 0, next)
       in
-      
     PEcall(id, exprs, size), fpmax 
   
   | TEvec_decl (els, t) ->
@@ -380,11 +379,11 @@ let rec pcompile_decl ctxs next = function
       ) 16 args in
 
       (* 2 - Pre compilar corpo *)
+    Hashtbl.add (fun_ctx_hd ctxs) f (p_args, next);
     let pb, pe, next = pcompile_block args_ctxs 8 body in
-    Hashtbl.replace (fun_ctx_hd ctxs) f (p_args, next);
     
     let ret_type =  pcompile_type t in
-    PDfun(f, p_args, ret_type,(pb,pe), next)
+    PDfun(f, p_args, ret_type, (pb,pe), next)
 
 and pcompile_file p =
   (* List.map (fun dec -> pcompile_decl [make_ctx()] 0 dec) p *)
