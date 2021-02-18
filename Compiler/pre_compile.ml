@@ -24,6 +24,25 @@ and print_struct id ctxs =
   with Not_found -> 
     raise (Error "List not found")
 
+let rec print_all_vars ctxs = 
+  print_string ("ctxs len: " ^ string_of_int (List.length ctxs) ^ "\n");
+  List.iter (fun (v, _, _) -> 
+    if Hashtbl.length v = 0 then print_endline "context with no vars" 
+    else Hashtbl.iter (fun a _ -> print_var a ctxs) v) ctxs
+
+and print_var id ctxs = 
+  print_string ("var " ^ id ^ ":\n");
+  try
+    let ctx,_,_ = List.find(fun (s, _, _) -> Hashtbl.mem s id) ctxs in
+    try 
+      let (a,b) = Hashtbl.find ctx id in
+      print_string (id ^ ", " ^ string_of_int a ^ ", " ^ string_of_int b ^ "\n")
+    with Not_found ->  
+      raise (Error "Hastable not found")
+  with Not_found -> 
+    raise (Error "List not found")
+    
+
 let rec print_all_fun ctxs =
   print_string ("ctxs len: " ^ string_of_int (List.length ctxs) ^ "\n");
   List.iter (fun (_, f, _) -> 
@@ -88,6 +107,7 @@ and get_type_start ctxs = function
   | PTvec t | PTref t | PTrefmut t -> get_type_start ctxs t
 
 and get_type_elements ctxs id start_pos previus_next next = function
+(* | PTi32 | PTbool | PTunit | PTempty -> [-start_pos], 1 *)
 | PTi32 | PTbool | PTunit | PTempty -> [-start_pos], 1
 | PTstruct s ->
   (* 2.1 - Get struct elements *)
@@ -167,6 +187,18 @@ and pcompile_expr ctxs next = function
     let pos, size = find_var_id ctxs id in
     PEident(id, pos), next
 
+  | TEbinop(Bassign, e1, e2, _) ->
+    
+    let e1, fp1 = pcompile_expr ctxs next e1 in
+    let id = begin match e1 with 
+    | PEident (s, _) -> s
+    | _ -> error "Var not found" end in
+
+    let e2, fp2 = pcompile_expr ctxs next e2 in
+    let pos, _ = find_var_id ctxs id in
+
+    PEbinop(Bassign, e1, e2, pos), (max fp1 fp2)
+
   | TEbinop(op, e1, e2, _) ->
     let e1, fp1 = pcompile_expr ctxs next e1 in
     let e2, fp2 = pcompile_expr ctxs next e2 in
@@ -220,7 +252,7 @@ and pcompile_expr ctxs next = function
       List.fold_right2 (fun el t (l, sz, fpmax) ->
         let e, fp = pcompile_expr ctxs fpmax el in
         (e::l, sz+(get_type_size ctxs t), max fp fpmax)
-        )  args args_type ([], 0, next)
+        )  args args_type ([], 8, next)
       in
     PEcall(id, exprs, size), fpmax 
   
@@ -263,8 +295,7 @@ and pcompile_stmt ctxs next = function
     let pos_list, sz = get_type_elements ctxs id start_pos previus_next next pt in
     
     (* 3 - Adicionar inicio ao frame *)
-    Hashtbl.add (var_ctx_hd ctxs) id ((List.hd pos_list), sz);
-    
+    Hashtbl.replace (var_ctx_hd ctxs) id ((List.hd pos_list), sz);
     PSdeclare (mut, id, pt, ep, pos_list), (new_next+next)
 
   | TSdeclare_struct (mut, id, idt, el, t) ->
@@ -294,38 +325,25 @@ and pcompile_stmt ctxs next = function
     let pb, pbe, next = pcompile_block ((make_ctx())::ctxs) next b in
     PSwhile (pe, (pb, pbe)), next
 
-  | TSreturn (Some e, t) -> 
-    
-    let ep, next = (pcompile_expr ctxs next e) in
-    let pt = pcompile_type t in
-    let start_pos = next + (get_type_start ctxs pt) in
+  | TSreturn (e, t) -> 
+    let ret, pos_list = match e with 
+    | Some e ->
+      let ep, next = (pcompile_expr ctxs next e) in
+      let pt = pcompile_type t in
+      let start_pos = next + (get_type_start ctxs pt) in
 
-    (* 2 - Adicionar todos os elementos *)
-    let pos_list =  match t with
-      | Ti32 | Tbool | Tunit | Tempty -> [-start_pos]
-      | Tstruct s ->
-        (* 3.1 - Get struct elements *)
-        let struct_els = fst(find_struct_id ctxs s) in
-        (* 3.1.2 - Calculate pos of each element *)
-        List.filter_map(fun (id, _, r_pos) -> if r_pos <> 0 then Some (-(abs(start_pos) + abs(r_pos))) else None)struct_els
-      | Tvec _ | Tref _ | Trefmut _  -> [-start_pos]
-    in
-    PSreturn (Some ep, pos_list), next
-
-  | TSreturn (None, t) -> 
-    let pt = pcompile_type t in
-    let start_pos = next + (get_type_start ctxs pt) in
-    (* 2 - Adicionar todos os elementos *)
-    let pos_list =  match t with
-      | Ti32 | Tbool | Tunit | Tempty -> [-start_pos]
-      | Tstruct s ->
-        (* 3.1 - Get struct elements *)
-        let struct_els = fst(find_struct_id ctxs s) in
-        (* 3.1.2 - Calculate pos of each element *)
-        List.filter_map(fun (id, _, r_pos) -> if r_pos <> 0 then Some (-(abs(start_pos) + abs(r_pos))) else None)struct_els
-      | Tvec _ | Tref _ | Trefmut _  -> [-start_pos]
-    in
-    PSreturn (None, pos_list), next
+      (* 2 - Adicionar todos os elementos *)
+      let pos_list =  match t with
+        | Ti32 | Tbool | Tunit | Tempty -> [-start_pos]
+        | Tstruct s ->
+          (* 3.1 - Get struct elements *)
+          let struct_els = fst(find_struct_id ctxs s) in
+          (* 3.1.2 - Calculate pos of each element *)
+          List.filter_map(fun (id, _, r_pos) -> if r_pos <> 0 then Some (-(abs(start_pos) + abs(r_pos))) else None)struct_els
+        | Tvec _ | Tref _ | Trefmut _  -> [-start_pos]
+        in Some ep, pos_list
+    | None -> None, [] 
+      in PSreturn (ret, pos_list), next
 
   | TSif (e, b1, b2, _) ->
     let pe,  next = pcompile_expr ctxs next e in

@@ -39,11 +39,21 @@ let rec get_elements e pos_list = function
     popq rax ++
     (* 2 - Guardar o valor da expressao na posicao ofs *)
     movq (reg rax) (ind ~ofs:(List.hd pos_list) rbp)
+
   | PTref t -> get_elements e pos_list t
   | PTvec t -> get_elements e pos_list t
   | _ -> 
+    compile_expr e ++
+    popq rax ++
+    (* 2 - Guardar o valor da expressao na posicao ofs *)
+    movq (reg rax) (ind ~ofs:(List.hd pos_list) rbp)
+
+    (* comment "heuheuheu" ++ 
     compile_expr e ++ 
-    List.fold_left (fun code p -> code ++ popq rax) nop pos_list
+    comment "begin fold" ++ 
+    (* List.fold_left (fun code p -> code ++ popq rax) nop pos_list *)
+    List.fold_left (fun code p -> code ++ popq rax ++ (comment "begin end fold")) (nop) pos_list
+     *)
 
 and compile_binop op e1 e2 pos = 
 match op with
@@ -52,6 +62,7 @@ match op with
     compile_expr e2 ++
     popq rax ++
     movq (reg rax) (ind ~ofs:pos rbp)
+
   | Ast.Bmod | Ast.Bdiv ->
      (* 1 - Dependendo da operacao queremos um registo diferente *)
      let rg = 
@@ -220,7 +231,6 @@ and compile_unop op e pos =
     (* 6b - Terminamos *)  
     label ("bool_end_" ^ current_bool_test)
 
-  (* // TODO: finish ref, refmut and deref*)
   | Ast.Uref -> 
     movq (ind ~ofs:pos rbp) (reg rax) ++
     pushq (reg rax)
@@ -275,10 +285,9 @@ and compile_expr = function
     List.fold_left (fun code e -> code ++ compile_expr e) nop args ++
     
     call id ++
-    popn size 
-    (* pushq (reg rax) *)
+    (* popn size *)
+    pushq (reg rax)
 
-  (* // TODO: Complete print *)
   | PEprint (s, pos) ->
     number_of_print := !number_of_print + 1;
     let print_index = string_of_int (!number_of_print) in
@@ -337,7 +346,7 @@ and compile_stmt = function
     let current_function = List.hd !function_labels in
     let code = match e with
       | Some exp -> ref (compile_expr exp)
-      | None -> ref (nop++comment "puta que me pariu") in
+      | None -> ref (nop) in
     (List.iteri(fun i _ -> if i <> 0 then code := (!code) ++ (popq r9)) pos_list);
     (!code) ++ popq rax ++
     jmp (current_function ^ "_fim")
@@ -347,35 +356,6 @@ and compile_stmt = function
   number_of_ifs := !number_of_ifs + 1;
   let current_if_test = string_of_int(!number_of_ifs) in
   
-  (* // TODO: Test if compile_elif is needed *)
-    (* let rec compile_elif index = function
-      | [hd] ->
-          let _, s = hd in 
-          let body = compile_stmt s in
-      
-          label ("if_else_" ^ string_of_int index ^ current_if_test) ++
-          body
-
-      | hd::tl -> 
-          let e, s = hd in 
-          let body = compile_stmt s in
-          
-          label ("if_else_" ^ (string_of_int index) ^ current_if_test) ++
-          compile_expr e ++
-          popq rax ++
-
-          (* 3 - Se vor diferente de 0 entao é verdade *)
-          cmpq (imm 0) (reg rax) ++
-          je ("if_else_" ^ string_of_int (index + 1) ^ current_if_test) ++
-
-          body ++
-          
-          jmp ("if_end_" ^ current_if_test) ++
-          
-          compile_elif (index + 1) tl
-      | _ -> label ("if_else_" ^ string_of_int index ^ current_if_test)
-      in *)
-
     (* 2 - Calcular o valor da condicao *)
     compile_expr e ++
     popq rax ++
@@ -395,7 +375,9 @@ and compile_stmt = function
     
 
 and compile_block (b, e) = 
+  
   let block = List.fold_left (fun code stmt -> code ++ compile_stmt stmt) nop b in
+  
   match e with
   | Some e -> block ++ (compile_expr e)
   | None   -> block
@@ -421,21 +403,6 @@ and compile_decl = function
     ret in
     function_labels := List.tl !function_labels;
     code
-
-(* 
-let rec compile_stmt = function
-
-  
-  | PSptr_assign (id, e, pos) -> 
-    (* 1 - Atualiza o valor que esta no endereço ofs*)
-    compile_expr e ++
-    popq rax ++
-    movq (reg rax) (ind ~ofs:pos rbp)
-    
-and compile_global_stmt = function  
-
-
-  | PGSstruct _-> nop *)
 
 (* Compilação do programa p e grava o código no ficheiro ofile *)
 let compile_program p ofile =
